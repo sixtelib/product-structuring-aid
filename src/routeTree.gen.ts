@@ -20,6 +20,7 @@ import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EspaceNouveauRouteImport } from './routes/espace.nouveau'
 import { Route as EspaceDossiersRouteImport } from './routes/espace.dossiers'
+import { Route as EspaceDossiersCaseIdRouteImport } from './routes/espace.dossiers.$caseId'
 
 const TarifsRoute = TarifsRouteImport.update({
   id: '/tarifs',
@@ -76,6 +77,11 @@ const EspaceDossiersRoute = EspaceDossiersRouteImport.update({
   path: '/dossiers',
   getParentRoute: () => EspaceRoute,
 } as any)
+const EspaceDossiersCaseIdRoute = EspaceDossiersCaseIdRouteImport.update({
+  id: '/$caseId',
+  path: '/$caseId',
+  getParentRoute: () => EspaceDossiersRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -87,8 +93,9 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/sinistres': typeof SinistresRoute
   '/tarifs': typeof TarifsRoute
-  '/espace/dossiers': typeof EspaceDossiersRoute
+  '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -100,8 +107,9 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/sinistres': typeof SinistresRoute
   '/tarifs': typeof TarifsRoute
-  '/espace/dossiers': typeof EspaceDossiersRoute
+  '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,8 +122,9 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/sinistres': typeof SinistresRoute
   '/tarifs': typeof TarifsRoute
-  '/espace/dossiers': typeof EspaceDossiersRoute
+  '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/tarifs'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/espace/dossiers/$caseId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/tarifs'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/espace/dossiers/$caseId'
   id:
     | '__root__'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/tarifs'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/espace/dossiers/$caseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -250,16 +262,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EspaceDossiersRouteImport
       parentRoute: typeof EspaceRoute
     }
+    '/espace/dossiers/$caseId': {
+      id: '/espace/dossiers/$caseId'
+      path: '/$caseId'
+      fullPath: '/espace/dossiers/$caseId'
+      preLoaderRoute: typeof EspaceDossiersCaseIdRouteImport
+      parentRoute: typeof EspaceDossiersRoute
+    }
   }
 }
 
+interface EspaceDossiersRouteChildren {
+  EspaceDossiersCaseIdRoute: typeof EspaceDossiersCaseIdRoute
+}
+
+const EspaceDossiersRouteChildren: EspaceDossiersRouteChildren = {
+  EspaceDossiersCaseIdRoute: EspaceDossiersCaseIdRoute,
+}
+
+const EspaceDossiersRouteWithChildren = EspaceDossiersRoute._addFileChildren(
+  EspaceDossiersRouteChildren,
+)
+
 interface EspaceRouteChildren {
-  EspaceDossiersRoute: typeof EspaceDossiersRoute
+  EspaceDossiersRoute: typeof EspaceDossiersRouteWithChildren
   EspaceNouveauRoute: typeof EspaceNouveauRoute
 }
 
 const EspaceRouteChildren: EspaceRouteChildren = {
-  EspaceDossiersRoute: EspaceDossiersRoute,
+  EspaceDossiersRoute: EspaceDossiersRouteWithChildren,
   EspaceNouveauRoute: EspaceNouveauRoute,
 }
 
