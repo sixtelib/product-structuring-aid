@@ -40,6 +40,13 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "fr_FR" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "Recours — Défense des assurés sinistrés" },
+      { name: "twitter:title", content: "Recours — Défense des assurés sinistrés" },
+      { name: "description", content: "Product Structuring Aid helps organize and build your product's online presence and backend infrastructure." },
+      { property: "og:description", content: "Product Structuring Aid helps organize and build your product's online presence and backend infrastructure." },
+      { name: "twitter:description", content: "Product Structuring Aid helps organize and build your product's online presence and backend infrastructure." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/96702679-4cda-42ea-bfcf-3b6074517208/id-preview-e30b01aa--fde7b2a8-0833-4c89-8027-4dc06ab330d5.lovable.app-1777292236296.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/96702679-4cda-42ea-bfcf-3b6074517208/id-preview-e30b01aa--fde7b2a8-0833-4c89-8027-4dc06ab330d5.lovable.app-1777292236296.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
