@@ -14,16 +14,354 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      case_analyses: {
+        Row: {
+          analysis_type: string
+          case_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          model: string | null
+          result: Json
+          summary: string | null
+        }
+        Insert: {
+          analysis_type: string
+          case_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          model?: string | null
+          result?: Json
+          summary?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          case_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          model?: string | null
+          result?: Json
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_analyses_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      case_documents: {
+        Row: {
+          case_id: string
+          category: string | null
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          case_id: string
+          category?: string | null
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Update: {
+          case_id?: string
+          category?: string | null
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_documents_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      case_events: {
+        Row: {
+          actor_id: string | null
+          case_id: string
+          created_at: string
+          description: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          id: string
+          is_visible_to_client: boolean
+          metadata: Json | null
+          title: string
+        }
+        Insert: {
+          actor_id?: string | null
+          case_id: string
+          created_at?: string
+          description?: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          id?: string
+          is_visible_to_client?: boolean
+          metadata?: Json | null
+          title: string
+        }
+        Update: {
+          actor_id?: string | null
+          case_id?: string
+          created_at?: string
+          description?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          is_visible_to_client?: boolean
+          metadata?: Json | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      case_messages: {
+        Row: {
+          case_id: string
+          content: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+        }
+        Insert: {
+          case_id: string
+          content: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id: string
+        }
+        Update: {
+          case_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_messages_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cases: {
+        Row: {
+          claim_type: Database["public"]["Enums"]["claim_type"]
+          created_at: string
+          description: string | null
+          estimated_amount: number | null
+          expert_id: string | null
+          id: string
+          incident_date: string | null
+          insurer_name: string | null
+          insurer_offer: number | null
+          obtained_amount: number | null
+          owner_id: string
+          policy_number: string | null
+          reference: string
+          status: Database["public"]["Enums"]["case_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          claim_type: Database["public"]["Enums"]["claim_type"]
+          created_at?: string
+          description?: string | null
+          estimated_amount?: number | null
+          expert_id?: string | null
+          id?: string
+          incident_date?: string | null
+          insurer_name?: string | null
+          insurer_offer?: number | null
+          obtained_amount?: number | null
+          owner_id: string
+          policy_number?: string | null
+          reference?: string
+          status?: Database["public"]["Enums"]["case_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          claim_type?: Database["public"]["Enums"]["claim_type"]
+          created_at?: string
+          description?: string | null
+          estimated_amount?: number | null
+          expert_id?: string | null
+          id?: string
+          incident_date?: string | null
+          insurer_name?: string | null
+          insurer_offer?: number | null
+          obtained_amount?: number | null
+          owner_id?: string
+          policy_number?: string | null
+          reference?: string
+          status?: Database["public"]["Enums"]["case_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          case_id: string
+          fee_rate: number
+          id: string
+          issued_at: string
+          owner_id: string
+          paid_at: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          case_id: string
+          fee_rate: number
+          id?: string
+          issued_at?: string
+          owner_id: string
+          paid_at?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          case_id?: string
+          fee_rate?: number
+          id?: string
+          issued_at?: string
+          owner_id?: string
+          paid_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "assure" | "expert" | "admin"
+      case_status:
+        | "nouveau"
+        | "qualification"
+        | "en_analyse"
+        | "en_negociation"
+        | "expertise"
+        | "cloture_succes"
+        | "cloture_echec"
+        | "abandonne"
+      claim_type:
+        | "degat_des_eaux"
+        | "incendie"
+        | "vol_cambriolage"
+        | "catastrophe_naturelle"
+        | "bris_de_glace"
+        | "dommage_vehicule"
+        | "responsabilite_civile"
+        | "autre"
+      event_type:
+        | "creation"
+        | "document_ajoute"
+        | "message"
+        | "changement_statut"
+        | "analyse_ia"
+        | "expert_assigne"
+        | "note_interne"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +488,37 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["assure", "expert", "admin"],
+      case_status: [
+        "nouveau",
+        "qualification",
+        "en_analyse",
+        "en_negociation",
+        "expertise",
+        "cloture_succes",
+        "cloture_echec",
+        "abandonne",
+      ],
+      claim_type: [
+        "degat_des_eaux",
+        "incendie",
+        "vol_cambriolage",
+        "catastrophe_naturelle",
+        "bris_de_glace",
+        "dommage_vehicule",
+        "responsabilite_civile",
+        "autre",
+      ],
+      event_type: [
+        "creation",
+        "document_ajoute",
+        "message",
+        "changement_statut",
+        "analyse_ia",
+        "expert_assigne",
+        "note_interne",
+      ],
+    },
   },
 } as const
