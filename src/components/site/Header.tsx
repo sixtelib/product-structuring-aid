@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
+import { useAuth } from "@/lib/auth";
 
 const navItems = [
   { to: "/", label: "Accueil" },
@@ -14,6 +15,7 @@ const navItems = [
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur-md">
@@ -36,12 +38,21 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Link
-            to="/contact"
-            className="text-sm font-medium text-primary hover:text-accent transition-colors"
-          >
-            Contact
-          </Link>
+          {user ? (
+            <Link
+              to="/espace/dossiers"
+              className="text-sm font-medium text-primary hover:text-accent transition-colors"
+            >
+              Mon espace
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className="text-sm font-medium text-primary hover:text-accent transition-colors"
+            >
+              Connexion
+            </Link>
+          )}
           <Link
             to="/"
             hash="chatbot"
@@ -78,11 +89,11 @@ export function Header() {
               </Link>
             ))}
             <Link
-              to="/contact"
+              to={user ? "/espace/dossiers" : "/auth"}
               onClick={() => setOpen(false)}
               className="rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground"
             >
-              Contact
+              {user ? "Mon espace" : "Connexion"}
             </Link>
             <Link
               to="/"

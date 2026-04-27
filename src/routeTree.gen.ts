@@ -12,10 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as SinistresRouteImport } from './routes/sinistres'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as EspaceRouteImport } from './routes/espace'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CommentCaMarcheRouteImport } from './routes/comment-ca-marche'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EspaceNouveauRouteImport } from './routes/espace.nouveau'
+import { Route as EspaceDossiersRouteImport } from './routes/espace.dossiers'
+import { Route as EspaceDossiersCaseIdRouteImport } from './routes/espace.dossiers.$caseId'
 
 const TarifsRoute = TarifsRouteImport.update({
   id: '/tarifs',
@@ -32,6 +37,11 @@ const FaqRoute = FaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EspaceRoute = EspaceRouteImport.update({
+  id: '/espace',
+  path: '/espace',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -40,6 +50,11 @@ const ContactRoute = ContactRouteImport.update({
 const CommentCaMarcheRoute = CommentCaMarcheRouteImport.update({
   id: '/comment-ca-marche',
   path: '/comment-ca-marche',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AProposRoute = AProposRouteImport.update({
@@ -52,70 +67,117 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EspaceNouveauRoute = EspaceNouveauRouteImport.update({
+  id: '/nouveau',
+  path: '/nouveau',
+  getParentRoute: () => EspaceRoute,
+} as any)
+const EspaceDossiersRoute = EspaceDossiersRouteImport.update({
+  id: '/dossiers',
+  path: '/dossiers',
+  getParentRoute: () => EspaceRoute,
+} as any)
+const EspaceDossiersCaseIdRoute = EspaceDossiersCaseIdRouteImport.update({
+  id: '/$caseId',
+  path: '/$caseId',
+  getParentRoute: () => EspaceDossiersRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
+  '/auth': typeof AuthRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/contact': typeof ContactRoute
+  '/espace': typeof EspaceRouteWithChildren
   '/faq': typeof FaqRoute
   '/sinistres': typeof SinistresRoute
   '/tarifs': typeof TarifsRoute
+  '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
+  '/espace/nouveau': typeof EspaceNouveauRoute
+  '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
+  '/auth': typeof AuthRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/contact': typeof ContactRoute
+  '/espace': typeof EspaceRouteWithChildren
   '/faq': typeof FaqRoute
   '/sinistres': typeof SinistresRoute
   '/tarifs': typeof TarifsRoute
+  '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
+  '/espace/nouveau': typeof EspaceNouveauRoute
+  '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
+  '/auth': typeof AuthRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/contact': typeof ContactRoute
+  '/espace': typeof EspaceRouteWithChildren
   '/faq': typeof FaqRoute
   '/sinistres': typeof SinistresRoute
   '/tarifs': typeof TarifsRoute
+  '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
+  '/espace/nouveau': typeof EspaceNouveauRoute
+  '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/a-propos'
+    | '/auth'
     | '/comment-ca-marche'
     | '/contact'
+    | '/espace'
     | '/faq'
     | '/sinistres'
     | '/tarifs'
+    | '/espace/dossiers'
+    | '/espace/nouveau'
+    | '/espace/dossiers/$caseId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/a-propos'
+    | '/auth'
     | '/comment-ca-marche'
     | '/contact'
+    | '/espace'
     | '/faq'
     | '/sinistres'
     | '/tarifs'
+    | '/espace/dossiers'
+    | '/espace/nouveau'
+    | '/espace/dossiers/$caseId'
   id:
     | '__root__'
     | '/'
     | '/a-propos'
+    | '/auth'
     | '/comment-ca-marche'
     | '/contact'
+    | '/espace'
     | '/faq'
     | '/sinistres'
     | '/tarifs'
+    | '/espace/dossiers'
+    | '/espace/nouveau'
+    | '/espace/dossiers/$caseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AProposRoute: typeof AProposRoute
+  AuthRoute: typeof AuthRoute
   CommentCaMarcheRoute: typeof CommentCaMarcheRoute
   ContactRoute: typeof ContactRoute
+  EspaceRoute: typeof EspaceRouteWithChildren
   FaqRoute: typeof FaqRoute
   SinistresRoute: typeof SinistresRoute
   TarifsRoute: typeof TarifsRoute
@@ -144,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/espace': {
+      id: '/espace'
+      path: '/espace'
+      fullPath: '/espace'
+      preLoaderRoute: typeof EspaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
@@ -156,6 +225,13 @@ declare module '@tanstack/react-router' {
       path: '/comment-ca-marche'
       fullPath: '/comment-ca-marche'
       preLoaderRoute: typeof CommentCaMarcheRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/a-propos': {
@@ -172,14 +248,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/espace/nouveau': {
+      id: '/espace/nouveau'
+      path: '/nouveau'
+      fullPath: '/espace/nouveau'
+      preLoaderRoute: typeof EspaceNouveauRouteImport
+      parentRoute: typeof EspaceRoute
+    }
+    '/espace/dossiers': {
+      id: '/espace/dossiers'
+      path: '/dossiers'
+      fullPath: '/espace/dossiers'
+      preLoaderRoute: typeof EspaceDossiersRouteImport
+      parentRoute: typeof EspaceRoute
+    }
+    '/espace/dossiers/$caseId': {
+      id: '/espace/dossiers/$caseId'
+      path: '/$caseId'
+      fullPath: '/espace/dossiers/$caseId'
+      preLoaderRoute: typeof EspaceDossiersCaseIdRouteImport
+      parentRoute: typeof EspaceDossiersRoute
+    }
   }
 }
+
+interface EspaceDossiersRouteChildren {
+  EspaceDossiersCaseIdRoute: typeof EspaceDossiersCaseIdRoute
+}
+
+const EspaceDossiersRouteChildren: EspaceDossiersRouteChildren = {
+  EspaceDossiersCaseIdRoute: EspaceDossiersCaseIdRoute,
+}
+
+const EspaceDossiersRouteWithChildren = EspaceDossiersRoute._addFileChildren(
+  EspaceDossiersRouteChildren,
+)
+
+interface EspaceRouteChildren {
+  EspaceDossiersRoute: typeof EspaceDossiersRouteWithChildren
+  EspaceNouveauRoute: typeof EspaceNouveauRoute
+}
+
+const EspaceRouteChildren: EspaceRouteChildren = {
+  EspaceDossiersRoute: EspaceDossiersRouteWithChildren,
+  EspaceNouveauRoute: EspaceNouveauRoute,
+}
+
+const EspaceRouteWithChildren =
+  EspaceRoute._addFileChildren(EspaceRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AProposRoute: AProposRoute,
+  AuthRoute: AuthRoute,
   CommentCaMarcheRoute: CommentCaMarcheRoute,
   ContactRoute: ContactRoute,
+  EspaceRoute: EspaceRouteWithChildren,
   FaqRoute: FaqRoute,
   SinistresRoute: SinistresRoute,
   TarifsRoute: TarifsRoute,
@@ -187,12 +311,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
