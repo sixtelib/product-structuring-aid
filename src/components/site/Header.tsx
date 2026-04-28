@@ -18,7 +18,7 @@ export function Header() {
   const { user } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-white">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Logo />
 
@@ -27,10 +27,10 @@ export function Header() {
             <Link
               key={item.to}
               to={item.to}
-              activeProps={{ className: "text-primary bg-secondary" }}
-              inactiveProps={{ className: "text-muted-foreground hover:text-primary" }}
+              activeProps={{ className: "bg-secondary text-primary" }}
+              inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
               activeOptions={{ exact: item.to === "/" }}
-              className="rounded-md px-3 py-2 text-sm font-medium transition-colors"
+              className="rounded-lg px-3 py-2 text-sm font-medium transition-colors"
             >
               {item.label}
             </Link>
@@ -40,23 +40,20 @@ export function Header() {
         <div className="hidden items-center gap-3 lg:flex">
           {user ? (
             <Link
-              to="/espace/dossiers"
-              className="text-sm font-medium text-primary hover:text-accent transition-colors"
+              to="/dashboard"
+              className="text-sm font-medium text-foreground transition-colors hover:text-primary"
             >
               Mon espace
             </Link>
           ) : (
-            <Link
-              to="/auth"
-              className="text-sm font-medium text-primary hover:text-accent transition-colors"
-            >
+            <Link to="/auth" className="text-sm font-medium text-foreground transition-colors hover:text-primary">
               Connexion
             </Link>
           )}
           <Link
             to="/"
             hash="chatbot"
-            className="inline-flex items-center justify-center rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-accent)] transition hover:brightness-105"
+            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
           >
             Évaluer mon dossier
           </Link>
@@ -65,7 +62,7 @@ export function Header() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-md text-primary hover:bg-secondary"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-foreground hover:bg-secondary lg:hidden"
           aria-label="Menu"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -73,7 +70,7 @@ export function Header() {
       </div>
 
       {open && (
-        <div className="lg:hidden border-t border-border bg-background">
+        <div className="border-t border-border bg-white lg:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4 sm:px-6">
             {navItems.map((item) => (
               <Link
@@ -83,15 +80,15 @@ export function Header() {
                 activeProps={{ className: "bg-secondary text-primary" }}
                 inactiveProps={{ className: "text-muted-foreground" }}
                 activeOptions={{ exact: item.to === "/" }}
-                className="rounded-md px-3 py-2.5 text-sm font-medium"
+                className="rounded-lg px-3 py-2.5 text-sm font-medium"
               >
                 {item.label}
               </Link>
             ))}
             <Link
-              to={user ? "/espace/dossiers" : "/auth"}
+              to={user ? "/dashboard" : "/auth"}
               onClick={() => setOpen(false)}
-              className="rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground"
             >
               {user ? "Mon espace" : "Connexion"}
             </Link>
@@ -99,7 +96,7 @@ export function Header() {
               to="/"
               hash="chatbot"
               onClick={() => setOpen(false)}
-              className="mt-2 inline-flex items-center justify-center rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground"
+              className="mt-2 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
             >
               Évaluer mon dossier
             </Link>

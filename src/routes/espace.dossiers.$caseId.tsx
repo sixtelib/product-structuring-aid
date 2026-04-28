@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Upload, Send, FileText, Trash2, Download, MessageSquare, Clock } from "lucide-react";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { claimTypeLabel } from "@/lib/claim-types";
 
 export const Route = createFileRoute("/espace/dossiers/$caseId")({
-  component: CaseDetailPage,
+  component: EspaceDossierRedirect,
   errorComponent: ({ error, reset }) => {
     const router = useRouter();
     return (
@@ -26,12 +26,21 @@ export const Route = createFileRoute("/espace/dossiers/$caseId")({
   notFoundComponent: () => (
     <div className="rounded-lg border border-border bg-background p-6 text-center">
       <p className="text-muted-foreground">Dossier introuvable.</p>
-      <Link to="/espace/dossiers" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
-        Retour à mes dossiers
+      <Link to="/dashboard" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
+        Retour au dashboard
       </Link>
     </div>
   ),
 });
+
+function EspaceDossierRedirect() {
+  const { caseId } = Route.useParams();
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate({ to: "/dashboard/dossiers/$id", params: { id: caseId }, replace: true });
+  }, [caseId, navigate]);
+  return null;
+}
 
 interface CaseFull {
   id: string;
@@ -112,8 +121,8 @@ function CaseDetailPage() {
     return (
       <div className="rounded-lg border border-border bg-background p-6 text-center">
         <p className="text-muted-foreground">Dossier introuvable.</p>
-        <Link to="/espace/dossiers" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
-          Retour
+        <Link to="/dashboard" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
+          Retour au dashboard
         </Link>
       </div>
     );
@@ -121,14 +130,14 @@ function CaseDetailPage() {
 
   return (
     <div>
-      <Link to="/espace/dossiers" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
-        <ArrowLeft className="h-4 w-4" /> Retour aux dossiers
+      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
+        <ArrowLeft className="h-4 w-4" /> Retour au dashboard
       </Link>
 
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-mono text-muted-foreground">Réf. {c.reference}</p>
-          <h1 className="mt-1 font-serif text-3xl font-semibold text-foreground">{c.title}</h1>
+          <h1 className="mt-1 font-sans tracking-tight text-3xl font-semibold text-foreground">{c.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {claimTypeLabel(c.claim_type)}
             {c.insurer_name ? ` · ${c.insurer_name}` : ""}
@@ -141,19 +150,19 @@ function CaseDetailPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="rounded-lg border border-border bg-background p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Préjudice estimé</p>
-          <p className="mt-1 font-serif text-2xl font-semibold text-foreground">
+          <p className="mt-1 font-sans tracking-tight text-2xl font-semibold text-foreground">
             {c.estimated_amount != null ? `${Number(c.estimated_amount).toLocaleString("fr-FR")} €` : "—"}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-background p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Offre assureur</p>
-          <p className="mt-1 font-serif text-2xl font-semibold text-foreground">
+          <p className="mt-1 font-sans tracking-tight text-2xl font-semibold text-foreground">
             {c.insurer_offer != null ? `${Number(c.insurer_offer).toLocaleString("fr-FR")} €` : "—"}
           </p>
         </div>
         <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
           <p className="text-xs uppercase tracking-wide text-accent-foreground/70">Obtenu</p>
-          <p className="mt-1 font-serif text-2xl font-semibold text-foreground">
+          <p className="mt-1 font-sans tracking-tight text-2xl font-semibold text-foreground">
             {c.obtained_amount != null ? `${Number(c.obtained_amount).toLocaleString("fr-FR")} €` : "En cours"}
           </p>
         </div>
@@ -371,7 +380,7 @@ function MessagesTab({ caseId, userId, messages, onChange }: { caseId: string; u
             return (
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                  className={`max-w-[75%] rounded-xl px-4 py-2.5 ${
                     mine ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
                   }`}
                 >

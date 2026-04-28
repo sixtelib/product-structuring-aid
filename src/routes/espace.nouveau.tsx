@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,8 +7,16 @@ import { useAuth } from "@/lib/auth";
 import { CLAIM_TYPES } from "@/lib/claim-types";
 
 export const Route = createFileRoute("/espace/nouveau")({
-  component: NouveauDossierPage,
+  component: EspaceNouveauRedirect,
 });
+
+function EspaceNouveauRedirect() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate({ to: "/dashboard", replace: true });
+  }, [navigate]);
+  return null;
+}
 
 function NouveauDossierPage() {
   const navigate = useNavigate();
@@ -59,7 +67,7 @@ function NouveauDossierPage() {
       });
 
       toast.success("Dossier créé");
-      navigate({ to: "/espace/dossiers/$caseId", params: { caseId: data.id } });
+      navigate({ to: "/dashboard/dossiers/$id", params: { id: data.id } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la création");
     } finally {
@@ -76,11 +84,11 @@ function NouveauDossierPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to="/espace/dossiers" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
-        <ArrowLeft className="h-4 w-4" /> Retour aux dossiers
+      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
+        <ArrowLeft className="h-4 w-4" /> Retour au dashboard
       </Link>
 
-      <h1 className="mt-4 font-serif text-3xl font-semibold text-foreground">Nouveau dossier</h1>
+      <h1 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Nouveau dossier</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Décrivez votre sinistre — un expert le qualifiera sous 48 h.
       </p>
@@ -185,7 +193,7 @@ function NouveauDossierPage() {
 
         <div className="flex justify-end gap-3 border-t border-border pt-6">
           <Link
-            to="/espace/dossiers"
+            to="/dashboard"
             className="inline-flex items-center rounded-md border border-border px-4 py-2.5 text-sm font-medium hover:bg-secondary"
           >
             Annuler

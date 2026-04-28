@@ -5,13 +5,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/tarifs")({
   head: () => ({
     meta: [
-      { title: "Tarifs — Recours" },
+      { title: "Tarifs — Claimeur" },
       {
         name: "description",
         content:
           "Rémunération uniquement au succès : 10 % de l'indemnisation supplémentaire obtenue. Gratuit si nous n'obtenons rien. Aucun frais caché.",
       },
-      { property: "og:title", content: "Tarifs — Recours" },
+      { property: "og:title", content: "Tarifs — Claimeur" },
       {
         property: "og:description",
         content:
@@ -60,15 +60,15 @@ const fmt = (n: number) => n.toLocaleString("fr-FR") + " €";
 function PricingPage() {
   return (
     <SiteLayout>
-      <section style={{ background: "var(--gradient-hero)" }}>
-        <div className="mx-auto max-w-4xl px-4 py-20 text-primary-foreground sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-accent">
+      <section className="bg-[#F8F9FF]">
+        <div className="mx-auto max-w-4xl px-4 py-20 text-foreground sm:px-6 lg:px-8">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">
             Tarifs
           </p>
-          <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
+          <h1 className="mt-3 font-sans tracking-tight text-4xl font-semibold sm:text-5xl">
             Vous ne payez que si nous gagnons.
           </h1>
-          <p className="mt-5 text-lg text-primary-foreground/85">
+          <p className="mt-5 text-lg text-muted-foreground">
             Notre seule rémunération : un pourcentage du gain supplémentaire que
             nous obtenons. Aucun frais d'ouverture, aucune mensualité, aucun
             engagement.
@@ -80,12 +80,12 @@ function PricingPage() {
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
             {/* Card principale */}
-            <div className="rounded-3xl border border-border bg-card p-8 shadow-[var(--shadow-elegant)] sm:p-10">
-              <span className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
+            <div className="rounded-xl border border-border bg-card p-8 shadow-[var(--shadow-soft)] sm:p-10">
+              <span className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 Sans risque
               </span>
-              <p className="mt-5 font-display text-6xl font-semibold text-primary sm:text-7xl">
+              <p className="mt-5 font-sans tracking-tight text-6xl font-semibold text-primary sm:text-7xl">
                 10 %
               </p>
               <p className="mt-2 text-lg text-foreground">
@@ -107,7 +107,7 @@ function PricingPage() {
               <Link
                 to="/"
                 hash="chatbot"
-                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md bg-accent px-6 py-3.5 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-accent)] transition hover:brightness-105"
+                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
               >
                 Évaluer mon dossier gratuitement <ArrowRight className="h-4 w-4" />
               </Link>
@@ -115,7 +115,7 @@ function PricingPage() {
 
             {/* Exemples chiffrés */}
             <div>
-              <h2 className="font-display text-2xl font-semibold text-primary">
+              <h2 className="font-sans tracking-tight text-2xl font-semibold text-primary">
                 Exemples concrets
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -125,13 +125,13 @@ function PricingPage() {
                 {examples.map((e) => (
                   <div
                     key={e.proposed}
-                    className="rounded-2xl border border-border bg-card p-5"
+                    className="rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-soft)]"
                   >
                     <div className="flex items-baseline justify-between gap-3">
                       <p className="text-sm text-muted-foreground">
                         Proposition assureur
                       </p>
-                      <p className="font-display text-base font-semibold text-foreground">
+                      <p className="font-sans tracking-tight text-base font-semibold text-foreground">
                         {fmt(e.proposed)}
                       </p>
                     </div>
@@ -139,7 +139,7 @@ function PricingPage() {
                       <p className="text-sm text-muted-foreground">
                         Indemnisation obtenue
                       </p>
-                      <p className="font-display text-base font-semibold text-primary">
+                      <p className="font-sans tracking-tight text-base font-semibold text-primary">
                         {fmt(e.obtained)}
                       </p>
                     </div>
@@ -154,7 +154,7 @@ function PricingPage() {
                         <p className="text-sm font-semibold text-success">
                           Vous percevez en plus
                         </p>
-                        <p className="font-display text-xl font-semibold text-success">
+                        <p className="font-sans tracking-tight text-xl font-semibold text-success">
                           +{fmt(e.net)}
                         </p>
                       </div>

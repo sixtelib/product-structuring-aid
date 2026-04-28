@@ -2,15 +2,22 @@ import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 
-export function AppGuard({ children }: { children: ReactNode }) {
+export function AppGuard({
+  children,
+  signInRedirect = "/auth",
+}: {
+  children: ReactNode;
+  /** Route de connexion si l'utilisateur n'est pas authentifié */
+  signInRedirect?: "/auth" | "/login";
+}) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate({ to: "/auth" });
+      navigate({ to: signInRedirect, replace: true });
     }
-  }, [loading, user, navigate]);
+  }, [loading, user, navigate, signInRedirect]);
 
   if (loading) {
     return (

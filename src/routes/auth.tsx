@@ -8,7 +8,7 @@ import { Logo } from "@/components/site/Logo";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Connexion — Recours" },
+      { title: "Connexion — Claimeur" },
       { name: "description", content: "Accédez à votre espace assuré pour suivre vos dossiers et échanger avec nos experts." },
       { name: "robots", content: "noindex,nofollow" },
     ],
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, isAdmin, isExpert, loading } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,8 +26,17 @@ function AuthPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/espace/dossiers" });
-  }, [loading, user, navigate]);
+    if (loading || !user) return;
+    if (isAdmin) {
+      navigate({ to: "/admin", replace: true });
+      return;
+    }
+    if (isExpert) {
+      navigate({ to: "/expert", replace: true });
+      return;
+    }
+    navigate({ to: "/dashboard", replace: true });
+  }, [loading, isAdmin, isExpert, user, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,7 +58,13 @@ function AuthPage() {
         if (error) throw error;
         toast.success("Bienvenue !");
       }
-      navigate({ to: "/espace/dossiers" });
+      if (isAdmin) {
+        navigate({ to: "/admin", replace: true });
+      } else if (isExpert) {
+        navigate({ to: "/expert", replace: true });
+      } else {
+        navigate({ to: "/dashboard", replace: true });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
       const friendly =
@@ -71,7 +86,7 @@ function AuthPage() {
         </Link>
 
         <div className="flex-1">
-          <h1 className="font-serif text-3xl font-semibold text-foreground">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             {mode === "login" ? "Bon retour" : "Créer un compte"}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -89,7 +104,7 @@ function AuthPage() {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   placeholder="Marie Dupont"
                 />
               </div>
@@ -102,7 +117,7 @@ function AuthPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 placeholder="vous@exemple.fr"
                 autoComplete="email"
               />
@@ -116,7 +131,7 @@ function AuthPage() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
               />
               {mode === "signup" && (
@@ -129,7 +144,7 @@ function AuthPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+              className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow disabled:opacity-60"
             >
               {submitting ? "..." : mode === "login" ? "Se connecter" : "Créer mon compte"}
             </button>

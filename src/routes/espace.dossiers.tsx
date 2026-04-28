@@ -41,17 +41,17 @@ function DossiersPage() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-serif text-3xl font-semibold text-foreground">Mes dossiers</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mes dossiers</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Suivez l'avancement de vos recours et échangez avec nos experts.
           </p>
         </div>
         <Link
-          to="/espace/nouveau"
-          className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground"
+          to="/dashboard"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
         >
           <Plus className="h-4 w-4" />
-          Nouveau dossier
+          Aller au dashboard
         </Link>
       </div>
 
@@ -68,11 +68,11 @@ function DossiersPage() {
               Créez votre premier dossier pour démarrer la qualification.
             </p>
             <Link
-              to="/espace/nouveau"
+              to="/dashboard"
               className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
             >
               <Plus className="h-4 w-4" />
-              Créer un dossier
+              Aller au dashboard
             </Link>
           </div>
         ) : (
@@ -80,8 +80,8 @@ function DossiersPage() {
             {cases.map((c) => (
               <Link
                 key={c.id}
-                to="/espace/dossiers/$caseId"
-                params={{ caseId: c.id }}
+                to="/dashboard/dossiers/$id"
+                params={{ id: c.id }}
                 className="group rounded-lg border border-border bg-background p-5 transition hover:border-primary/40 hover:shadow-[var(--shadow-soft)]"
               >
                 <div className="flex items-start justify-between gap-3">

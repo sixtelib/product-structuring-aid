@@ -16,7 +16,7 @@ function NotFoundComponent() {
         <div className="mt-6">
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-glow"
           >
             Retour à l'accueil
           </Link>
@@ -31,7 +31,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Recours — Défense des assurés sinistrés" },
+      { title: "Claimeur — Défense des assurés sinistrés" },
       {
         name: "description",
         content:
@@ -40,8 +40,8 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "fr_FR" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "Recours — Défense des assurés sinistrés" },
-      { name: "twitter:title", content: "Recours — Défense des assurés sinistrés" },
+      { property: "og:title", content: "Claimeur — Défense des assurés sinistrés" },
+      { name: "twitter:title", content: "Claimeur — Défense des assurés sinistrés" },
       { name: "description", content: "Product Structuring Aid helps organize and build your product's online presence and backend infrastructure." },
       { property: "og:description", content: "Product Structuring Aid helps organize and build your product's online presence and backend infrastructure." },
       { name: "twitter:description", content: "Product Structuring Aid helps organize and build your product's online presence and backend infrastructure." },
@@ -54,7 +54,7 @@ export const Route = createRootRoute({
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
       },
     ],
   }),

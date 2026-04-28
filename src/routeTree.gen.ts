@@ -11,16 +11,27 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as SinistresRouteImport } from './routes/sinistres'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as InscriptionExpertRouteImport } from './routes/inscription-expert'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ExpertRouteImport } from './routes/expert'
 import { Route as EspaceRouteImport } from './routes/espace'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CommentCaMarcheRouteImport } from './routes/comment-ca-marche'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ExpertIndexRouteImport } from './routes/expert.index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as EspaceNouveauRouteImport } from './routes/espace.nouveau'
 import { Route as EspaceDossiersRouteImport } from './routes/espace.dossiers'
+import { Route as DashboardNouveauRouteImport } from './routes/dashboard.nouveau'
+import { Route as ExpertDossiersIdRouteImport } from './routes/expert.dossiers.$id'
 import { Route as EspaceDossiersCaseIdRouteImport } from './routes/espace.dossiers.$caseId'
+import { Route as DashboardDossiersIdRouteImport } from './routes/dashboard.dossiers.$id'
 
 const TarifsRoute = TarifsRouteImport.update({
   id: '/tarifs',
@@ -32,14 +43,34 @@ const SinistresRoute = SinistresRouteImport.update({
   path: '/sinistres',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InscriptionExpertRoute = InscriptionExpertRouteImport.update({
+  id: '/inscription-expert',
+  path: '/inscription-expert',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExpertRoute = ExpertRouteImport.update({
+  id: '/expert',
+  path: '/expert',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EspaceRoute = EspaceRouteImport.update({
   id: '/espace',
   path: '/espace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -57,6 +88,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AProposRoute = AProposRouteImport.update({
   id: '/a-propos',
   path: '/a-propos',
@@ -66,6 +102,21 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ExpertIndexRoute = ExpertIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ExpertRoute,
+} as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const EspaceNouveauRoute = EspaceNouveauRouteImport.update({
   id: '/nouveau',
@@ -77,25 +128,51 @@ const EspaceDossiersRoute = EspaceDossiersRouteImport.update({
   path: '/dossiers',
   getParentRoute: () => EspaceRoute,
 } as any)
+const DashboardNouveauRoute = DashboardNouveauRouteImport.update({
+  id: '/nouveau',
+  path: '/nouveau',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const ExpertDossiersIdRoute = ExpertDossiersIdRouteImport.update({
+  id: '/dossiers/$id',
+  path: '/dossiers/$id',
+  getParentRoute: () => ExpertRoute,
+} as any)
 const EspaceDossiersCaseIdRoute = EspaceDossiersCaseIdRouteImport.update({
   id: '/$caseId',
   path: '/$caseId',
   getParentRoute: () => EspaceDossiersRoute,
 } as any)
+const DashboardDossiersIdRoute = DashboardDossiersIdRouteImport.update({
+  id: '/dossiers/$id',
+  path: '/dossiers/$id',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/espace': typeof EspaceRouteWithChildren
+  '/expert': typeof ExpertRouteWithChildren
   '/faq': typeof FaqRoute
+  '/inscription-expert': typeof InscriptionExpertRoute
+  '/login': typeof LoginRoute
   '/sinistres': typeof SinistresRoute
   '/tarifs': typeof TarifsRoute
+  '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/admin/': typeof AdminIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/expert/': typeof ExpertIndexRoute
+  '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
+  '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -105,42 +182,72 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/espace': typeof EspaceRouteWithChildren
   '/faq': typeof FaqRoute
+  '/inscription-expert': typeof InscriptionExpertRoute
+  '/login': typeof LoginRoute
   '/sinistres': typeof SinistresRoute
   '/tarifs': typeof TarifsRoute
+  '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/admin': typeof AdminIndexRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/expert': typeof ExpertIndexRoute
+  '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
+  '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/espace': typeof EspaceRouteWithChildren
+  '/expert': typeof ExpertRouteWithChildren
   '/faq': typeof FaqRoute
+  '/inscription-expert': typeof InscriptionExpertRoute
+  '/login': typeof LoginRoute
   '/sinistres': typeof SinistresRoute
   '/tarifs': typeof TarifsRoute
+  '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/admin/': typeof AdminIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/expert/': typeof ExpertIndexRoute
+  '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
+  '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/a-propos'
+    | '/admin'
     | '/auth'
     | '/comment-ca-marche'
     | '/contact'
+    | '/dashboard'
     | '/espace'
+    | '/expert'
     | '/faq'
+    | '/inscription-expert'
+    | '/login'
     | '/sinistres'
     | '/tarifs'
+    | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/admin/'
+    | '/dashboard/'
+    | '/expert/'
+    | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
+    | '/expert/dossiers/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -150,35 +257,59 @@ export interface FileRouteTypes {
     | '/contact'
     | '/espace'
     | '/faq'
+    | '/inscription-expert'
+    | '/login'
     | '/sinistres'
     | '/tarifs'
+    | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/admin'
+    | '/dashboard'
+    | '/expert'
+    | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
+    | '/expert/dossiers/$id'
   id:
     | '__root__'
     | '/'
     | '/a-propos'
+    | '/admin'
     | '/auth'
     | '/comment-ca-marche'
     | '/contact'
+    | '/dashboard'
     | '/espace'
+    | '/expert'
     | '/faq'
+    | '/inscription-expert'
+    | '/login'
     | '/sinistres'
     | '/tarifs'
+    | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/admin/'
+    | '/dashboard/'
+    | '/expert/'
+    | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
+    | '/expert/dossiers/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AProposRoute: typeof AProposRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   CommentCaMarcheRoute: typeof CommentCaMarcheRoute
   ContactRoute: typeof ContactRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   EspaceRoute: typeof EspaceRouteWithChildren
+  ExpertRoute: typeof ExpertRouteWithChildren
   FaqRoute: typeof FaqRoute
+  InscriptionExpertRoute: typeof InscriptionExpertRoute
+  LoginRoute: typeof LoginRoute
   SinistresRoute: typeof SinistresRoute
   TarifsRoute: typeof TarifsRoute
 }
@@ -199,6 +330,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SinistresRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inscription-expert': {
+      id: '/inscription-expert'
+      path: '/inscription-expert'
+      fullPath: '/inscription-expert'
+      preLoaderRoute: typeof InscriptionExpertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/faq': {
       id: '/faq'
       path: '/faq'
@@ -206,11 +351,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/expert': {
+      id: '/expert'
+      path: '/expert'
+      fullPath: '/expert'
+      preLoaderRoute: typeof ExpertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/espace': {
       id: '/espace'
       path: '/espace'
       fullPath: '/espace'
       preLoaderRoute: typeof EspaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -234,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/a-propos': {
       id: '/a-propos'
       path: '/a-propos'
@@ -247,6 +413,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/expert/': {
+      id: '/expert/'
+      path: '/'
+      fullPath: '/expert/'
+      preLoaderRoute: typeof ExpertIndexRouteImport
+      parentRoute: typeof ExpertRoute
+    }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/espace/nouveau': {
       id: '/espace/nouveau'
@@ -262,6 +449,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EspaceDossiersRouteImport
       parentRoute: typeof EspaceRoute
     }
+    '/dashboard/nouveau': {
+      id: '/dashboard/nouveau'
+      path: '/nouveau'
+      fullPath: '/dashboard/nouveau'
+      preLoaderRoute: typeof DashboardNouveauRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/expert/dossiers/$id': {
+      id: '/expert/dossiers/$id'
+      path: '/dossiers/$id'
+      fullPath: '/expert/dossiers/$id'
+      preLoaderRoute: typeof ExpertDossiersIdRouteImport
+      parentRoute: typeof ExpertRoute
+    }
     '/espace/dossiers/$caseId': {
       id: '/espace/dossiers/$caseId'
       path: '/$caseId'
@@ -269,8 +470,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EspaceDossiersCaseIdRouteImport
       parentRoute: typeof EspaceDossiersRoute
     }
+    '/dashboard/dossiers/$id': {
+      id: '/dashboard/dossiers/$id'
+      path: '/dossiers/$id'
+      fullPath: '/dashboard/dossiers/$id'
+      preLoaderRoute: typeof DashboardDossiersIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface DashboardRouteChildren {
+  DashboardNouveauRoute: typeof DashboardNouveauRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardDossiersIdRoute: typeof DashboardDossiersIdRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardNouveauRoute: DashboardNouveauRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+  DashboardDossiersIdRoute: DashboardDossiersIdRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
 
 interface EspaceDossiersRouteChildren {
   EspaceDossiersCaseIdRoute: typeof EspaceDossiersCaseIdRoute
@@ -297,17 +531,44 @@ const EspaceRouteChildren: EspaceRouteChildren = {
 const EspaceRouteWithChildren =
   EspaceRoute._addFileChildren(EspaceRouteChildren)
 
+interface ExpertRouteChildren {
+  ExpertIndexRoute: typeof ExpertIndexRoute
+  ExpertDossiersIdRoute: typeof ExpertDossiersIdRoute
+}
+
+const ExpertRouteChildren: ExpertRouteChildren = {
+  ExpertIndexRoute: ExpertIndexRoute,
+  ExpertDossiersIdRoute: ExpertDossiersIdRoute,
+}
+
+const ExpertRouteWithChildren =
+  ExpertRoute._addFileChildren(ExpertRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AProposRoute: AProposRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   CommentCaMarcheRoute: CommentCaMarcheRoute,
   ContactRoute: ContactRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   EspaceRoute: EspaceRouteWithChildren,
+  ExpertRoute: ExpertRouteWithChildren,
   FaqRoute: FaqRoute,
+  InscriptionExpertRoute: InscriptionExpertRoute,
+  LoginRoute: LoginRoute,
   SinistresRoute: SinistresRoute,
   TarifsRoute: TarifsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

@@ -138,14 +138,14 @@ export function QualificationChatbot() {
   return (
     <div
       id="chatbot"
-      className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-elegant)]"
+      className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-soft)]"
     >
-      <div className="flex items-center gap-3 border-b border-border bg-secondary/60 px-5 py-4">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
+      <div className="flex items-center gap-3 border-b border-border bg-white px-5 py-4">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Sparkles className="h-4 w-4" />
         </span>
         <div>
-          <p className="font-display text-base font-semibold text-primary">
+          <p className="text-base font-semibold tracking-tight text-foreground">
             Évaluation de dossier
           </p>
           <p className="text-xs text-muted-foreground">
@@ -164,10 +164,10 @@ export function QualificationChatbot() {
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              className={`max-w-[85%] rounded-lg px-4 py-2.5 text-sm leading-relaxed ${
                 m.role === "user"
                   ? "rounded-br-sm bg-primary text-primary-foreground"
-                  : "rounded-bl-sm bg-secondary text-foreground"
+                  : "rounded-bl-sm border border-border bg-secondary text-foreground"
               }`}
             >
               {m.text}
@@ -179,7 +179,7 @@ export function QualificationChatbot() {
           <div className="pt-2">
             <button
               onClick={start}
-              className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-2 text-sm font-semibold text-accent-foreground transition hover:brightness-105"
+              className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
             >
               Démarrer l'évaluation
             </button>
@@ -192,7 +192,7 @@ export function QualificationChatbot() {
               <button
                 key={t}
                 onClick={() => pickClaim(t)}
-                className="rounded-full border border-border bg-background px-3.5 py-1.5 text-sm font-medium text-foreground transition hover:border-accent hover:text-accent"
+                className="rounded-lg border border-border bg-background px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
               >
                 {t}
               </button>
@@ -206,7 +206,7 @@ export function QualificationChatbot() {
               <button
                 key={s}
                 onClick={() => pickStatus(s)}
-                className="rounded-xl border border-border bg-background px-4 py-2.5 text-left text-sm font-medium text-foreground transition hover:border-accent hover:bg-accent-soft"
+                className="rounded-lg border border-border bg-background px-4 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:border-primary hover:bg-secondary"
               >
                 {s}
               </button>
@@ -223,7 +223,7 @@ export function QualificationChatbot() {
                 value={proposed}
                 onChange={(e) => setProposed(e.target.value)}
                 placeholder="Proposé (€)"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
               />
               <input
                 type="text"
@@ -231,12 +231,12 @@ export function QualificationChatbot() {
                 value={expected}
                 onChange={(e) => setExpected(e.target.value)}
                 placeholder="Estimé juste (€)"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
               />
             </div>
             <button
               onClick={submitAmounts}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-glow"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
             >
               Voir l'évaluation <Send className="h-4 w-4" />
             </button>
@@ -257,7 +257,7 @@ export function QualificationChatbot() {
             </div>
             <Link
               to="/"
-              className="inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-accent)] transition hover:brightness-105"
+              className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
             >
               Créer mon espace gratuit
             </Link>
@@ -282,7 +282,7 @@ export function QualificationChatbot() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Décrivez votre situation…"
-              className="flex-1 rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-accent"
+              className="flex-1 rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
             />
             <button
               type="submit"

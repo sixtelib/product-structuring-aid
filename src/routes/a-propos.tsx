@@ -5,13 +5,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/a-propos")({
   head: () => ({
     meta: [
-      { title: "À propos — Recours" },
+      { title: "À propos — Claimeur" },
       {
         name: "description",
         content:
-          "Recours est née d'un constat : l'IA est utilisée massivement par les assureurs. Notre mission : remettre l'équilibre du côté de l'assuré.",
+          "Claimeur est née d'un constat : l'IA est utilisée massivement par les assureurs. Notre mission : remettre l'équilibre du côté de l'assuré.",
       },
-      { property: "og:title", content: "Notre mission — Recours" },
+      { property: "og:title", content: "Notre mission — Claimeur" },
       {
         property: "og:description",
         content: "Pourquoi nous existons et ce qui nous différencie.",
@@ -45,17 +45,17 @@ const values = [
 function AboutPage() {
   return (
     <SiteLayout>
-      <section style={{ background: "var(--gradient-hero)" }}>
-        <div className="mx-auto max-w-4xl px-4 py-20 text-primary-foreground sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-accent">
+      <section className="bg-[#F8F9FF]">
+        <div className="mx-auto max-w-4xl px-4 py-20 text-foreground sm:px-6 lg:px-8">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">
             Notre mission
           </p>
-          <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
+          <h1 className="mt-3 font-sans tracking-tight text-4xl font-semibold sm:text-5xl">
             Rétablir l'équilibre entre l'assuré et son assureur.
           </h1>
-          <p className="mt-5 text-lg text-primary-foreground/85">
+          <p className="mt-5 text-lg text-muted-foreground">
             71 % des assureurs utilisent l'IA pour décider de vos remboursements.
-            Recours met cette même technologie au service de votre défense.
+            Claimeur met cette même technologie au service de votre défense.
           </p>
         </div>
       </section>
@@ -63,8 +63,8 @@ function AboutPage() {
       <section className="bg-background">
         <div className="mx-auto max-w-4xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="prose prose-lg max-w-none">
-            <h2 className="font-display text-3xl font-semibold text-primary">
-              Pourquoi Recours existe
+            <h2 className="font-sans tracking-tight text-3xl font-semibold text-primary">
+              Pourquoi Claimeur existe
             </h2>
             <div className="mt-6 space-y-5 text-base leading-relaxed text-foreground">
               <p>
@@ -79,7 +79,7 @@ function AboutPage() {
                 l'assuré seul et un système algorithmique devient insoutenable.
               </p>
               <p>
-                Recours combine deux forces : une <strong>IA propriétaire</strong>{" "}
+                Claimeur combine deux forces : une <strong>IA propriétaire</strong>{" "}
                 qui analyse les contrats et identifie les marges de négociation, et
                 un <strong>réseau d'experts certifiés</strong> qui pilote chaque
                 dossier de bout en bout. Notre seule mesure de succès : ce que nous
@@ -87,7 +87,7 @@ function AboutPage() {
               </p>
             </div>
 
-            <h2 className="mt-16 font-display text-3xl font-semibold text-primary">
+            <h2 className="mt-16 font-sans tracking-tight text-3xl font-semibold text-primary">
               Nos engagements
             </h2>
           </div>
@@ -96,12 +96,12 @@ function AboutPage() {
             {values.map(({ icon: Icon, title, text }) => (
               <div
                 key={title}
-                className="rounded-2xl border border-border bg-card p-6"
+                className="rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)]"
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-soft text-accent">
+                <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
                   <Icon className="h-5 w-5" />
                 </span>
-                <h3 className="mt-4 font-display text-lg font-semibold text-primary">
+                <h3 className="mt-4 font-sans tracking-tight text-lg font-semibold text-primary">
                   {title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -111,8 +111,8 @@ function AboutPage() {
             ))}
           </div>
 
-          <div className="mt-16 rounded-2xl bg-sand p-8 sm:p-10">
-            <h3 className="font-display text-2xl font-semibold text-primary">
+          <div className="mt-16 rounded-xl border border-border bg-white p-8 shadow-[var(--shadow-soft)] sm:p-10">
+            <h3 className="font-sans tracking-tight text-2xl font-semibold text-primary">
               Une équipe à taille humaine, des moyens technologiques sérieux.
             </h3>
             <p className="mt-3 text-muted-foreground">
@@ -122,7 +122,7 @@ function AboutPage() {
             </p>
             <Link
               to="/contact"
-              className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-glow"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
             >
               Nous rencontrer <ArrowRight className="h-4 w-4" />
             </Link>

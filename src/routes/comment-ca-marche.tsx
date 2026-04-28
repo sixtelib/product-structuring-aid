@@ -5,13 +5,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/comment-ca-marche")({
   head: () => ({
     meta: [
-      { title: "Comment ça marche — Recours" },
+      { title: "Comment ça marche — Claimeur" },
       {
         name: "description",
         content:
           "De la qualification à l'indemnisation : 4 étapes pour confier votre dossier à nos experts. Délais, méthode, transparence totale.",
       },
-      { property: "og:title", content: "Comment ça marche — Recours" },
+      { property: "og:title", content: "Comment ça marche — Claimeur" },
       {
         property: "og:description",
         content: "4 étapes simples pour récupérer ce que votre assureur vous doit.",
@@ -71,19 +71,16 @@ const phases = [
 function HowItWorksPage() {
   return (
     <SiteLayout>
-      <section
-        className="relative"
-        style={{ background: "var(--gradient-hero)" }}
-      >
-        <div className="mx-auto max-w-4xl px-4 py-20 text-primary-foreground sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-accent">
+      <section className="relative bg-[#F8F9FF]">
+        <div className="mx-auto max-w-4xl px-4 py-20 text-foreground sm:px-6 lg:px-8">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">
             Comment ça marche
           </p>
-          <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
             Vous nous confiez le dossier. <br />
             Nous gérons tout le reste.
           </h1>
-          <p className="mt-5 max-w-2xl text-lg text-primary-foreground/85">
+          <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
             Une méthode éprouvée combinant IA et expertise humaine, pour transformer
             une indemnisation insuffisante en juste réparation.
           </p>
@@ -98,11 +95,11 @@ function HowItWorksPage() {
                 key={p.n}
                 className="grid gap-6 md:grid-cols-[auto_1fr] md:gap-10"
               >
-                <span className="font-display text-5xl font-semibold text-accent">
+                <span className="font-sans tracking-tight text-5xl font-semibold text-primary/40">
                   {p.n}
                 </span>
                 <div>
-                  <h2 className="font-display text-2xl font-semibold text-primary sm:text-3xl">
+                  <h2 className="font-sans tracking-tight text-2xl font-semibold text-primary sm:text-3xl">
                     {p.title}
                   </h2>
                   <p className="mt-3 text-base leading-relaxed text-muted-foreground">
@@ -121,8 +118,8 @@ function HowItWorksPage() {
             ))}
           </ol>
 
-          <div className="mt-16 rounded-2xl bg-sand p-8 sm:p-10">
-            <h3 className="font-display text-2xl font-semibold text-primary">
+          <div className="mt-16 rounded-xl border border-border bg-white p-8 shadow-[var(--shadow-soft)] sm:p-10">
+            <h3 className="font-sans tracking-tight text-2xl font-semibold text-primary">
               Combien de temps ça prend ?
             </h3>
             <p className="mt-3 text-muted-foreground">
@@ -133,7 +130,7 @@ function HowItWorksPage() {
             <Link
               to="/"
               hash="chatbot"
-              className="mt-6 inline-flex items-center gap-2 rounded-md bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-accent)] transition hover:brightness-105"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
             >
               Démarrer maintenant <ArrowRight className="h-4 w-4" />
             </Link>

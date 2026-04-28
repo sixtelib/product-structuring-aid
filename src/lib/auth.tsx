@@ -8,6 +8,8 @@ interface AuthContextValue {
   user: User | null;
   session: Session | null;
   roles: AppRole[];
+  isAdmin: boolean;
+  isExpert: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -20,16 +22,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const isAdmin = roles.includes("admin");
+  const isExpert = roles.includes("expert");
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
+        // Ensure guards don't run with stale roles after sign-in/out
+        setLoading(true);
         // Defer role fetch to avoid recursion in callback
-        setTimeout(() => fetchRoles(newSession.user.id), 0);
+        setTimeout(() => {
+          fetchRoles(newSession.user!.id).finally(() => setLoading(false));
+        }, 0);
       } else {
         setRoles([]);
+        setLoading(false);
       }
     });
 
@@ -49,7 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function fetchRoles(userId: string) {
     const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    setRoles((data ?? []).map((r) => r.role as AppRole));
+    const next = (data ?? [])
+      .map((r) => String((r as { role?: unknown }).role ?? "").trim())
+      .filter(Boolean) as AppRole[];
+    console.log("roles chargés:", next);
+    setRoles(next);
   }
 
   async function signOut() {
@@ -58,10 +72,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, roles, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, roles, isAdmin, isExpert, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
+}
+
+export function isAdmin(roles: AppRole[]) {
+  return roles.includes("admin");
 }
 
 export function useAuth() {

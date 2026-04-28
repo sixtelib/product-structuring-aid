@@ -15,13 +15,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/sinistres")({
   head: () => ({
     meta: [
-      { title: "Sinistres traités — Recours" },
+      { title: "Sinistres traités — Claimeur" },
       {
         name: "description",
         content:
           "Habitation, dégât des eaux, incendie, auto, catastrophe naturelle, santé : nous défendons les assurés sur tous les sinistres dont l'enjeu dépasse 3 000 €.",
       },
-      { property: "og:title", content: "Sinistres traités — Recours" },
+      { property: "og:title", content: "Sinistres traités — Claimeur" },
       {
         property: "og:description",
         content: "Tous les sinistres où une renégociation peut faire la différence.",
@@ -93,15 +93,15 @@ const claims = [
 function ClaimsPage() {
   return (
     <SiteLayout>
-      <section style={{ background: "var(--gradient-hero)" }}>
-        <div className="mx-auto max-w-4xl px-4 py-20 text-primary-foreground sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-accent">
+      <section className="bg-[#F8F9FF]">
+        <div className="mx-auto max-w-4xl px-4 py-20 text-foreground sm:px-6 lg:px-8">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">
             Sinistres traités
           </p>
-          <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
+          <h1 className="mt-3 font-sans tracking-tight text-4xl font-semibold sm:text-5xl">
             Tous les sinistres où l'enjeu dépasse 3 000 €.
           </h1>
-          <p className="mt-5 text-lg text-primary-foreground/85">
+          <p className="mt-5 text-lg text-muted-foreground">
             Si vous estimez que votre assureur sous-évalue votre indemnisation, nous
             avons probablement une marge à récupérer.
           </p>
@@ -114,12 +114,12 @@ function ClaimsPage() {
             {claims.map(({ icon: Icon, title, text, typical }) => (
               <article
                 key={title}
-                className="group flex flex-col rounded-2xl border border-border bg-card p-6 transition hover:border-accent hover:shadow-[var(--shadow-elegant)]"
+                className="group flex flex-col rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition hover:border-primary/40 hover:shadow-[var(--shadow-elegant)]"
               >
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-soft text-accent">
                   <Icon className="h-5 w-5" />
                 </span>
-                <h2 className="mt-4 font-display text-xl font-semibold text-primary">
+                <h2 className="mt-4 font-sans tracking-tight text-xl font-semibold text-primary">
                   {title}
                 </h2>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
@@ -132,8 +132,8 @@ function ClaimsPage() {
             ))}
           </div>
 
-          <div className="mt-14 rounded-2xl bg-sand p-8 text-center sm:p-12">
-            <h3 className="font-display text-2xl font-semibold text-primary sm:text-3xl">
+          <div className="mt-14 rounded-xl border border-border bg-white p-8 text-center shadow-[var(--shadow-soft)] sm:p-12">
+            <h3 className="font-sans tracking-tight text-2xl font-semibold text-primary sm:text-3xl">
               Votre cas n'est pas listé ?
             </h3>
             <p className="mt-3 text-muted-foreground">
@@ -143,7 +143,7 @@ function ClaimsPage() {
             <Link
               to="/"
               hash="chatbot"
-              className="mt-6 inline-flex items-center gap-2 rounded-md bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-accent)] transition hover:brightness-105"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
             >
               Évaluer mon dossier <ArrowRight className="h-4 w-4" />
             </Link>

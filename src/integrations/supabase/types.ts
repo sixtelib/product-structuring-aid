@@ -235,6 +235,95 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          created_at: string
+          dossier_id: string
+          id: string
+          nom: string
+          storage_path: string | null
+          statut: string
+        }
+        Insert: {
+          created_at?: string
+          dossier_id: string
+          id?: string
+          nom: string
+          storage_path?: string | null
+          statut?: string
+        }
+        Update: {
+          created_at?: string
+          dossier_id?: string
+          id?: string
+          nom?: string
+          storage_path?: string | null
+          statut?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dossiers: {
+        Row: {
+          assureur_nom: string | null
+          created_at: string
+          date_sinistre: string | null
+          date_ouverture: string
+          description: string | null
+          expert_id: string | null
+          id: string
+          montant_estime: number
+          notes_expert: string | null
+          numero_contrat: string | null
+          offre_assureur: number | null
+          statut: string
+          titre: string | null
+          type_sinistre: string
+          user_id: string
+        }
+        Insert: {
+          assureur_nom?: string | null
+          created_at?: string
+          date_sinistre?: string | null
+          date_ouverture?: string
+          description?: string | null
+          expert_id?: string | null
+          id?: string
+          montant_estime?: number
+          notes_expert?: string | null
+          numero_contrat?: string | null
+          offre_assureur?: number | null
+          statut?: string
+          titre?: string | null
+          type_sinistre: string
+          user_id: string
+        }
+        Update: {
+          assureur_nom?: string | null
+          created_at?: string
+          date_sinistre?: string | null
+          date_ouverture?: string
+          description?: string | null
+          expert_id?: string | null
+          id?: string
+          montant_estime?: number
+          notes_expert?: string | null
+          numero_contrat?: string | null
+          offre_assureur?: number | null
+          statut?: string
+          titre?: string | null
+          type_sinistre?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
@@ -276,26 +365,67 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          auteur: string
+          contenu: string
+          created_at: string
+          dossier_id: string
+          id: string
+        }
+        Insert: {
+          auteur: string
+          contenu: string
+          created_at?: string
+          dossier_id: string
+          id?: string
+        }
+        Update: {
+          auteur?: string
+          contenu?: string
+          created_at?: string
+          dossier_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
+          email: string | null
           full_name: string | null
           id: string
           phone: string | null
+          role: string
+          specialite: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id: string
           phone?: string | null
+          role?: string
+          specialite?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
+          role?: string
+          specialite?: string | null
           updated_at?: string
         }
         Relationships: []

@@ -6,13 +6,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "Questions fréquentes — Recours" },
+      { title: "Questions fréquentes — Claimeur" },
       {
         name: "description",
         content:
           "Qui est l'expert d'assuré ? Est-ce légal ? Combien de temps ça prend ? Toutes les réponses pour comprendre comment nous défendons vos droits.",
       },
-      { property: "og:title", content: "FAQ — Recours" },
+      { property: "og:title", content: "FAQ — Claimeur" },
       {
         property: "og:description",
         content: "Vos questions sur la défense des assurés, nos délais et notre méthode.",
@@ -70,15 +70,15 @@ function FaqPage() {
 
   return (
     <SiteLayout>
-      <section style={{ background: "var(--gradient-hero)" }}>
-        <div className="mx-auto max-w-4xl px-4 py-20 text-primary-foreground sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-accent">
+      <section className="bg-[#F8F9FF]">
+        <div className="mx-auto max-w-4xl px-4 py-20 text-foreground sm:px-6 lg:px-8">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">
             Questions fréquentes
           </p>
-          <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
+          <h1 className="mt-3 font-sans tracking-tight text-4xl font-semibold sm:text-5xl">
             Tout ce que vous devez savoir.
           </h1>
-          <p className="mt-5 text-lg text-primary-foreground/85">
+          <p className="mt-5 text-lg text-muted-foreground">
             Une question manque ? Écrivez-nous, nous l'ajoutons.
           </p>
         </div>
@@ -98,11 +98,11 @@ function FaqPage() {
                     onClick={() => setOpen(isOpen ? null : idx)}
                     className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
                   >
-                    <span className="font-display text-base font-semibold text-primary sm:text-lg">
+                    <span className="font-sans tracking-tight text-base font-semibold text-primary sm:text-lg">
                       {item.q}
                     </span>
                     <ChevronDown
-                      className={`h-5 w-5 flex-shrink-0 text-accent transition-transform ${
+                      className={`h-5 w-5 flex-shrink-0 text-primary transition-transform ${
                         isOpen ? "rotate-180" : ""
                       }`}
                     />
@@ -117,8 +117,8 @@ function FaqPage() {
             })}
           </div>
 
-          <div className="mt-12 rounded-2xl bg-sand p-8 text-center">
-            <h3 className="font-display text-xl font-semibold text-primary">
+          <div className="mt-12 rounded-xl border border-border bg-white p-8 text-center shadow-[var(--shadow-soft)]">
+            <h3 className="font-sans tracking-tight text-xl font-semibold text-primary">
               Votre question n'est pas ici ?
             </h3>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -126,7 +126,7 @@ function FaqPage() {
             </p>
             <Link
               to="/contact"
-              className="mt-5 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-glow"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
             >
               Nous contacter <ArrowRight className="h-4 w-4" />
             </Link>

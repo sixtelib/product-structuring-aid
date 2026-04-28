@@ -1,26 +1,18 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { AppGuard } from "@/components/app/AppGuard";
-import { AppHeader } from "@/components/app/AppHeader";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/espace")({
+  beforeLoad: () => {
+    throw redirect({ to: "/dashboard" });
+  },
   head: () => ({
     meta: [
-      { title: "Espace assuré — Recours" },
+      { title: "Espace assuré — Claimeur" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
-  component: EspaceLayout,
+  component: EspaceRedirect,
 });
 
-function EspaceLayout() {
-  return (
-    <AppGuard>
-      <div className="min-h-screen bg-secondary/30">
-        <AppHeader />
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <Outlet />
-        </main>
-      </div>
-    </AppGuard>
-  );
+function EspaceRedirect() {
+  return null;
 }

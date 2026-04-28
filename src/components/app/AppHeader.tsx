@@ -13,13 +13,13 @@ export function AppHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/90 backdrop-blur">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-white">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Logo />
           <nav className="hidden items-center gap-1 md:flex">
             <Link
-              to="/espace/dossiers"
+              to="/dashboard"
               activeProps={{ className: "bg-secondary text-primary" }}
               inactiveProps={{ className: "text-muted-foreground hover:text-primary" }}
               className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
@@ -32,11 +32,11 @@ export function AppHeader() {
 
         <div className="flex items-center gap-3">
           <Link
-            to="/espace/nouveau"
-            className="hidden md:inline-flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground"
+            to="/dashboard"
+            className="hidden md:inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
           >
             <Plus className="h-4 w-4" />
-            Nouveau dossier
+            Mon dashboard
           </Link>
           <span className="hidden text-xs text-muted-foreground sm:inline-block">
             {user?.email}
