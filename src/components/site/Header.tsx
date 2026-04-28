@@ -46,7 +46,7 @@ export function Header() {
               Mon espace
             </Link>
           ) : (
-            <Link to="/auth" className="text-sm font-medium text-foreground transition-colors hover:text-primary">
+            <Link to="/login" className="text-sm font-medium text-foreground transition-colors hover:text-primary">
               Connexion
             </Link>
           )}
@@ -86,7 +86,7 @@ export function Header() {
               </Link>
             ))}
             <Link
-              to={user ? "/dashboard" : "/auth"}
+              to={user ? "/dashboard" : "/login"}
               onClick={() => setOpen(false)}
               className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground"
             >

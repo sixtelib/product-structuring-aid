@@ -6,6 +6,9 @@ import { useAuth } from "@/lib/auth";
 import { Logo } from "@/components/site/Logo";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>) => {
+    return { mode: search.mode === "signup" ? "signup" : "login" } as const;
+  },
   head: () => ({
     meta: [
       { title: "Connexion — Claimeur" },
@@ -19,7 +22,8 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const { user, isAdmin, isExpert, loading } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const { mode: initialMode } = Route.useSearch();
+  const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");

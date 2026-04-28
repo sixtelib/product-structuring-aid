@@ -22,6 +22,9 @@ function LoginPage() {
   const navigate = useNavigate();
   const { user, isAdmin, isExpert, loading } = useAuth();
   const [busy, setBusy] = useState<"google" | "apple" | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (loading || !user) return;
@@ -54,6 +57,30 @@ function LoginPage() {
     }
   }
 
+  async function signInWithEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim() || !password.trim()) return;
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (error) throw error;
+      toast.success("Bienvenue !");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      const friendly =
+        msg.includes("Invalid login") ? "Email ou mot de passe incorrect."
+        : msg.includes("Email not confirmed") ? "Email non confirmé. Vérifiez votre boîte mail."
+        : msg;
+      toast.error(friendly);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-4 py-8">
@@ -63,9 +90,7 @@ function LoginPage() {
 
         <div className="flex-1">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">Espace client</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Choisissez un fournisseur pour vous connecter ou créer un compte.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">Connectez-vous en un clic ou avec votre email.</p>
 
           <div className="mt-8 flex flex-col gap-3">
             <button
@@ -88,6 +113,55 @@ function LoginPage() {
               {busy === "apple" ? "Redirection…" : "Continuer avec Apple"}
             </button>
           </div>
+
+          <div className="my-8 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">ou</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <form onSubmit={signInWithEmail} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="vous@exemple.fr"
+                autoComplete="email"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground">Mot de passe</label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                autoComplete="current-password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting || loading || !!busy}
+              className="w-full rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-60"
+            >
+              {submitting ? "Connexion…" : "Se connecter"}
+            </button>
+
+            <div className="text-center text-sm text-muted-foreground">
+              Pas encore de compte ?{" "}
+              <Link to="/auth" search={{ mode: "signup" }} className="font-medium text-primary hover:underline">
+                Créer un compte
+              </Link>
+            </div>
+          </form>
         </div>
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
