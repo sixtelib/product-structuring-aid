@@ -7,18 +7,23 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  server: {
-    proxy: {
-      "/api/anthropic": {
-        target: "https://api.anthropic.com",
-        changeOrigin: true,
-        secure: true,
-        rewrite: (path) => path.replace(/^\/api\/anthropic/, ""),
-        configure: (proxy) => {
-          proxy.on("proxyReq", (proxyReq, req) => {
-            console.log("Headers entrants:", req.headers);
-            console.log("Headers envoyés:", proxyReq.getHeaders());
-          });
+  // Disable Cloudflare Workers build output (wrangler.json in dist/server).
+  // This is required for Vercel deployments.
+  cloudflare: false,
+  vite: {
+    server: {
+      proxy: {
+        "/api/anthropic": {
+          target: "https://api.anthropic.com",
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path) => path.replace(/^\/api\/anthropic/, ""),
+          configure: (proxy) => {
+            proxy.on("proxyReq", (proxyReq, req) => {
+              console.log("Headers entrants:", req.headers);
+              console.log("Headers envoyés:", proxyReq.getHeaders());
+            });
+          },
         },
       },
     },
