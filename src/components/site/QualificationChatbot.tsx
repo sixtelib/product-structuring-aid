@@ -24,8 +24,7 @@ const EMPTY_DATA: CollectedData = {
   description: "",
 };
 
-const WELCOME =
-  "Bonjour 👋 Décrivez-moi votre situation en quelques mots. Type de sinistre, ce que votre assureur vous a proposé, ce qui vous semble injuste.";
+const WELCOME = "Bonjour 👋 Quel type de sinistre avez-vous subi ?";
 
 const SYSTEM_PROMPT = `Tu es un conseiller Vertual (assurance, France). Tu collectes les informations pour orienter l'utilisateur.
 
@@ -46,9 +45,23 @@ Réponds en français.
 {"type_sinistre":"","assureur":"","montant_propose":"","date_sinistre":"","description":""}
 Remplis le champ description avec une synthèse courte incluant, quand elles sont connues : la proposition de l'assureur, les documents dont dispose l'assuré, et ses tentatives de contestation.
 Quand tu peux évaluer brièvement, mets l'évaluation entre <evaluation> et </evaluation> (pourcentage de succès, 2 arguments, gain potentiel estimé en euros).
-N'utilise pas le tiret long (tiret cadratin) ; préfère une virgule.`;
+N'utilise pas le tiret long (tiret cadratin) ; préfère une virgule.
 
-const CATEGORIES: { label: string; text: string }[] = [
+À la fin de chaque réponse, ajoute une balise cachée indiquant quelle catégorie de suggestion afficher. Format exact : <suggest>TYPE</suggest>
+
+Types disponibles :
+- <suggest>type_sinistre</suggest> → quand tu demandes le type de sinistre
+- <suggest>reponse_assureur</suggest> → quand tu demandes ce que l'assureur a proposé/répondu
+- <suggest>montant</suggest> → quand tu demandes un montant d'indemnisation
+- <suggest>assureur</suggest> → quand tu demandes le nom de l'assureur
+- <suggest>anciennete</suggest> → quand tu demandes depuis quand date le sinistre
+- <suggest>none</suggest> → pour les questions ouvertes ou si aucune suggestion n'est pertinente
+
+La balise <suggest> doit toujours être présente, même si c'est <suggest>none</suggest>.
+N'affiche pas cette balise à l'utilisateur, elle sera parsée automatiquement.`;
+
+/** Pills initiales (type de sinistre), même jeu que type_sinistre ; codées en dur, sans balise suggest sur l'accueil. */
+const STARTUP_TYPE_SINISTRE_PILLS: { label: string; text: string }[] = [
   { label: "Dégât des eaux", text: "Mon sinistre est de type : Dégât des eaux" },
   { label: "Incendie", text: "Mon sinistre est de type : Incendie" },
   { label: "Tempête", text: "Mon sinistre est de type : Tempête" },
@@ -81,52 +94,40 @@ function parseClaudeResponse(text: string) {
   return { cleanText, parsedData, evaluation };
 }
 
-function suggestionsFromLastClaude(messages: Msg[]): string[] {
-  const lastClaude = messages.filter((m) => m.role === "claude").slice(-1)[0];
-  const lastClaudeMsg = lastClaude?.text?.toLowerCase() ?? "";
-  // Le message d'accueil contient « proposé » mais ne vise pas le montant ; éviter la branche montant.
-  if (messages.filter((m) => m.role === "claude").length === 1 && lastClaude?.text === WELCOME) {
-    return ["Refus total", "Offre trop basse", "Pas encore de réponse", "Offre partielle", "Sinistre ignoré"];
-  }
+function suggestionsFromLastClaude(text: string): string[] {
+  const suggestMatch = text.match(/<suggest>([\s\S]*?)<\/suggest>/i);
+  const suggestType = suggestMatch ? suggestMatch[1].trim().toLowerCase() : "none";
 
-  if (
-    lastClaudeMsg.includes("assureur") &&
-    (lastClaudeMsg.includes("nom") || lastClaudeMsg.includes("quel"))
-  ) {
-    return ["AXA", "MAIF", "Groupama", "MAAF", "Allianz", "MMA", "Generali", "Autre"];
-  }
-  if (
-    lastClaudeMsg.includes("montant") ||
-    lastClaudeMsg.includes("somme") ||
-    lastClaudeMsg.includes("proposé") ||
-    lastClaudeMsg.includes("indemnisation")
-  ) {
-    return [
+  const suggestionSets: Record<string, string[]> = {
+    type_sinistre: ["Dégât des eaux", "Incendie", "Tempête", "Accident auto", "Multirisque", "Autre"],
+    reponse_assureur: [
+      "Refus total",
+      "Offre trop basse",
+      "Pas encore de réponse",
+      "Offre partielle",
+      "Sinistre ignoré",
+    ],
+    montant: [
       "Moins de 1 000€",
       "1 000€ à 5 000€",
       "5 000€ à 20 000€",
       "20 000€ à 50 000€",
       "Plus de 50 000€",
-    ];
-  }
-  if (
-    lastClaudeMsg.includes("date") ||
-    lastClaudeMsg.includes("quand") ||
-    lastClaudeMsg.includes("mois") ||
-    lastClaudeMsg.includes("sinistre a eu lieu")
-  ) {
-    return ["Moins d'1 mois", "1 à 3 mois", "3 à 6 mois", "6 mois à 1 an", "Plus d'1 an"];
-  }
-  if (lastClaudeMsg.includes("document") || lastClaudeMsg.includes("pièce") || lastClaudeMsg.includes("police")) {
-    return ["Oui, j'ai tous les documents", "J'ai quelques documents", "Pas encore de documents"];
-  }
-  if (lastClaudeMsg.includes("contesté") || lastClaudeMsg.includes("démarche") || lastClaudeMsg.includes("tenté")) {
-    return ["Première tentative", "J'ai déjà contesté sans succès", "J'ai un avocat sans résultat"];
-  }
-  if (lastClaudeMsg.includes("refus") || lastClaudeMsg.includes("proposé") || lastClaudeMsg.includes("offre")) {
-    return ["Refus total", "Offre trop basse", "Pas encore de réponse", "Offre partielle"];
-  }
-  return [];
+    ],
+    assureur: ["AXA", "MAAF", "Allianz", "MMA", "Groupama", "Macif", "MAIF", "Autre assureur"],
+    anciennete: ["Moins d'1 mois", "1 à 3 mois", "3 à 6 mois", "Plus de 6 mois"],
+    none: [],
+  };
+
+  return suggestionSets[suggestType] ?? [];
+}
+
+function cleanMessageText(text: string): string {
+  return text
+    .replace(/<suggest>[\s\S]*?<\/suggest>/gi, "")
+    .replace(/<data>[\s\S]*?<\/data>/gi, "")
+    .replace(/<evaluation>[\s\S]*?<\/evaluation>/gi, "")
+    .trim();
 }
 
 function renderInlineBold(text: string) {
@@ -170,7 +171,14 @@ export function QualificationChatbot() {
   }, []);
 
   useEffect(() => {
-    setSuggestions(suggestionsFromLastClaude(messages));
+    const lastClaude = messages.filter((m) => m.role === "claude").slice(-1)[0];
+    const onlyWelcome =
+      messages.length === 1 && lastClaude?.role === "claude" && lastClaude.text === WELCOME;
+    if (onlyWelcome) {
+      setSuggestions([]);
+      return;
+    }
+    setSuggestions(suggestionsFromLastClaude(lastClaude?.text ?? ""));
   }, [messages]);
 
   useEffect(() => {
@@ -194,7 +202,7 @@ export function QualificationChatbot() {
 
     const anthropicMessages = next.map((m) => ({
       role: m.role === "user" ? ("user" as const) : ("assistant" as const),
-      content: m.text,
+      content: m.role === "user" ? m.text : cleanMessageText(m.text),
     }));
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -267,6 +275,9 @@ export function QualificationChatbot() {
 
   const evaluationBlurPct = evaluationPreview?.match(/\b\d{1,3}\s?%/)?.[0] ?? "??%";
 
+  const onlyWelcome =
+    messages.length === 1 && messages[0]?.role === "claude" && messages[0]?.text === WELCOME;
+
   return (
     <div
       id="chatbot"
@@ -280,26 +291,10 @@ export function QualificationChatbot() {
                 m.role === "user" ? "bg-[#5B50F0] text-white" : "bg-white text-foreground shadow-sm"
               }`}
             >
-              {renderTextBubble(m.text)}
+              {renderTextBubble(m.role === "claude" ? cleanMessageText(m.text) : m.text)}
             </div>
           </div>
         ))}
-
-        {messages.length === 1 && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c.label}
-                type="button"
-                onClick={() => void sendUserText(c.text)}
-                disabled={isLoading}
-                className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-        )}
 
         {isLoading && (
           <div className="flex justify-start">
@@ -333,7 +328,22 @@ export function QualificationChatbot() {
         <div ref={bottomRef} />
       </div>
 
-      {!isLoading && suggestions.length > 0 && (
+      {!isLoading && onlyWelcome && (
+        <div className="mt-2 flex flex-wrap gap-2 px-1 pb-2">
+          {STARTUP_TYPE_SINISTRE_PILLS.map((p) => (
+            <button
+              key={p.label}
+              type="button"
+              onClick={() => void sendUserText(p.text)}
+              className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!isLoading && !onlyWelcome && suggestions.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2 px-1 pb-2">
           {suggestions.map((s) => (
             <button

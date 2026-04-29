@@ -271,7 +271,7 @@ function HomePage() {
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-wider text-primary">Sinistres traités</p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Tous les sinistres où l'enjeu dépasse 3 000 €.
+                Tous les sinistres où une renégociation peut faire la différence.
               </h2>
             </div>
             <Link

@@ -70,7 +70,7 @@ const faqPageJsonLd = {
       name: "Est-ce que ça vaut le coup pour un petit sinistre ?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Pour un sinistre inférieur à 1 500 €, les recours formels (expert, médiation, justice) sont rarement rentables. En revanche, une simple lettre de contestation bien rédigée peut suffire. Pour les sinistres supérieurs à 3 000 €, un expert d'assuré est presque toujours justifié.",
+        text: "Pour un sinistre inférieur à 1 500 €, les recours formels (expert, médiation, justice) sont rarement rentables. En revanche, une simple lettre de contestation bien rédigée peut suffire. Lorsque l'enjeu ou la complexité du dossier le justifie, mandater un expert d'assuré est souvent pertinent.",
       },
     },
     {
@@ -410,7 +410,8 @@ export function AssureurRefusePayerPage() {
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Pour un sinistre inférieur à 1 500 €, les recours formels (expert, médiation, justice) sont
                     rarement rentables. En revanche, une simple lettre de contestation bien rédigée peut suffire.
-                    Pour les sinistres supérieurs à 3 000 €, un expert d'assuré est presque toujours justifié.
+                    Lorsque l'enjeu ou la complexité du dossier le justifie, mandater un expert d'assuré est souvent
+                    pertinent.
                   </dd>
                 </div>
                 <div>

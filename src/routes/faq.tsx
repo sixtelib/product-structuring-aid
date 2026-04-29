@@ -53,7 +53,7 @@ const faq = [
   },
   {
     q: "Quels sinistres traitez-vous ?",
-    a: "Tout sinistre dont l'enjeu dépasse 3 000 € : habitation, dégât des eaux, incendie, catastrophe naturelle, auto, santé/prévoyance, multirisque pro, garantie décennale.",
+    a: "Nous accompagnons notamment : habitation, dégât des eaux, incendie, catastrophe naturelle, auto, santé/prévoyance, multirisque pro, garantie décennale.",
   },
   {
     q: "L'indemnisation supplémentaire est-elle imposable ?",

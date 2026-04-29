@@ -19,7 +19,7 @@ export const Route = createFileRoute("/sinistres")({
       {
         name: "description",
         content:
-          "Habitation, dégât des eaux, incendie, auto, catastrophe naturelle, santé : nous défendons les assurés sur tous les sinistres dont l'enjeu dépasse 3 000 €.",
+          "Habitation, dégât des eaux, incendie, auto, catastrophe naturelle, santé : nous défendons les assurés sur ces sinistres lorsque l'indemnisation peut être contestée.",
       },
       { property: "og:title", content: "Sinistres traités ,  Vertual" },
       {
@@ -99,7 +99,7 @@ function ClaimsPage() {
             Sinistres traités
           </p>
           <h1 className="mt-3 font-sans tracking-tight text-4xl font-semibold sm:text-5xl">
-            Tous les sinistres où l'enjeu dépasse 3 000 €.
+            Tous les sinistres où une renégociation peut faire la différence.
           </h1>
           <p className="mt-5 text-lg text-muted-foreground">
             Si vous estimez que votre assureur sous-évalue votre indemnisation, nous
