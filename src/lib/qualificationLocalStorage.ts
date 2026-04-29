@@ -6,14 +6,14 @@ export const QUALIFICATION_STORAGE_KEYS = {
 } as const;
 
 const LEGACY_KEYS = {
-  evaluation: "claimeur_evaluation",
-  collectedData: "claimeur_collected_data",
-  pendingFiles: "claimeur_pending_files",
+  evaluation: "vertual_evaluation",
+  collectedData: "vertual_collected_data",
+  pendingFiles: "vertual_pending_files",
 } as const;
 
 let legacyMigrated = false;
 
-/** Copie les anciennes clés `claimeur_*` vers `vertual_*` puis supprime les anciennes (une fois par session). */
+/** Copie les anciennes clés `vertual_*` vers `vertual_*` puis supprime les anciennes (une fois par session). */
 export function migrateLegacyQualificationLocalStorage(): void {
   if (typeof window === "undefined" || legacyMigrated) return;
   legacyMigrated = true;
