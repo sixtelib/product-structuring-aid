@@ -1,4 +1,3 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
@@ -88,22 +87,14 @@ const faqPageJsonLd = {
 export function AssureurRefusePayerPage() {
   return (
     <SiteLayout>
-      <Helmet>
-        <title>Assureur refuse de payer : que faire ? Recours et solutions | Vertual</title>
-        <meta
-          name="description"
-          content="Votre assureur refuse de rembourser votre sinistre ? Découvrez les 5 recours concrets pour contester un refus d'indemnisation et obtenir ce à quoi vous avez droit."
-        />
-        <link rel="canonical" href="https://vertual.fr/guides/assureur-refuse-payer" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd) }}
-        />
-      </Helmet>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd) }}
+      />
 
       <div className="bg-white font-sans text-foreground">
         <article className="mx-auto max-w-[760px] px-4 py-12 sm:px-6 sm:py-16 lg:py-20">

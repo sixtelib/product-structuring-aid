@@ -1,4 +1,3 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
@@ -79,22 +78,14 @@ const faqPageJsonLd = {
 export function ExpertAssurePage() {
   return (
     <SiteLayout>
-      <Helmet>
-        <title>Expert d'assuré : rôle, honoraires et comment ça marche | Vertual</title>
-        <meta
-          name="description"
-          content="L'expert d'assuré défend vos intérêts face à votre assureur après un sinistre. Rôle, honoraires, différence avec l'expert de l'assureur : tout comprendre en 5 minutes."
-        />
-        <link rel="canonical" href="https://vertual.fr/guides/expert-assure" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd) }}
-        />
-      </Helmet>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd) }}
+      />
 
       <div className="bg-white font-sans text-foreground">
         <article className="mx-auto max-w-[760px] px-4 py-12 sm:px-6 sm:py-16 lg:py-20">

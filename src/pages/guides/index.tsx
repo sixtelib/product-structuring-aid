@@ -1,4 +1,3 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "@tanstack/react-router";
 import { BookOpen, ArrowRight, Scale } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -6,15 +5,6 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export function GuidesIndexPage() {
   return (
     <SiteLayout>
-      <Helmet>
-        <title>Guides assuré — Vertual</title>
-        <meta
-          name="description"
-          content="Guides pratiques pour comprendre l'expertise d'assuré, vos droits après un sinistre et comment maximiser votre indemnisation."
-        />
-        <link rel="canonical" href="https://vertual.fr/guides" />
-      </Helmet>
-
       <section className="bg-[#F8F9FF]">
         <div className="mx-auto max-w-4xl px-4 py-16 text-foreground sm:px-6 sm:py-20 lg:px-8">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">Ressources</p>
