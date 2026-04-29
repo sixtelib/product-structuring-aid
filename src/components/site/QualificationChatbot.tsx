@@ -1,299 +1,544 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Send, ShieldCheck, Sparkles } from "lucide-react";
+import { Paperclip, Send } from "lucide-react";
 
-type Role = "bot" | "user";
-type Message = { id: string; role: Role; text: string };
+type Role = "claude" | "user";
+type Message =
+  | { id: string; role: Role; kind: "text"; text: string }
+  | { id: string; role: "user"; kind: "file"; fileName: string; fileSize: number };
 
-type Step =
-  | "intro"
-  | "claimType"
-  | "context"
-  | "status"
-  | "amounts"
-  | "verdict";
+type CollectedData = {
+  type_sinistre: string;
+  assureur: string;
+  montant_propose: string;
+  date_sinistre: string;
+  description: string;
+};
 
-const claimTypes = [
-  "Habitation",
-  "Auto",
-  "Dégât des eaux",
-  "Incendie",
-  "Catastrophe naturelle",
-  "Santé / prévoyance",
-  "Autre",
-];
+const SYSTEM_PROMPT = `Tu es un conseiller expert en indemnisation d'assurance pour Claimeur, une plateforme française qui défend les assurés face à leurs assureurs. Ton rôle est double : qualifier le dossier ET rassurer l'assuré.
 
-const statusOptions = [
-  "J'ai reçu une proposition trop basse",
-  "Mon dossier a été refusé",
-  "Une expertise est en cours",
-  "Je n'ai pas encore déclaré",
-];
+TON STYLE : empathique, expert, direct. Jamais condescendant. Comme un ami avocat qui explique les droits de l'assuré.
+
+TON OBJECTIF : en 3-5 messages maximum, collecter ces informations :
+- Type de sinistre (dégât des eaux, incendie, tempête, vol, etc.)
+- Nom de l'assureur
+- Montant proposé par l'assureur (ou "refus total")
+- Date approximative du sinistre
+- Description courte de la situation
+
+RÈGLES :
+- Le premier message doit être exactement : "Bonjour 👋 Décrivez-moi votre situation en quelques mots — type de sinistre, ce que votre assureur vous a proposé, et ce qui vous semble injuste."
+- Une question à la fois maximum
+- Quand tu as toutes les infos, fais une évaluation courte (2-3 phrases) et dis si le dossier mérite d'être contesté
+- Termine TOUJOURS par proposer de créer un compte pour qu'un expert prenne en charge le dossier
+- Ne donne JAMAIS de conseil juridique précis
+- Réponds TOUJOURS en français
+- N'utilise jamais le tiret long —. Utilise des virgules, des points, ou des retours à la ligne à la place.
+
+FORMAT D'ÉVALUATION :
+- Quand tu as assez d'informations pour évaluer, réponds en 2 parties :
+1) Un message normal d'introduction (ex: "Voici mon évaluation de votre dossier...")
+2) Puis une section entre balises <evaluation> et </evaluation> contenant :
+   - un pourcentage de succès estimé (ex: "78%")
+   - 2 à 3 arguments clés
+   - un gain potentiel estimé en euros
+
+EXTRACTION : À chaque message, si tu as collecté des infos structurées, inclus à la fin de ta réponse un bloc JSON caché entre les balises <data> et </data> avec les champs remplis :
+{"type_sinistre": "", "assureur": "", "montant_propose": "", "date_sinistre": "", "description": ""}`;
 
 function uid() {
   return Math.random().toString(36).slice(2);
+}
+
+const EMPTY_DATA: CollectedData = {
+  type_sinistre: "",
+  assureur: "",
+  montant_propose: "",
+  date_sinistre: "",
+  description: "",
+};
+
+type PendingFile = {
+  name: string;
+  type: string;
+  size: number;
+  base64: string;
+};
+
+function parseClaudeResponse(text: string) {
+  const match = text.match(/<data>([\s\S]*?)<\/data>/i);
+  const evalMatch = text.match(/<evaluation>([\s\S]*?)<\/evaluation>/i);
+  let parsedData: Partial<CollectedData> | null = null;
+  let evaluation: string | null = null;
+
+  if (match?.[1]) {
+    try {
+      parsedData = JSON.parse(match[1]) as Partial<CollectedData>;
+    } catch {
+      parsedData = null;
+    }
+  }
+
+  if (evalMatch?.[1]) {
+    evaluation = evalMatch[1].trim();
+  }
+
+  const cleanText = text
+    .replace(/<data>[\s\S]*?<\/data>/gi, "")
+    .replace(/<evaluation>[\s\S]*?<\/evaluation>/gi, "")
+    .trim();
+  return { cleanText, parsedData, evaluation };
+}
+
+function renderInlineMarkdown(text: string) {
+  const nodes: Array<string | JSX.Element> = [];
+  const boldRegex = /\*\*(.+?)\*\*/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = boldRegex.exec(text))) {
+    if (match.index > last) nodes.push(text.slice(last, match.index));
+    nodes.push(<strong key={`b-${match.index}`}>{match[1]}</strong>);
+    last = match.index + match[0].length;
+  }
+
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+function renderMarkdown(text: string) {
+  return text
+    .split(/\r?\n/)
+    .map((raw, idx) => {
+      const line = raw.trimEnd();
+      if (!line.trim()) return null;
+      if (line.trim() === "---") return <hr key={`hr-${idx}`} className="my-2 border-border/40" />;
+      if (line.startsWith("### ")) {
+        return (
+          <h3 key={`h3-${idx}`} className="mt-2 text-sm font-semibold">
+            {renderInlineMarkdown(line.slice(4))}
+          </h3>
+        );
+      }
+      if (line.startsWith("## ")) {
+        return (
+          <h2 key={`h2-${idx}`} className="mt-2 text-base font-semibold">
+            {renderInlineMarkdown(line.slice(3))}
+          </h2>
+        );
+      }
+      if (line.startsWith("# ")) {
+        return (
+          <h1 key={`h1-${idx}`} className="mt-2 text-lg font-semibold">
+            {renderInlineMarkdown(line.slice(2))}
+          </h1>
+        );
+      }
+      const bullet = line.match(/^\*\s+(.*)$/);
+      if (bullet) {
+        return (
+          <p key={`li-${idx}`} className="mt-1">
+            • {renderInlineMarkdown(bullet[1])}
+          </p>
+        );
+      }
+      return (
+        <p key={`p-${idx}`} className="mt-1">
+          {renderInlineMarkdown(line)}
+        </p>
+      );
+    })
+    .filter(Boolean);
 }
 
 export function QualificationChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: uid(),
-      role: "bot",
-      text:
-        "Bonjour 👋 Je suis votre conseiller virtuel. En 2 minutes, je vais évaluer si nous pouvons obtenir une meilleure indemnisation pour votre sinistre. C'est gratuit, sans engagement.",
+      role: "claude",
+      kind: "text",
+      text: "Bonjour 👋 Décrivez-moi votre situation en quelques mots. Type de sinistre, ce que votre assureur vous a proposé, ce qui vous semble injuste.",
     },
   ]);
-  const [step, setStep] = useState<Step>("intro");
-  const [claimType, setClaimType] = useState<string>("");
-  const [contextText, setContextText] = useState("");
-  const [statusText, setStatusText] = useState("");
-  const [proposed, setProposed] = useState("");
-  const [expected, setExpected] = useState("");
   const [input, setInput] = useState("");
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showCategories, setShowCategories] = useState(true);
+  const [collectedData, setCollectedData] = useState<CollectedData>(EMPTY_DATA);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [evaluationPreview, setEvaluationPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  const shouldShowSignupCta = useMemo(() => {
+    if (evaluationPreview) return true;
+    const lastClaude = [...messages].reverse().find((m) => m.role === "claude" && m.kind === "text");
+    if (!lastClaude) return false;
+    return /créer un compte|creer un compte/i.test(lastClaude.text);
+  }, [messages, evaluationPreview]);
+
+  const evaluationSuccess = useMemo(() => {
+    if (!evaluationPreview) return "??%";
+    return evaluationPreview.match(/\b\d{1,3}\s?%/)?.[0] ?? "??%";
+  }, [evaluationPreview]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, step]);
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, isLoading]);
 
-  function pushBot(text: string) {
-    setMessages((m) => [...m, { id: uid(), role: "bot", text }]);
-  }
-  function pushUser(text: string) {
-    setMessages((m) => [...m, { id: uid(), role: "user", text }]);
+  async function askClaude(nextMessages: Message[]) {
+    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
+    if (!apiKey) throw new Error("Clé API Anthropic manquante (VITE_ANTHROPIC_API_KEY).");
+
+    const anthropicMessages = nextMessages
+      .map((m) => {
+        if (m.kind === "file") {
+          return {
+            role: "user" as const,
+            content: `L'utilisateur a joint le fichier : ${m.fileName}`,
+          };
+        }
+
+        return {
+          role: m.role === "user" ? ("user" as const) : ("assistant" as const),
+          content: m.text,
+        };
+      });
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 500,
+        system: SYSTEM_PROMPT,
+        messages: anthropicMessages,
+      }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(txt || `Erreur Anthropic (${res.status})`);
+    }
+
+    const data = (await res.json()) as {
+      content?: Array<{ type?: string; text?: string }>;
+    };
+    const text = data.content?.find((c) => c.type === "text")?.text?.trim() ?? "";
+    if (!text) throw new Error("Réponse Claude vide.");
+    return text;
   }
 
-  function start() {
-    setStep("claimType");
-    pushBot("Quel type de sinistre êtes-vous en train de gérer ?");
+  function mergeCollectedData(incoming: Partial<CollectedData> | null) {
+    if (!incoming) return;
+    setCollectedData((prev) => ({
+      type_sinistre: incoming.type_sinistre?.trim() || prev.type_sinistre,
+      assureur: incoming.assureur?.trim() || prev.assureur,
+      montant_propose: incoming.montant_propose?.trim() || prev.montant_propose,
+      date_sinistre: incoming.date_sinistre?.trim() || prev.date_sinistre,
+      description: incoming.description?.trim() || prev.description,
+    }));
   }
 
-  function pickClaim(type: string) {
-    setClaimType(type);
-    pushUser(type);
-    setStep("context");
-    setTimeout(
-      () =>
-        pushBot(
-          "Très bien. En quelques mots, pouvez-vous me décrire ce qu'il s'est passé et la date approximative ?",
-        ),
-      300,
-    );
-  }
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || isLoading) return;
 
-  function submitContext(text: string) {
-    if (!text.trim()) return;
-    setContextText(text);
-    pushUser(text);
+    setShowCategories(false);
+    const userMessage: Message = { id: uid(), role: "user", kind: "text", text };
+    const next = [...messages, userMessage];
+    setMessages(next);
     setInput("");
-    setStep("status");
-    setTimeout(() => pushBot("Où en est votre dossier aujourd'hui ?"), 300);
+    setIsLoading(true);
+
+    try {
+      const reply = await askClaude(next);
+      const { cleanText, parsedData, evaluation } = parseClaudeResponse(reply);
+      mergeCollectedData(parsedData);
+      if (evaluation) setEvaluationPreview(evaluation);
+      setMessages((prev) => [...prev, { id: uid(), role: "claude", kind: "text", text: cleanText }]);
+    } catch (e) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uid(),
+          role: "claude",
+          kind: "text",
+          text: "Je rencontre un problème temporaire. Réessayez dans quelques secondes.",
+        },
+      ]);
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  function pickStatus(s: string) {
-    setStatusText(s);
-    pushUser(s);
-    setStep("amounts");
-    setTimeout(
-      () =>
-        pushBot(
-          "Dernière question : connaissez-vous le montant proposé par votre assureur et le montant que vous estimez juste ? (laissez vide si vous ne savez pas)",
-        ),
-      300,
-    );
+  async function sendPreset(text: string) {
+    if (isLoading) return;
+    setShowCategories(false);
+    const userMessage: Message = { id: uid(), role: "user", kind: "text", text };
+    const next = [...messages, userMessage];
+    setMessages(next);
+    setIsLoading(true);
+    try {
+      const reply = await askClaude(next);
+      const { cleanText, parsedData, evaluation } = parseClaudeResponse(reply);
+      mergeCollectedData(parsedData);
+      if (evaluation) setEvaluationPreview(evaluation);
+      setMessages((prev) => [...prev, { id: uid(), role: "claude", kind: "text", text: cleanText }]);
+    } catch (e) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uid(),
+          role: "claude",
+          kind: "text",
+          text: "Je rencontre un problème temporaire. Réessayez dans quelques secondes.",
+        },
+      ]);
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  function submitAmounts() {
-    const p = proposed.trim();
-    const e = expected.trim();
-    pushUser(
-      p || e
-        ? `Proposé : ${p || "—"} € · Estimé juste : ${e || "—"} €`
-        : "Je ne sais pas encore",
-    );
+  async function toDataUrl(file: File) {
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ""));
+      reader.onerror = () => reject(new Error("Impossible de lire le fichier."));
+      reader.readAsDataURL(file);
+    });
+  }
 
-    const proposedNum = Number(p.replace(/[^\d]/g, ""));
-    const expectedNum = Number(e.replace(/[^\d]/g, ""));
-    const gap =
-      proposedNum && expectedNum && expectedNum > proposedNum
-        ? expectedNum - proposedNum
-        : null;
+  function formatBytes(size: number) {
+    if (size < 1024) return `${size} o`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
 
-    setStep("verdict");
-    setTimeout(() => {
-      pushBot(
-        `Merci. D'après votre situation (${claimType.toLowerCase()}, ${statusText.toLowerCase()}), votre dossier est éligible à une analyse approfondie.`,
-      );
-    }, 300);
-    setTimeout(() => {
-      const gapText = gap
-        ? ` Sur la base d'un écart de ${gap.toLocaleString("fr-FR")} €, notre marge de négociation moyenne est de 15 à 35 %.`
-        : "";
-      pushBot(
-        `Nos experts étudient votre dossier sous 48h.${gapText} Pour aller plus loin, créez votre espace sécurisé et déposez vos pièces — c'est gratuit, et vous ne payez rien si nous n'obtenons rien.`,
-      );
-    }, 1100);
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || isLoading) return;
+
+    const allowed = ["application/pdf", "image/jpeg", "image/png"];
+    if (!allowed.includes(file.type)) return;
+    if (file.size > 10 * 1024 * 1024) return;
+
+    try {
+      setShowCategories(false);
+      const base64 = await toDataUrl(file);
+      const pending: PendingFile = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        base64,
+      };
+      setPendingFiles((prev) => [...prev, pending]);
+
+      const fileMessage: Message = {
+        id: uid(),
+        role: "user",
+        kind: "file",
+        fileName: file.name,
+        fileSize: file.size,
+      };
+
+      const next = [...messages, fileMessage];
+      setMessages(next);
+      setIsLoading(true);
+      const reply = await askClaude(next);
+      const { cleanText, parsedData, evaluation } = parseClaudeResponse(reply);
+      mergeCollectedData(parsedData);
+      if (evaluation) setEvaluationPreview(evaluation);
+      setMessages((prev) => [...prev, { id: uid(), role: "claude", kind: "text", text: cleanText }]);
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uid(),
+          role: "claude",
+          kind: "text",
+          text: "J'ai bien noté votre document. Nous pourrons l'analyser en détail après création du dossier.",
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function goToSignup() {
+    localStorage.setItem("claimeur_collected_data", JSON.stringify(collectedData));
+    if (evaluationPreview) {
+      localStorage.setItem("claimeur_evaluation", evaluationPreview);
+    }
+    localStorage.setItem("claimeur_pending_files", JSON.stringify(pendingFiles));
   }
 
   return (
     <div
       id="chatbot"
-      className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-soft)]"
+      className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 font-['Inter'] shadow-md"
     >
-      <div className="flex items-center gap-3 border-b border-border bg-white px-5 py-4">
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Sparkles className="h-4 w-4" />
-        </span>
-        <div>
-          <p className="text-base font-semibold tracking-tight text-foreground">
-            Évaluation de dossier
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Conversation confidentielle · 2 min
-          </p>
-        </div>
-      </div>
-
-      <div
-        ref={scrollRef}
-        className="max-h-[420px] min-h-[320px] space-y-3 overflow-y-auto px-5 py-5"
-      >
+      <div className="min-h-[120px] max-h-[320px] space-y-3 overflow-y-auto bg-transparent">
         {messages.map((m) => (
-          <div
-            key={m.id}
-            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-          >
+          <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
-              className={`max-w-[85%] rounded-lg px-4 py-2.5 text-sm leading-relaxed ${
-                m.role === "user"
-                  ? "rounded-br-sm bg-primary text-primary-foreground"
-                  : "rounded-bl-sm border border-border bg-secondary text-foreground"
+              className={`max-w-[85%] rounded-[12px] px-4 py-2.5 text-sm leading-relaxed ${
+                m.kind === "file"
+                  ? "bg-white text-foreground shadow-sm"
+                  : m.role === "user"
+                  ? "bg-[#5B50F0] text-white"
+                  : "bg-white text-foreground shadow-sm"
               }`}
             >
-              {m.text}
+              {m.kind === "file" ? (
+                <div className="min-w-[180px]">
+                  <p className="truncate text-sm font-medium">📄 {m.fileName}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{formatBytes(m.fileSize)}</p>
+                </div>
+              ) : (
+                renderMarkdown(m.text)
+              )}
             </div>
           </div>
         ))}
 
-        {step === "intro" && (
-          <div className="pt-2">
-            <button
-              onClick={start}
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
-            >
-              Démarrer l'évaluation
-            </button>
-          </div>
-        )}
-
-        {step === "claimType" && (
-          <div className="flex flex-wrap gap-2 pt-2">
-            {claimTypes.map((t) => (
+        {showCategories && messages.length === 1 && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              { label: "🌊 Dégât des eaux", text: "Mon sinistre est de type : Dégât des eaux" },
+              { label: "🔥 Incendie", text: "Mon sinistre est de type : Incendie" },
+              { label: "🌪️ Tempête / Catastrophe", text: "Mon sinistre est de type : Tempête / Catastrophe" },
+              { label: "🚗 Accident auto", text: "Mon sinistre est de type : Accident auto" },
+              { label: "🏠 Multirisque habitation", text: "Mon sinistre est de type : Multirisque habitation" },
+              { label: "📋 Autre sinistre", text: "Mon sinistre est de type : Autre sinistre" },
+            ].map((c) => (
               <button
-                key={t}
-                onClick={() => pickClaim(t)}
-                className="rounded-lg border border-border bg-background px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                key={c.label}
+                type="button"
+                onClick={() => void sendPreset(c.text)}
+                className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
               >
-                {t}
+                {c.label}
               </button>
             ))}
           </div>
         )}
 
-        {step === "status" && (
-          <div className="flex flex-col gap-2 pt-2">
-            {statusOptions.map((s) => (
-              <button
-                key={s}
-                onClick={() => pickStatus(s)}
-                className="rounded-lg border border-border bg-background px-4 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:border-primary hover:bg-secondary"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {step === "amounts" && (
-          <div className="space-y-2 pt-2">
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={proposed}
-                onChange={(e) => setProposed(e.target.value)}
-                placeholder="Proposé (€)"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
-              />
-              <input
-                type="text"
-                inputMode="numeric"
-                value={expected}
-                onChange={(e) => setExpected(e.target.value)}
-                placeholder="Estimé juste (€)"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
-              />
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="rounded-[12px] bg-white px-4 py-3 shadow-sm">
+              <span className="inline-flex items-center gap-2 text-sm text-foreground">
+                En cours d'analyse
+                <span className="inline-flex">
+                  <span className="animate-pulse">.</span>
+                  <span className="animate-pulse [animation-delay:150ms]">.</span>
+                  <span className="animate-pulse [animation-delay:300ms]">.</span>
+                </span>
+              </span>
             </div>
-            <button
-              onClick={submitAmounts}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
-            >
-              Voir l'évaluation <Send className="h-4 w-4" />
-            </button>
           </div>
         )}
 
-        {step === "verdict" && (
-          <div className="space-y-3 pt-3">
-            <div className="rounded-xl border border-success/30 bg-success/10 p-4">
-              <div className="flex items-center gap-2 text-success">
-                <ShieldCheck className="h-5 w-5" />
-                <p className="font-semibold">Dossier éligible</p>
+        {evaluationPreview && (
+          <div className="relative mt-4 overflow-hidden rounded-xl border-2 border-dashed border-[#5B50F0]/40 bg-white p-5">
+            <p className="text-sm font-semibold text-foreground">Votre évaluation est prête ✨</p>
+
+            <div className="pointer-events-none mt-3 select-none">
+              <div className="inline-flex items-center rounded-full bg-[#5B50F0]/15 px-3 py-1 text-xs font-semibold text-[#5B50F0]">
+                Probabilité de succès: <span className="ml-1 blur-[3px]">{evaluationSuccess}</span>
               </div>
-              <p className="mt-1.5 text-sm text-foreground">
-                Créez votre espace pour déposer vos pièces. Aucun paiement avant
-                l'obtention d'une indemnisation supplémentaire.
+              <div className="mt-3 text-sm text-muted-foreground [filter:blur(6px)]">
+                {renderMarkdown(evaluationPreview)}
+              </div>
+            </div>
+
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-white" />
+
+            <div className="relative mt-4 flex flex-col items-center">
+              <Link
+                to="/auth"
+                search={{ mode: "signup" }}
+                onClick={goToSignup}
+                className="inline-flex items-center justify-center rounded-lg bg-[#5B50F0] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5]"
+              >
+                Révéler mon évaluation →
+              </Link>
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Créez votre compte gratuit pour accéder à votre analyse complète
+              </p>
+              <p className="mt-1 text-center text-[11px] text-muted-foreground">
+                Gratuit · Sans engagement · 2 minutes
               </p>
             </div>
-            <Link
-              to="/"
-              className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
-            >
-              Créer mon espace gratuit
-            </Link>
-            <p className="text-center text-xs text-muted-foreground">
-              Espace sécurisé · Données chiffrées · RGPD
-            </p>
           </div>
         )}
+
+        <div ref={bottomRef} />
       </div>
 
-      {step === "context" && (
-        <div className="border-t border-border bg-background px-4 py-3">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submitContext(input);
-            }}
-            className="flex items-center gap-2"
-          >
-            <input
-              autoFocus
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Décrivez votre situation…"
-              className="flex-1 rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
-            />
-            <button
-              type="submit"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary-glow"
-              aria-label="Envoyer"
+      <div className="mt-3 border-t border-gray-100 pt-3">
+        {shouldShowSignupCta && (
+          <div className="mb-3">
+            <Link
+              to="/auth"
+              search={{ mode: "signup" }}
+              onClick={goToSignup}
+              className="inline-flex w-full items-center justify-center rounded-full bg-[#5B50F0] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5]"
             >
-              <Send className="h-4 w-4" />
-            </button>
-          </form>
-        </div>
-      )}
+              Révéler mon analyse →
+            </Link>
+          </div>
+        )}
+
+        <form onSubmit={handleSend} className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="application/pdf,image/jpeg,image/png"
+            onChange={(e) => void handleFileSelected(e)}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-[#F8F9FF] disabled:opacity-60"
+            aria-label="Joindre un fichier"
+            title="Joindre un PDF, JPG ou PNG (10MB max)"
+          >
+            <Paperclip className="h-4 w-4" />
+          </button>
+          <input
+            autoFocus
+            id="chatbot-input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Décrivez votre situation…"
+            className="flex-1 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm outline-none placeholder:text-muted-foreground shadow-sm focus:border-[#5B50F0]/40 focus:ring-2 focus:ring-[#5B50F0]/10"
+          />
+          <button
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#5B50F0] text-white transition-colors hover:bg-[#4B41D5] disabled:opacity-60"
+            aria-label="Envoyer"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </form>
+        <p className="mt-2 text-right text-[10px] text-muted-foreground">
+          Claimeur n'est pas un cabinet juridique.
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
@@ -10,6 +10,41 @@ export const Route = createFileRoute("/dashboard/nouveau")({
   component: DashboardNouveauPage,
 });
 
+type PendingStoredFile = {
+  name: string;
+  base64: string;
+  type?: string;
+  size?: number;
+};
+
+type StoredCollectedData = {
+  type_sinistre?: string;
+  assureur?: string;
+  montant_propose?: string;
+  date_sinistre?: string;
+  description?: string;
+};
+
+function dataUrlToBlob(dataUrl: string, fallbackType = "application/octet-stream") {
+  const [meta, b64] = dataUrl.split(",");
+  if (!meta || !b64) throw new Error("Base64 invalide.");
+  const mime = meta.match(/data:(.*?);base64/)?.[1] || fallbackType;
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+  return { blob: new Blob([bytes], { type: mime }), mime };
+}
+
+function mapClaimType(input?: string) {
+  const txt = (input || "").toLowerCase();
+  if (txt.includes("dégât des eaux") || txt.includes("degat des eaux")) return "degat_des_eaux";
+  if (txt.includes("incendie")) return "incendie";
+  if (txt.includes("tempête") || txt.includes("tempete")) return "tempete";
+  if (txt.includes("catastrophe")) return "catastrophe_naturelle";
+  if (txt.includes("vol")) return "vol";
+  return CLAIM_TYPES[0]?.value ?? "degat_des_eaux";
+}
+
 function DashboardNouveauPage() {
   return <DashboardNouveauContent />;
 }
@@ -19,6 +54,7 @@ function DashboardNouveauContent() {
   const { user } = useAuth();
 
   const [submitting, setSubmitting] = useState(false);
+  const [welcomeEvaluation, setWelcomeEvaluation] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "",
     claim_type: CLAIM_TYPES[0]?.value ?? "degat_des_eaux",
@@ -38,6 +74,80 @@ function DashboardNouveauContent() {
 
   function update<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const evalRaw = window.localStorage.getItem("claimeur_evaluation");
+    if (evalRaw) setWelcomeEvaluation(evalRaw);
+
+    const collectedRaw = window.localStorage.getItem("claimeur_collected_data");
+    if (!collectedRaw) return;
+    try {
+      const c = JSON.parse(collectedRaw) as StoredCollectedData;
+      setForm((prev) => ({
+        ...prev,
+        title: prev.title || (c.type_sinistre ? `Sinistre ${c.type_sinistre}` : prev.title),
+        claim_type: mapClaimType(c.type_sinistre),
+        incident_date: prev.incident_date || (c.date_sinistre || ""),
+        description: prev.description || (c.description || ""),
+        insurer_name: prev.insurer_name || (c.assureur || ""),
+        insurer_offer: prev.insurer_offer || (c.montant_propose || ""),
+      }));
+    } catch {
+      // ignore malformed local data
+    }
+  }, []);
+
+  async function uploadPendingFilesForDossier(dossierId: string) {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem("claimeur_pending_files");
+    if (!raw) return;
+
+    let files: PendingStoredFile[] = [];
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      files = Array.isArray(parsed) ? (parsed as PendingStoredFile[]) : [];
+    } catch {
+      window.localStorage.removeItem("claimeur_pending_files");
+      return;
+    }
+    if (files.length === 0) {
+      window.localStorage.removeItem("claimeur_pending_files");
+      return;
+    }
+
+    let uploaded = 0;
+    for (const file of files) {
+      try {
+        const { blob, mime } = dataUrlToBlob(file.base64, file.type || "application/octet-stream");
+        const safeName = (file.name || "document").replace(/[^\w.\- ()[\]]+/g, "_");
+        const path = `dossiers/${dossierId}/${Date.now()}-${safeName}`;
+
+        const up = await supabase.storage.from("documents").upload(path, blob, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: mime,
+        });
+        if (up.error) throw up.error;
+
+        const { error: insErr } = await supabase.from("documents").insert({
+          dossier_id: dossierId,
+          nom: file.name || safeName,
+          storage_path: path,
+          statut: "recu",
+        });
+        if (insErr) throw insErr;
+        uploaded += 1;
+      } catch (err) {
+        console.error("Upload pending file failed:", err);
+      }
+    }
+
+    window.localStorage.removeItem("claimeur_pending_files");
+    if (uploaded > 0) {
+      toast.success(`${uploaded} document${uploaded > 1 ? "s" : ""} ajouté${uploaded > 1 ? "s" : ""} au dossier.`);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -82,6 +192,11 @@ function DashboardNouveauContent() {
       if (error) throw error;
       if (!data?.id) throw new Error("ID dossier manquant.");
 
+      await uploadPendingFilesForDossier(data.id);
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("claimeur_evaluation");
+        window.localStorage.removeItem("claimeur_collected_data");
+      }
       toast.success("Dossier créé.");
       navigate({ to: "/dashboard/dossiers/$id", params: { id: data.id } });
     } catch (err) {
@@ -103,6 +218,13 @@ function DashboardNouveauContent() {
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Créez votre dossier pour démarrer l'analyse et échanger avec un expert.
         </p>
+
+        {welcomeEvaluation && (
+          <div className="mt-6 rounded-xl border border-[#5B50F0]/30 bg-[#F5F3FF] p-4">
+            <p className="text-sm font-semibold text-foreground">Bienvenue, votre évaluation personnalisée :</p>
+            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-foreground">{welcomeEvaluation}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6 rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
           <div>

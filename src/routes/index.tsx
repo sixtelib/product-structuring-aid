@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useRef } from "react";
 import {
   ShieldCheck,
+  Shield,
   Sparkles,
   TrendingUp,
   Clock,
@@ -48,9 +50,9 @@ const claims = [
 ];
 
 const stats = [
-  { value: "+27 %", label: "Indemnisation moyenne récupérée" },
-  { value: "48 h", label: "Pour analyser votre dossier" },
-  { value: "0 €", label: "Si nous n'obtenons rien" },
+  { value: "+27%", label: "Indemnisation moyenne récupérée", icon: TrendingUp, tone: "primary" as const },
+  { value: "48h", label: "Pour analyser votre dossier", icon: Clock, tone: "primary" as const },
+  { value: "0€", label: "Si nous n'obtenons rien, vous ne payez rien.", icon: Shield, tone: "coral" as const },
 ];
 
 const steps = [
@@ -80,112 +82,141 @@ const steps = [
   },
 ];
 
-function HeroIllustration() {
-  return (
-    <div
-      className="relative mx-auto w-full max-w-lg rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)]"
-      aria-hidden
-    >
-      <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
-        <div className="flex items-center gap-2">
-          <div className="h-2.5 w-2.5 rounded-full bg-accent/80" />
-          <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/25" />
-          <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/25" />
-        </div>
-        <div className="h-2 w-24 rounded bg-muted" />
-      </div>
-      <div className="space-y-3">
-        <div className="h-3 w-[55%] rounded bg-primary/20" />
-        <div className="h-3 w-full rounded bg-muted" />
-        <div className="h-3 w-[80%] rounded bg-muted" />
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-lg border border-border bg-secondary p-3">
-            <div className="h-2 w-12 rounded bg-primary/30" />
-            <div className="mt-2 h-6 w-16 rounded bg-primary/15" />
-          </div>
-          <div className="rounded-lg border border-border bg-secondary p-3">
-            <div className="h-2 w-10 rounded bg-accent/40" />
-            <div className="mt-2 h-6 w-14 rounded bg-accent/15" />
-          </div>
-        </div>
-        <div className="mt-4 flex gap-2">
-          <div className="h-8 flex-1 rounded-lg bg-primary/90" />
-          <div className="h-8 w-20 rounded-lg border border-primary bg-transparent" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function HomePage() {
+  const chatbotRef = useRef<HTMLDivElement | null>(null);
+
+  function scrollToChatbot() {
+    chatbotRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches) {
+      window.setTimeout(() => {
+        const el = document.getElementById("chatbot-input") as HTMLInputElement | null;
+        el?.focus();
+      }, 350);
+    }
+  }
+
   return (
     <SiteLayout>
       {/* HERO */}
-      <section className="bg-[#F8F9FF]">
-        <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-8 lg:py-24">
-          <div className="flex flex-col justify-center">
-            <span className="inline-flex w-fit items-center gap-2 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
-              IA + experts agréés
-            </span>
-            <h1 className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-[56px] lg:leading-[1.06]">
-              Mal indemnisé ?<br />
-              <span className="text-primary">On se bat pour vous.</span>
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Claimeur est la première plateforme française qui défend l'assuré, pas l'assureur. Notre IA analyse votre
-              contrat, nos experts négocient, vous encaissez la différence.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href="#chatbot"
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
-              >
-                Évaluer mon dossier <ArrowRight className="h-4 w-4" />
-              </a>
-              <Link
-                to="/comment-ca-marche"
-                className="inline-flex items-center rounded-lg border-2 border-primary bg-transparent px-6 py-3.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
-              >
-                Comment ça marche
-              </Link>
-            </div>
-            <div className="mt-12 grid gap-4 sm:grid-cols-3">
-              {stats.map((s) => (
-                <div
-                  key={s.label}
-                  className="rounded-xl border border-border bg-white px-5 py-5 shadow-[var(--shadow-soft)]"
+      <section className="bg-[#F8F9FF] pb-6 pt-12">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-start lg:gap-16">
+            <div className="flex flex-col">
+              <span className="inline-flex w-fit items-center gap-2 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
+                IA + experts agréés
+              </span>
+              <h1 className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-[56px] lg:leading-[1.06]">
+                Mal indemnisé ?<br />
+                <span className="text-primary">On se bat pour vous.</span>
+              </h1>
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
+                Claimeur est la première plateforme française qui défend l'assuré, pas l'assureur. Notre IA analyse votre
+                contrat, nos experts négocient, vous encaissez la différence.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                <button
+                  type="button"
+                  onClick={scrollToChatbot}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
                 >
-                  <p className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">{s.value}</p>
-                  <p className="mt-2 text-xs font-medium leading-snug text-muted-foreground">{s.label}</p>
-                </div>
-              ))}
+                  Évaluer mon dossier <ArrowRight className="h-4 w-4" />
+                </button>
+                <Link
+                  to="/comment-ca-marche"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Comment ça marche <span aria-hidden>→</span>
+                </Link>
+              </div>
             </div>
-          </div>
-          <div className="flex justify-center lg:justify-end">
-            <HeroIllustration />
+
+            <div className="w-full">
+              <p className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <span aria-hidden>✨</span> Évaluez votre dossier gratuitement
+              </p>
+              <div ref={chatbotRef} className="min-h-[300px] w-full">
+                <QualificationChatbot />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Évaluation guidée */}
-      <section className="border-b border-border bg-white py-16 sm:py-20">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-8 text-center">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-              Évaluation gratuite de votre dossier
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Répondez à quelques questions — environ 2 minutes, sans engagement.
-            </p>
+      {/* STATS */}
+      <section className="bg-[#F8F9FF] pb-8 pt-6">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {stats.map((s) => {
+              const Icon = s.icon;
+              const isCoral = s.tone === "coral";
+              return (
+                <div
+                  key={s.label}
+                  className={`rounded-xl border px-5 py-5 shadow-[var(--shadow-soft)] ${
+                    isCoral ? "border-red-100 bg-[#FFF5F5]" : "border-border bg-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon className={`h-5 w-5 ${isCoral ? "text-[#FF6B6B]" : "text-primary"}`} aria-hidden />
+                    <p
+                      className={`text-2xl font-bold tracking-tight sm:text-3xl ${
+                        isCoral ? "text-[#FF6B6B]" : "text-primary"
+                      }`}
+                    >
+                      {s.value}
+                    </p>
+                  </div>
+                  <p
+                    className={`mt-2 text-xs leading-snug ${
+                      isCoral ? "font-medium text-foreground" : "font-medium text-muted-foreground"
+                    }`}
+                  >
+                    {s.label}
+                  </p>
+                </div>
+              );
+            })}
           </div>
-          <QualificationChatbot />
+        </div>
+      </section>
+
+      {/* TÉMOIGNAGES */}
+      <section className="bg-[#F8F9FF] py-8">
+        <div className="mx-auto max-w-7xl px-6">
+          <h2 className="text-center text-lg font-semibold tracking-tight text-foreground">
+            Ils ont fait valoir leurs droits
+          </h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                name: "Marie L., Paris",
+                quote: "Mon assureur m'avait proposé 4 200€. Claimeur a obtenu 11 800€. Je n'en revenais pas.",
+              },
+              {
+                name: "Thomas B., Lyon",
+                quote: "Dégât des eaux refusé par la MAAF. En 6 semaines, on a obtenu 8 500€ de dédommagements.",
+              },
+              {
+                name: "Sophie M., Bordeaux",
+                quote: "Je ne savais pas que je pouvais contester. L'expert a tout géré, je n'ai rien eu à faire.",
+              },
+            ].map((t) => (
+              <div key={t.name} className="rounded-xl border border-border bg-white p-5 shadow-[var(--shadow-soft)]">
+                <p className="text-4xl font-bold leading-none text-primary" aria-hidden>
+                  “
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-foreground">{t.quote}</p>
+                <p className="mt-4 text-xs font-medium text-muted-foreground">{t.name}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* SIGNAL */}
       <section className="border-y border-border bg-[#F8F9FF]">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="grid items-center gap-8 lg:grid-cols-[auto_1fr] lg:gap-12">
             <span className="inline-flex w-fit items-center gap-2 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
               <TrendingUp className="h-3.5 w-3.5" aria-hidden /> Signal fort
@@ -249,7 +280,7 @@ function HomePage() {
               Voir tout <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             {claims.map(({ icon: Icon, label }) => (
               <div
                 key={label}
