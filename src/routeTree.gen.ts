@@ -13,6 +13,7 @@ import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as SinistresRouteImport } from './routes/sinistres'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InscriptionExpertRouteImport } from './routes/inscription-expert'
+import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ExpertRouteImport } from './routes/expert'
 import { Route as EspaceRouteImport } from './routes/espace'
@@ -23,9 +24,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as ExpertIndexRouteImport } from './routes/expert.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as GuidesExpertAssureRouteImport } from './routes/guides.expert-assure'
+import { Route as GuidesAssureurRefusePayerRouteImport } from './routes/guides.assureur-refuse-payer'
 import { Route as EspaceNouveauRouteImport } from './routes/espace.nouveau'
 import { Route as EspaceDossiersRouteImport } from './routes/espace.dossiers'
 import { Route as DashboardNouveauRouteImport } from './routes/dashboard.nouveau'
@@ -51,6 +55,11 @@ const LoginRoute = LoginRouteImport.update({
 const InscriptionExpertRoute = InscriptionExpertRouteImport.update({
   id: '/inscription-expert',
   path: '/inscription-expert',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesRoute = GuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -103,6 +112,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuidesIndexRoute = GuidesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GuidesRoute,
+} as any)
 const ExpertIndexRoute = ExpertIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -118,6 +132,17 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const GuidesExpertAssureRoute = GuidesExpertAssureRouteImport.update({
+  id: '/expert-assure',
+  path: '/expert-assure',
+  getParentRoute: () => GuidesRoute,
+} as any)
+const GuidesAssureurRefusePayerRoute =
+  GuidesAssureurRefusePayerRouteImport.update({
+    id: '/assureur-refuse-payer',
+    path: '/assureur-refuse-payer',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const EspaceNouveauRoute = EspaceNouveauRouteImport.update({
   id: '/nouveau',
   path: '/nouveau',
@@ -160,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/espace': typeof EspaceRouteWithChildren
   '/expert': typeof ExpertRouteWithChildren
   '/faq': typeof FaqRoute
+  '/guides': typeof GuidesRouteWithChildren
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
   '/sinistres': typeof SinistresRoute
@@ -167,9 +193,12 @@ export interface FileRoutesByFullPath {
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
+  '/guides/expert-assure': typeof GuidesExpertAssureRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/expert/': typeof ExpertIndexRoute
+  '/guides/': typeof GuidesIndexRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
@@ -189,9 +218,12 @@ export interface FileRoutesByTo {
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
+  '/guides/expert-assure': typeof GuidesExpertAssureRoute
   '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/expert': typeof ExpertIndexRoute
+  '/guides': typeof GuidesIndexRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
@@ -208,6 +240,7 @@ export interface FileRoutesById {
   '/espace': typeof EspaceRouteWithChildren
   '/expert': typeof ExpertRouteWithChildren
   '/faq': typeof FaqRoute
+  '/guides': typeof GuidesRouteWithChildren
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
   '/sinistres': typeof SinistresRoute
@@ -215,9 +248,12 @@ export interface FileRoutesById {
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
+  '/guides/expert-assure': typeof GuidesExpertAssureRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/expert/': typeof ExpertIndexRoute
+  '/guides/': typeof GuidesIndexRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
@@ -235,6 +271,7 @@ export interface FileRouteTypes {
     | '/espace'
     | '/expert'
     | '/faq'
+    | '/guides'
     | '/inscription-expert'
     | '/login'
     | '/sinistres'
@@ -242,9 +279,12 @@ export interface FileRouteTypes {
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/guides/assureur-refuse-payer'
+    | '/guides/expert-assure'
     | '/admin/'
     | '/dashboard/'
     | '/expert/'
+    | '/guides/'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
@@ -264,9 +304,12 @@ export interface FileRouteTypes {
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/guides/assureur-refuse-payer'
+    | '/guides/expert-assure'
     | '/admin'
     | '/dashboard'
     | '/expert'
+    | '/guides'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
@@ -282,6 +325,7 @@ export interface FileRouteTypes {
     | '/espace'
     | '/expert'
     | '/faq'
+    | '/guides'
     | '/inscription-expert'
     | '/login'
     | '/sinistres'
@@ -289,9 +333,12 @@ export interface FileRouteTypes {
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/guides/assureur-refuse-payer'
+    | '/guides/expert-assure'
     | '/admin/'
     | '/dashboard/'
     | '/expert/'
+    | '/guides/'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
@@ -308,6 +355,7 @@ export interface RootRouteChildren {
   EspaceRoute: typeof EspaceRouteWithChildren
   ExpertRoute: typeof ExpertRouteWithChildren
   FaqRoute: typeof FaqRoute
+  GuidesRoute: typeof GuidesRouteWithChildren
   InscriptionExpertRoute: typeof InscriptionExpertRoute
   LoginRoute: typeof LoginRoute
   SinistresRoute: typeof SinistresRoute
@@ -342,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/inscription-expert'
       fullPath: '/inscription-expert'
       preLoaderRoute: typeof InscriptionExpertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides': {
+      id: '/guides'
+      path: '/guides'
+      fullPath: '/guides'
+      preLoaderRoute: typeof GuidesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -414,6 +469,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guides/': {
+      id: '/guides/'
+      path: '/'
+      fullPath: '/guides/'
+      preLoaderRoute: typeof GuidesIndexRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/expert/': {
       id: '/expert/'
       path: '/'
@@ -434,6 +496,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/guides/expert-assure': {
+      id: '/guides/expert-assure'
+      path: '/expert-assure'
+      fullPath: '/guides/expert-assure'
+      preLoaderRoute: typeof GuidesExpertAssureRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/assureur-refuse-payer': {
+      id: '/guides/assureur-refuse-payer'
+      path: '/assureur-refuse-payer'
+      fullPath: '/guides/assureur-refuse-payer'
+      preLoaderRoute: typeof GuidesAssureurRefusePayerRouteImport
+      parentRoute: typeof GuidesRoute
     }
     '/espace/nouveau': {
       id: '/espace/nouveau'
@@ -544,6 +620,21 @@ const ExpertRouteChildren: ExpertRouteChildren = {
 const ExpertRouteWithChildren =
   ExpertRoute._addFileChildren(ExpertRouteChildren)
 
+interface GuidesRouteChildren {
+  GuidesAssureurRefusePayerRoute: typeof GuidesAssureurRefusePayerRoute
+  GuidesExpertAssureRoute: typeof GuidesExpertAssureRoute
+  GuidesIndexRoute: typeof GuidesIndexRoute
+}
+
+const GuidesRouteChildren: GuidesRouteChildren = {
+  GuidesAssureurRefusePayerRoute: GuidesAssureurRefusePayerRoute,
+  GuidesExpertAssureRoute: GuidesExpertAssureRoute,
+  GuidesIndexRoute: GuidesIndexRoute,
+}
+
+const GuidesRouteWithChildren =
+  GuidesRoute._addFileChildren(GuidesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AProposRoute: AProposRoute,
@@ -555,6 +646,7 @@ const rootRouteChildren: RootRouteChildren = {
   EspaceRoute: EspaceRouteWithChildren,
   ExpertRoute: ExpertRouteWithChildren,
   FaqRoute: FaqRoute,
+  GuidesRoute: GuidesRouteWithChildren,
   InscriptionExpertRoute: InscriptionExpertRoute,
   LoginRoute: LoginRoute,
   SinistresRoute: SinistresRoute,

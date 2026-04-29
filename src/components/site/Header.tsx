@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 const navItems = [
   { to: "/", label: "Accueil" },
   { to: "/comment-ca-marche", label: "Comment ça marche" },
+  { to: "/guides", label: "Guides" },
   { to: "/sinistres", label: "Sinistres traités" },
   { to: "/tarifs", label: "Tarifs" },
   { to: "/faq", label: "FAQ" },

@@ -5,13 +5,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/a-propos")({
   head: () => ({
     meta: [
-      { title: "À propos — Claimeur" },
+      { title: "À propos — Vertual" },
       {
         name: "description",
         content:
-          "Claimeur est née d'un constat : l'IA est utilisée massivement par les assureurs. Notre mission : remettre l'équilibre du côté de l'assuré.",
+          "Vertual est née d'un constat : l'IA est utilisée massivement par les assureurs. Notre mission : remettre l'équilibre du côté de l'assuré.",
       },
-      { property: "og:title", content: "Notre mission — Claimeur" },
+      { property: "og:title", content: "Notre mission — Vertual" },
       {
         property: "og:description",
         content: "Pourquoi nous existons et ce qui nous différencie.",
@@ -55,7 +55,7 @@ function AboutPage() {
           </h1>
           <p className="mt-5 text-lg text-muted-foreground">
             71 % des assureurs utilisent l'IA pour décider de vos remboursements.
-            Claimeur met cette même technologie au service de votre défense.
+            Vertual met cette même technologie au service de votre défense.
           </p>
         </div>
       </section>
@@ -64,7 +64,7 @@ function AboutPage() {
         <div className="mx-auto max-w-4xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="prose prose-lg max-w-none">
             <h2 className="font-sans tracking-tight text-3xl font-semibold text-primary">
-              Pourquoi Claimeur existe
+              Pourquoi Vertual existe
             </h2>
             <div className="mt-6 space-y-5 text-base leading-relaxed text-foreground">
               <p>
@@ -79,7 +79,7 @@ function AboutPage() {
                 l'assuré seul et un système algorithmique devient insoutenable.
               </p>
               <p>
-                Claimeur combine deux forces : une <strong>IA propriétaire</strong>{" "}
+                Vertual combine deux forces : une <strong>IA propriétaire</strong>{" "}
                 qui analyse les contrats et identifie les marges de négociation, et
                 un <strong>réseau d'experts certifiés</strong> qui pilote chaque
                 dossier de bout en bout. Notre seule mesure de succès : ce que nous

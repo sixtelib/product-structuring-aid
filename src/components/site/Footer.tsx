@@ -77,7 +77,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col gap-4 border-t border-border pt-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Claimeur. Tous droits réservés.</p>
+          <p>© {new Date().getFullYear()} Vertual. Tous droits réservés.</p>
           <p>Document de travail — version pilote</p>
         </div>
       </div>

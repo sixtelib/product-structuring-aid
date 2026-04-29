@@ -1,6 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
+import { AppHelmetProvider } from "@/main";
 
 import appCss from "../styles.css?url";
 
@@ -31,22 +32,23 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Claimeur — Défense des assurés sinistrés" },
+      { title: "Vertual — Expert d'assuré en ligne" },
       {
         name: "description",
         content:
-          "Vous êtes mal indemnisé par votre assureur ? Notre plateforme combine IA et experts pour défendre vos droits. Rémunération au succès uniquement.",
+          "Vertual défend les assurés sinistrés face à leurs assureurs. Analyse gratuite de votre dossier, success fee uniquement.",
       },
+      { property: "og:title", content: "Vertual — Expert d'assuré en ligne" },
+      { property: "og:description", content: "Vertual défend les assurés sinistrés face à leurs assureurs." },
+      { property: "og:url", content: "https://vertual.fr" },
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "fr_FR" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "Claimeur — Défense des assurés sinistrés" },
-      { name: "twitter:title", content: "Claimeur — Défense des assurés sinistrés" },
-      { name: "description", content: "Product Structuring Aid helps organize and build your product's online presence and backend infrastructure." },
-      { property: "og:description", content: "Product Structuring Aid helps organize and build your product's online presence and backend infrastructure." },
-      { name: "twitter:description", content: "Product Structuring Aid helps organize and build your product's online presence and backend infrastructure." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/96702679-4cda-42ea-bfcf-3b6074517208/id-preview-e30b01aa--fde7b2a8-0833-4c89-8027-4dc06ab330d5.lovable.app-1777292236296.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/96702679-4cda-42ea-bfcf-3b6074517208/id-preview-e30b01aa--fde7b2a8-0833-4c89-8027-4dc06ab330d5.lovable.app-1777292236296.png" },
+      { name: "twitter:title", content: "Vertual — Expert d'assuré en ligne" },
+      {
+        name: "twitter:description",
+        content: "Vertual défend les assurés sinistrés face à leurs assureurs.",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -70,7 +72,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <AppHelmetProvider>{children}</AppHelmetProvider>
         <Scripts />
       </body>
     </html>

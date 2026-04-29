@@ -8,7 +8,7 @@ import { Logo } from "@/components/site/Logo";
 export const Route = createFileRoute("/inscription-expert")({
   head: () => ({
     meta: [
-      { title: "Inscription expert — Claimeur" },
+      { title: "Inscription expert — Vertual" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -74,7 +74,7 @@ function ExpertSignupPage() {
         <div className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)]">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Inscription expert d'assuré</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Créez votre compte expert pour rejoindre Claimeur.
+            Créez votre compte expert pour rejoindre Vertual.
           </p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">

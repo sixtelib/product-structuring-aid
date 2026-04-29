@@ -4,6 +4,10 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Logo } from "@/components/site/Logo";
+import {
+  migrateLegacyQualificationLocalStorage,
+  QUALIFICATION_STORAGE_KEYS,
+} from "@/lib/qualificationLocalStorage";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => {
@@ -11,7 +15,7 @@ export const Route = createFileRoute("/auth")({
   },
   head: () => ({
     meta: [
-      { title: "Connexion — Claimeur" },
+      { title: "Connexion — Vertual" },
       { name: "description", content: "Accédez à votre espace assuré pour suivre vos dossiers et échanger avec nos experts." },
       { name: "robots", content: "noindex,nofollow" },
     ],
@@ -31,6 +35,7 @@ function AuthPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    migrateLegacyQualificationLocalStorage();
     if (loading || !user) return;
     if (isAdmin) {
       navigate({ to: "/admin", replace: true });
@@ -40,16 +45,21 @@ function AuthPage() {
       navigate({ to: "/expert", replace: true });
       return;
     }
-    navigate({ to: "/dashboard", replace: true });
+    const hasEvaluation =
+      typeof window !== "undefined" && !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);
+    navigate({ to: hasEvaluation ? "/dashboard/nouveau" : "/dashboard", replace: true });
   }, [loading, isAdmin, isExpert, user, navigate]);
 
   async function signInWithOAuth(provider: "google" | "apple") {
     setBusy(provider);
     try {
+      migrateLegacyQualificationLocalStorage();
+      const hasEvaluation =
+        typeof window !== "undefined" && !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}${hasEvaluation ? "/dashboard/nouveau" : "/dashboard"}`,
         },
       });
       if (error) throw error;
@@ -65,6 +75,7 @@ function AuthPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      migrateLegacyQualificationLocalStorage();
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
@@ -85,7 +96,11 @@ function AuthPage() {
         navigate({ to: "/admin", replace: true });
       } else if (isExpert) {
         navigate({ to: "/expert", replace: true });
-      } else if (mode === "signup" && typeof window !== "undefined" && !!window.localStorage.getItem("claimeur_evaluation")) {
+      } else if (
+        mode === "signup" &&
+        typeof window !== "undefined" &&
+        !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation)
+      ) {
         navigate({ to: "/dashboard/nouveau", replace: true });
       } else {
         navigate({ to: "/dashboard", replace: true });

@@ -5,6 +5,10 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { CLAIM_TYPES } from "@/lib/claim-types";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  migrateLegacyQualificationLocalStorage,
+  QUALIFICATION_STORAGE_KEYS,
+} from "@/lib/qualificationLocalStorage";
 
 export const Route = createFileRoute("/dashboard/nouveau")({
   component: DashboardNouveauPage,
@@ -78,10 +82,15 @@ function DashboardNouveauContent() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const evalRaw = window.localStorage.getItem("claimeur_evaluation");
-    if (evalRaw) setWelcomeEvaluation(evalRaw);
+    migrateLegacyQualificationLocalStorage();
+    const evalRaw = window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);
+    const collectedRaw = window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.collectedData);
+    console.log("[dashboard/nouveau] localStorage:", {
+      [QUALIFICATION_STORAGE_KEYS.evaluation]: evalRaw,
+      [QUALIFICATION_STORAGE_KEYS.collectedData]: collectedRaw,
+    });
 
-    const collectedRaw = window.localStorage.getItem("claimeur_collected_data");
+    if (evalRaw) setWelcomeEvaluation(evalRaw);
     if (!collectedRaw) return;
     try {
       const c = JSON.parse(collectedRaw) as StoredCollectedData;
@@ -101,7 +110,7 @@ function DashboardNouveauContent() {
 
   async function uploadPendingFilesForDossier(dossierId: string) {
     if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem("claimeur_pending_files");
+    const raw = window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.pendingFiles);
     if (!raw) return;
 
     let files: PendingStoredFile[] = [];
@@ -109,11 +118,11 @@ function DashboardNouveauContent() {
       const parsed = JSON.parse(raw) as unknown;
       files = Array.isArray(parsed) ? (parsed as PendingStoredFile[]) : [];
     } catch {
-      window.localStorage.removeItem("claimeur_pending_files");
+      window.localStorage.removeItem(QUALIFICATION_STORAGE_KEYS.pendingFiles);
       return;
     }
     if (files.length === 0) {
-      window.localStorage.removeItem("claimeur_pending_files");
+      window.localStorage.removeItem(QUALIFICATION_STORAGE_KEYS.pendingFiles);
       return;
     }
 
@@ -144,7 +153,7 @@ function DashboardNouveauContent() {
       }
     }
 
-    window.localStorage.removeItem("claimeur_pending_files");
+    window.localStorage.removeItem(QUALIFICATION_STORAGE_KEYS.pendingFiles);
     if (uploaded > 0) {
       toast.success(`${uploaded} document${uploaded > 1 ? "s" : ""} ajouté${uploaded > 1 ? "s" : ""} au dossier.`);
     }
@@ -194,8 +203,8 @@ function DashboardNouveauContent() {
 
       await uploadPendingFilesForDossier(data.id);
       if (typeof window !== "undefined") {
-        window.localStorage.removeItem("claimeur_evaluation");
-        window.localStorage.removeItem("claimeur_collected_data");
+        window.localStorage.removeItem(QUALIFICATION_STORAGE_KEYS.evaluation);
+        window.localStorage.removeItem(QUALIFICATION_STORAGE_KEYS.collectedData);
       }
       toast.success("Dossier créé.");
       navigate({ to: "/dashboard/dossiers/$id", params: { id: data.id } });

@@ -6,13 +6,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — Claimeur" },
+      { title: "Contact — Vertual" },
       {
         name: "description",
         content:
           "Une question, un dossier complexe, un partenariat ? Notre équipe vous répond sous 24h ouvrées.",
       },
-      { property: "og:title", content: "Contact — Claimeur" },
+      { property: "og:title", content: "Contact — Vertual" },
       {
         property: "og:description",
         content: "Écrivez-nous, nous vous répondons sous 24h ouvrées.",

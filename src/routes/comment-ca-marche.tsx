@@ -5,13 +5,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/comment-ca-marche")({
   head: () => ({
     meta: [
-      { title: "Comment ça marche — Claimeur" },
+      { title: "Comment ça marche — Vertual" },
       {
         name: "description",
         content:
           "De la qualification à l'indemnisation : 4 étapes pour confier votre dossier à nos experts. Délais, méthode, transparence totale.",
       },
-      { property: "og:title", content: "Comment ça marche — Claimeur" },
+      { property: "og:title", content: "Comment ça marche — Vertual" },
       {
         property: "og:description",
         content: "4 étapes simples pour récupérer ce que votre assureur vous doit.",

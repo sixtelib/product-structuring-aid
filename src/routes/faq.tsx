@@ -6,13 +6,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "Questions fréquentes — Claimeur" },
+      { title: "Questions fréquentes — Vertual" },
       {
         name: "description",
         content:
           "Qui est l'expert d'assuré ? Est-ce légal ? Combien de temps ça prend ? Toutes les réponses pour comprendre comment nous défendons vos droits.",
       },
-      { property: "og:title", content: "FAQ — Claimeur" },
+      { property: "og:title", content: "FAQ — Vertual" },
       {
         property: "og:description",
         content: "Vos questions sur la défense des assurés, nos délais et notre méthode.",

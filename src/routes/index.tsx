@@ -23,19 +23,19 @@ import { QualificationChatbot } from "@/components/site/QualificationChatbot";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Claimeur — Défense des assurés sinistrés face aux assureurs" },
+      { title: "Vertual — Expert d'assuré en ligne" },
       {
         name: "description",
         content:
-          "Vous êtes mal indemnisé ? Claimeur combine IA et experts pour obtenir l'indemnisation que vous méritez. Évaluation gratuite, rémunération au succès uniquement.",
+          "Vertual défend les assurés sinistrés face à leurs assureurs. Analyse gratuite de votre dossier, success fee uniquement.",
       },
-      { property: "og:title", content: "Claimeur — La plateforme qui défend les assurés" },
+      { property: "og:title", content: "Vertual — Expert d'assuré en ligne" },
       {
         property: "og:description",
-        content:
-          "Indemnisation maximale grâce à l'IA et nos experts. Vous ne payez que si nous obtenons plus.",
+        content: "Vertual défend les assurés sinistrés face à leurs assureurs.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://vertual.fr" }],
   }),
   component: HomePage,
 });
@@ -111,7 +111,7 @@ function HomePage() {
                 <span className="text-primary">On se bat pour vous.</span>
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-                Claimeur est la première plateforme française qui défend l'assuré, pas l'assureur. Notre IA analyse votre
+                Vertual est la première plateforme française qui défend l'assuré, pas l'assureur. Notre IA analyse votre
                 contrat, nos experts négocient, vous encaissez la différence.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -191,7 +191,7 @@ function HomePage() {
             {[
               {
                 name: "Marie L., Paris",
-                quote: "Mon assureur m'avait proposé 4 200€. Claimeur a obtenu 11 800€. Je n'en revenais pas.",
+                quote: "Mon assureur m'avait proposé 4 200€. Vertual a obtenu 11 800€. Je n'en revenais pas.",
               },
               {
                 name: "Thomas B., Lyon",

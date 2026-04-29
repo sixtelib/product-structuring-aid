@@ -1,0 +1,84 @@
+import { Helmet } from "react-helmet-async";
+import { Link } from "@tanstack/react-router";
+import { BookOpen, ArrowRight, Scale } from "lucide-react";
+import { SiteLayout } from "@/components/site/SiteLayout";
+
+export function GuidesIndexPage() {
+  return (
+    <SiteLayout>
+      <Helmet>
+        <title>Guides assuré — Vertual</title>
+        <meta
+          name="description"
+          content="Guides pratiques pour comprendre l'expertise d'assuré, vos droits après un sinistre et comment maximiser votre indemnisation."
+        />
+        <link rel="canonical" href="https://vertual.fr/guides" />
+      </Helmet>
+
+      <section className="bg-[#F8F9FF]">
+        <div className="mx-auto max-w-4xl px-4 py-16 text-foreground sm:px-6 sm:py-20 lg:px-8">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">Ressources</p>
+          <h1 className="mt-3 font-sans text-3xl font-semibold tracking-tight text-primary sm:text-4xl">
+            Guides
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+            Des contenus clairs pour y voir plus clair après un sinistre : refus d'indemnisation, expert d'assuré,
+            recours et honoraires.
+          </p>
+        </div>
+      </section>
+
+      <section className="bg-background">
+        <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <ul className="grid gap-5 md:grid-cols-2">
+            <li>
+              <Link
+                to="/guides/expert-assure"
+                className="group flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition-shadow hover:shadow-md sm:flex-row sm:items-start sm:gap-5"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
+                  <BookOpen className="h-6 w-6" />
+                </span>
+                <div className="mt-4 sm:mt-0">
+                  <h2 className="font-sans text-xl font-semibold tracking-tight text-primary group-hover:underline">
+                    Qu'est-ce qu'un expert d'assuré ?
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    Rôle, honoraires, différence avec l'expert de l'assureur et déroulement d'une mission.
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    Lire le guide
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/guides/assureur-refuse-payer"
+                className="group flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition-shadow hover:shadow-md sm:flex-row sm:items-start sm:gap-5"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
+                  <Scale className="h-6 w-6" />
+                </span>
+                <div className="mt-4 sm:mt-0">
+                  <h2 className="font-sans text-xl font-semibold tracking-tight text-primary group-hover:underline">
+                    Assureur refuse de payer : que faire ?
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    Les 5 recours concrets — contrat, contestation, expert d'assuré, médiateur, justice — et
+                    l'ordre dans lequel les enchaîner.
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    Lire le guide
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </SiteLayout>
+  );
+}

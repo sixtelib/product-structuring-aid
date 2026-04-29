@@ -4,7 +4,7 @@ import { AppGuard } from "@/components/app/AppGuard";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Mon espace — Claimeur" },
+      { title: "Mon espace — Vertual" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),

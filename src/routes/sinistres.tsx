@@ -15,13 +15,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/sinistres")({
   head: () => ({
     meta: [
-      { title: "Sinistres traités — Claimeur" },
+      { title: "Sinistres traités — Vertual" },
       {
         name: "description",
         content:
           "Habitation, dégât des eaux, incendie, auto, catastrophe naturelle, santé : nous défendons les assurés sur tous les sinistres dont l'enjeu dépasse 3 000 €.",
       },
-      { property: "og:title", content: "Sinistres traités — Claimeur" },
+      { property: "og:title", content: "Sinistres traités — Vertual" },
       {
         property: "og:description",
         content: "Tous les sinistres où une renégociation peut faire la différence.",
