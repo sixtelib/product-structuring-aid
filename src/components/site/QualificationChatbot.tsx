@@ -27,12 +27,26 @@ const EMPTY_DATA: CollectedData = {
 const WELCOME =
   "Bonjour 👋 Décrivez-moi votre situation en quelques mots. Type de sinistre, ce que votre assureur vous a proposé, ce qui vous semble injuste.";
 
-const SYSTEM_PROMPT = `Tu es un conseiller Vertual (assurance, France). Collecte en peu d'échanges : type de sinistre, assureur, proposition de l'assureur, date approximative, description courte.
-Réponds en français, une question à la fois si besoin.
+const SYSTEM_PROMPT = `Tu es un conseiller Vertual (assurance, France). Tu collectes les informations pour orienter l'utilisateur.
+
+Ordre strict des questions : pose une seule question par message, dans cet ordre exact, sans en sauter une :
+1) Ce que l'assureur a proposé (refus total, offre trop basse, absence de réponse, offre partielle, sinistre ignoré, ou autre).
+2) Le nom de l'assureur.
+3) Le montant proposé par l'assureur (ou l'ordre de grandeur).
+4) La date approximative du sinistre.
+5) Si l'assuré dispose de documents (police, rapport, courriers, etc.).
+6) Si l'assuré a déjà tenté de contester (seul, avec un avocat, recours précédent, etc.).
+
+Le type de sinistre peut déjà avoir été indiqué par l'utilisateur (boutons ou message) ; ne le redemande pas si tu l'as déjà.
+
+Ne JAMAIS lister des options dans ton texte : pas de tirets, pas de listes à puces, pas d'énumération « par exemple : A, B, C ». Les choix possibles sont affichés sous forme de boutons (pills) à côté du chat ; contente-toi de poser une question courte et simple, sans proposer toi-même les réponses.
+
+Réponds en français.
 À la fin de chaque message, si tu as des infos structurées, ajoute un bloc JSON entre <data> et </data> :
 {"type_sinistre":"","assureur":"","montant_propose":"","date_sinistre":"","description":""}
+Remplis le champ description avec une synthèse courte incluant, quand elles sont connues : la proposition de l'assureur, les documents dont dispose l'assuré, et ses tentatives de contestation.
 Quand tu peux évaluer brièvement, mets l'évaluation entre <evaluation> et </evaluation> (pourcentage de succès, 2 arguments, gain potentiel estimé en euros).
-N'utilise pas le tiret long —.`;
+N'utilise pas le tiret long (tiret cadratin) ; préfère une virgule.`;
 
 const CATEGORIES: { label: string; text: string }[] = [
   { label: "Dégât des eaux", text: "Mon sinistre est de type : Dégât des eaux" },
@@ -65,6 +79,54 @@ function parseClaudeResponse(text: string) {
     .replace(/<evaluation>[\s\S]*?<\/evaluation>/gi, "")
     .trim();
   return { cleanText, parsedData, evaluation };
+}
+
+function suggestionsFromLastClaude(messages: Msg[]): string[] {
+  const lastClaude = messages.filter((m) => m.role === "claude").slice(-1)[0];
+  const lastClaudeMsg = lastClaude?.text?.toLowerCase() ?? "";
+  // Le message d'accueil contient « proposé » mais ne vise pas le montant ; éviter la branche montant.
+  if (messages.filter((m) => m.role === "claude").length === 1 && lastClaude?.text === WELCOME) {
+    return ["Refus total", "Offre trop basse", "Pas encore de réponse", "Offre partielle", "Sinistre ignoré"];
+  }
+
+  if (
+    lastClaudeMsg.includes("assureur") &&
+    (lastClaudeMsg.includes("nom") || lastClaudeMsg.includes("quel"))
+  ) {
+    return ["AXA", "MAIF", "Groupama", "MAAF", "Allianz", "MMA", "Generali", "Autre"];
+  }
+  if (
+    lastClaudeMsg.includes("montant") ||
+    lastClaudeMsg.includes("somme") ||
+    lastClaudeMsg.includes("proposé") ||
+    lastClaudeMsg.includes("indemnisation")
+  ) {
+    return [
+      "Moins de 1 000€",
+      "1 000€ à 5 000€",
+      "5 000€ à 20 000€",
+      "20 000€ à 50 000€",
+      "Plus de 50 000€",
+    ];
+  }
+  if (
+    lastClaudeMsg.includes("date") ||
+    lastClaudeMsg.includes("quand") ||
+    lastClaudeMsg.includes("mois") ||
+    lastClaudeMsg.includes("sinistre a eu lieu")
+  ) {
+    return ["Moins d'1 mois", "1 à 3 mois", "3 à 6 mois", "6 mois à 1 an", "Plus d'1 an"];
+  }
+  if (lastClaudeMsg.includes("document") || lastClaudeMsg.includes("pièce") || lastClaudeMsg.includes("police")) {
+    return ["Oui, j'ai tous les documents", "J'ai quelques documents", "Pas encore de documents"];
+  }
+  if (lastClaudeMsg.includes("contesté") || lastClaudeMsg.includes("démarche") || lastClaudeMsg.includes("tenté")) {
+    return ["Première tentative", "J'ai déjà contesté sans succès", "J'ai un avocat sans résultat"];
+  }
+  if (lastClaudeMsg.includes("refus") || lastClaudeMsg.includes("proposé") || lastClaudeMsg.includes("offre")) {
+    return ["Refus total", "Offre trop basse", "Pas encore de réponse", "Offre partielle"];
+  }
+  return [];
 }
 
 function renderInlineBold(text: string) {
@@ -108,11 +170,7 @@ export function QualificationChatbot() {
   }, []);
 
   useEffect(() => {
-    const n = messages.filter((m) => m.role === "claude").length;
-    if (n === 1) setSuggestions(["Refus total", "Offre trop basse", "Pas encore de réponse"]);
-    else if (n === 2) setSuggestions(["Moins de 2 000€", "2 000€ à 10 000€", "Plus de 10 000€"]);
-    else if (n === 3) setSuggestions(["Moins d'1 mois", "1 à 6 mois", "Plus d'1 an"]);
-    else setSuggestions([]);
+    setSuggestions(suggestionsFromLastClaude(messages));
   }, [messages]);
 
   useEffect(() => {

@@ -34,29 +34,29 @@ function buildUserPrompt(input: DossierSummaryInput) {
   const docs = input.documents
     .slice(0, 30)
     .map((d) => {
-      const when = d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : "—";
-      const st = d.statut ?? "—";
+      const when = d.created_at ? new Date(d.created_at).toLocaleDateString("fr-FR") : ", ";
+      const st = d.statut ?? ", ";
       return `- ${d.nom} (statut: ${st}, ajouté: ${when})`;
     })
     .join("\n");
 
   const opened = input.date_ouverture
     ? new Date(input.date_ouverture).toLocaleDateString("fr-FR")
-    : "—";
-  const incident = input.date_sinistre ? new Date(input.date_sinistre).toLocaleDateString("fr-FR") : "—";
+    : ", ";
+  const incident = input.date_sinistre ? new Date(input.date_sinistre).toLocaleDateString("fr-FR") : ", ";
 
   return [
     "Voici les données du dossier (France) :",
-    `- ID: ${input.id ?? "—"}`,
+    `- ID: ${input.id ?? ", "}`,
     `- Type de sinistre: ${input.type_sinistre}`,
     `- Statut: ${input.statut}`,
     `- Date d'ouverture: ${opened}`,
     `- Date du sinistre: ${incident}`,
-    `- Assureur: ${input.assureur_nom ?? "—"}`,
+    `- Assureur: ${input.assureur_nom ?? ", "}`,
     `- Montant estimé: ${eur(input.montant_estime)}`,
     "",
     "Description (si disponible) :",
-    input.description?.trim() ? input.description.trim() : "—",
+    input.description?.trim() ? input.description.trim() : ", ",
     "",
     `Documents (${input.documents.length}) :`,
     docs || "- (aucun)",

@@ -202,27 +202,27 @@ export function ExpertAssurePage() {
               </h2>
               <ol className="mt-6 space-y-6 text-base leading-relaxed text-foreground">
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 1 — Analyse du dossier</h3>
+                  <h3 className="font-semibold text-foreground">Étape 1 ,  Analyse du dossier</h3>
                   <p className="mt-1 text-muted-foreground">
                     Examen du contrat, des circonstances, des documents.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 2 — Visite des lieux</h3>
+                  <h3 className="font-semibold text-foreground">Étape 2 ,  Visite des lieux</h3>
                   <p className="mt-1 text-muted-foreground">Constat indépendant et exhaustif des dommages.</p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 3 — Chiffrage contradictoire</h3>
+                  <h3 className="font-semibold text-foreground">Étape 3 ,  Chiffrage contradictoire</h3>
                   <p className="mt-1 text-muted-foreground">
                     Évaluation indépendante basée sur les garanties du contrat.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 4 — Réunion contradictoire</h3>
+                  <h3 className="font-semibold text-foreground">Étape 4 ,  Réunion contradictoire</h3>
                   <p className="mt-1 text-muted-foreground">Négociation entre les deux experts.</p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 5 — Accord et indemnisation</h3>
+                  <h3 className="font-semibold text-foreground">Étape 5 ,  Accord et indemnisation</h3>
                   <p className="mt-1 text-muted-foreground">Versement de l'indemnisation négociée.</p>
                 </li>
               </ol>
@@ -268,7 +268,7 @@ export function ExpertAssurePage() {
                     Puis-je intervenir après avoir signé le PV ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
-                    C'est plus complexe mais parfois possible — consultez rapidement.
+                    C'est plus complexe mais parfois possible ,  consultez rapidement.
                   </dd>
                 </div>
                 <div>

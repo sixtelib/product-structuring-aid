@@ -13,6 +13,7 @@ import {
   Flame,
   CloudRain,
   ArrowRight,
+  ChevronRight,
   ClipboardList,
   Upload,
   CircleDollarSign,
@@ -23,13 +24,13 @@ import { QualificationChatbot } from "@/components/site/QualificationChatbot";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Vertual — Expert d'assuré en ligne" },
+      { title: "Vertual ,  Expert d'assuré en ligne" },
       {
         name: "description",
         content:
           "Vertual défend les assurés sinistrés face à leurs assureurs. Analyse gratuite de votre dossier, success fee uniquement.",
       },
-      { property: "og:title", content: "Vertual — Expert d'assuré en ligne" },
+      { property: "og:title", content: "Vertual ,  Expert d'assuré en ligne" },
       {
         property: "og:description",
         content: "Vertual défend les assurés sinistrés face à leurs assureurs.",
@@ -225,7 +226,7 @@ function HomePage() {
               <span className="text-primary">71 %</span> des assureurs utilisent désormais l'IA pour décider de vos
               remboursements.{" "}
               <span className="font-normal text-muted-foreground">
-                L'assuré se retrouve seul face à un algorithme — sans outil pour se défendre.
+                L'assuré se retrouve seul face à un algorithme ,  sans outil pour se défendre.
               </span>
             </p>
           </div>
@@ -345,6 +346,39 @@ function HomePage() {
           >
             Évaluer mon dossier <ArrowRight className="h-4 w-4" />
           </a>
+        </div>
+      </section>
+
+      {/* GUIDES */}
+      <section aria-labelledby="guides-home-heading" className="border-t border-[#E5E7EB] bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nos guides gratuits</p>
+          <h2
+            id="guides-home-heading"
+            className="mt-3 max-w-3xl text-2xl font-bold tracking-tight text-[#5B50F0] sm:text-3xl"
+          >
+            Tout comprendre sur vos droits face à l'assureur
+          </h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <Link
+              to="/guides/expert-assure"
+              className="flex items-center justify-between gap-4 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] px-5 py-5 transition-colors hover:border-[#5B50F0]/30 hover:bg-[#F0F2FF] sm:px-6 sm:py-6"
+            >
+              <span className="text-left text-base font-semibold leading-snug text-[#5B50F0] sm:text-lg">
+                Qu'est-ce qu'un expert d'assuré ?
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-[#5B50F0]" aria-hidden />
+            </Link>
+            <Link
+              to="/guides/assureur-refuse-payer"
+              className="flex items-center justify-between gap-4 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] px-5 py-5 transition-colors hover:border-[#5B50F0]/30 hover:bg-[#F0F2FF] sm:px-6 sm:py-6"
+            >
+              <span className="text-left text-base font-semibold leading-snug text-[#5B50F0] sm:text-lg">
+                Que faire si mon assureur refuse de payer ?
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-[#5B50F0]" aria-hidden />
+            </Link>
+          </div>
         </div>
       </section>
     </SiteLayout>

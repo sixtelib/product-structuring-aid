@@ -151,13 +151,13 @@ function CaseDetailPage() {
         <div className="rounded-lg border border-border bg-background p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Préjudice estimé</p>
           <p className="mt-1 font-sans tracking-tight text-2xl font-semibold text-foreground">
-            {c.estimated_amount != null ? `${Number(c.estimated_amount).toLocaleString("fr-FR")} €` : "—"}
+            {c.estimated_amount != null ? `${Number(c.estimated_amount).toLocaleString("fr-FR")} €` : ", "}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-background p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Offre assureur</p>
           <p className="mt-1 font-sans tracking-tight text-2xl font-semibold text-foreground">
-            {c.insurer_offer != null ? `${Number(c.insurer_offer).toLocaleString("fr-FR")} €` : "—"}
+            {c.insurer_offer != null ? `${Number(c.insurer_offer).toLocaleString("fr-FR")} €` : ", "}
           </p>
         </div>
         <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">

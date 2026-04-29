@@ -15,7 +15,7 @@ export const Route = createFileRoute("/auth")({
   },
   head: () => ({
     meta: [
-      { title: "Connexion — Vertual" },
+      { title: "Connexion ,  Vertual" },
       { name: "description", content: "Accédez à votre espace assuré pour suivre vos dossiers et échanger avec nos experts." },
       { name: "robots", content: "noindex,nofollow" },
     ],

@@ -5,13 +5,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/comment-ca-marche")({
   head: () => ({
     meta: [
-      { title: "Comment ça marche — Vertual" },
+      { title: "Comment ça marche ,  Vertual" },
       {
         name: "description",
         content:
           "De la qualification à l'indemnisation : 4 étapes pour confier votre dossier à nos experts. Délais, méthode, transparence totale.",
       },
-      { property: "og:title", content: "Comment ça marche — Vertual" },
+      { property: "og:title", content: "Comment ça marche ,  Vertual" },
       {
         property: "og:description",
         content: "4 étapes simples pour récupérer ce que votre assureur vous doit.",
@@ -125,7 +125,7 @@ function HowItWorksPage() {
             <p className="mt-3 text-muted-foreground">
               Une analyse de dossier complète est rendue sous 48h. La phase de
               négociation avec l'assureur dure en moyenne 4 à 12 semaines selon la
-              complexité — vous êtes informé à chaque étape.
+              complexité ,  vous êtes informé à chaque étape.
             </p>
             <Link
               to="/"

@@ -56,7 +56,7 @@ export function GuidesIndexPage() {
                     Assureur refuse de payer : que faire ?
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Les 5 recours concrets — contrat, contestation, expert d'assuré, médiateur, justice — et
+                    Les 5 recours concrets ,  contrat, contestation, expert d'assuré, médiateur, justice ,  et
                     l'ordre dans lequel les enchaîner.
                   </p>
                   <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">

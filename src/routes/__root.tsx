@@ -31,19 +31,19 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Vertual — Expert d'assuré en ligne" },
+      { title: "Vertual ,  Expert d'assuré en ligne" },
       {
         name: "description",
         content:
           "Vertual défend les assurés sinistrés face à leurs assureurs. Analyse gratuite de votre dossier, success fee uniquement.",
       },
-      { property: "og:title", content: "Vertual — Expert d'assuré en ligne" },
+      { property: "og:title", content: "Vertual ,  Expert d'assuré en ligne" },
       { property: "og:description", content: "Vertual défend les assurés sinistrés face à leurs assureurs." },
       { property: "og:url", content: "https://vertual.fr" },
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "fr_FR" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Vertual — Expert d'assuré en ligne" },
+      { name: "twitter:title", content: "Vertual ,  Expert d'assuré en ligne" },
       {
         name: "twitter:description",
         content: "Vertual défend les assurés sinistrés face à leurs assureurs.",

@@ -3,11 +3,11 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 
 const toc = [
   { href: "#pourquoi", label: "Comprendre pourquoi votre assureur refuse" },
-  { href: "#contrat", label: "Recours 1 — Relire votre contrat en détail" },
-  { href: "#lettre", label: "Recours 2 — Envoyer une lettre de contestation" },
-  { href: "#expert", label: "Recours 3 — Faire appel à un expert d'assuré" },
-  { href: "#mediateur", label: "Recours 4 — Saisir le médiateur de l'assurance" },
-  { href: "#judiciaire", label: "Recours 5 — Engager une procédure judiciaire" },
+  { href: "#contrat", label: "Recours 1 ,  Relire votre contrat en détail" },
+  { href: "#lettre", label: "Recours 2 ,  Envoyer une lettre de contestation" },
+  { href: "#expert", label: "Recours 3 ,  Faire appel à un expert d'assuré" },
+  { href: "#mediateur", label: "Recours 4 ,  Saisir le médiateur de l'assurance" },
+  { href: "#judiciaire", label: "Recours 5 ,  Engager une procédure judiciaire" },
   { href: "#ordre", label: "Dans quel ordre procéder ?" },
   { href: "#faq", label: "Questions fréquentes" },
 ] as const;
@@ -110,7 +110,7 @@ export function AssureurRefusePayerPage() {
             </p>
             <p className="mt-4 text-base leading-relaxed text-foreground">
               La bonne nouvelle : un refus d'assurance n'est jamais définitif. Vous disposez de plusieurs recours
-              concrets — et l'un d'eux, en particulier, change radicalement le rapport de force en votre faveur.
+              concrets ,  et l'un d'eux, en particulier, change radicalement le rapport de force en votre faveur.
             </p>
           </header>
 
@@ -144,7 +144,7 @@ export function AssureurRefusePayerPage() {
               <ul className="mt-4 list-disc space-y-3 pl-5 text-base leading-relaxed text-foreground">
                 <li>
                   <strong>Refus total</strong> : l'assureur considère que le sinistre n'est pas couvert par votre
-                  contrat. C'est le cas le plus fréquent — et souvent le plus contestable.
+                  contrat. C'est le cas le plus fréquent ,  et souvent le plus contestable.
                 </li>
                 <li>
                   <strong>Refus partiel</strong> : l'assureur accepte de prendre en charge une partie du sinistre
@@ -165,10 +165,10 @@ export function AssureurRefusePayerPage() {
 
             <section id="contrat" className="scroll-mt-24">
               <h2 className="font-sans text-2xl font-semibold tracking-tight text-[#5B50F0]">
-                Recours 1 — Relire votre contrat en détail
+                Recours 1 ,  Relire votre contrat en détail
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
-                C'est l'étape que la plupart des assurés sautent — et c'est une erreur.
+                C'est l'étape que la plupart des assurés sautent ,  et c'est une erreur.
               </p>
               <p className="mt-4 text-base leading-relaxed text-foreground">
                 Les contrats d'assurance sont complexes, mais ils contiennent souvent des garanties que vous n'avez
@@ -198,14 +198,14 @@ export function AssureurRefusePayerPage() {
               </ul>
               <blockquote className="mt-6 border-l-4 border-[#5B50F0] bg-[#F8F9FF] py-3 pl-4 pr-4 text-sm leading-relaxed text-foreground">
                 <strong className="text-[#5B50F0]">À retenir :</strong> si vous ne comprenez pas votre contrat,
-                c'est normal — il n'est pas fait pour être compris facilement. C'est précisément le rôle d'un expert
+                c'est normal ,  il n'est pas fait pour être compris facilement. C'est précisément le rôle d'un expert
                 d'assuré que de le décrypter pour vous.
               </blockquote>
             </section>
 
             <section id="lettre" className="scroll-mt-24">
               <h2 className="font-sans text-2xl font-semibold tracking-tight text-[#5B50F0]">
-                Recours 2 — Envoyer une lettre de contestation
+                Recours 2 ,  Envoyer une lettre de contestation
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
                 Une fois que vous avez identifié les points faibles du refus de votre assureur, vous pouvez envoyer
@@ -231,10 +231,10 @@ export function AssureurRefusePayerPage() {
 
             <section id="expert" className="scroll-mt-24">
               <h2 className="font-sans text-2xl font-semibold tracking-tight text-[#5B50F0]">
-                Recours 3 — Faire appel à un expert d'assuré
+                Recours 3 ,  Faire appel à un expert d'assuré
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
-                C'est le recours le plus efficace — et pourtant le moins connu.
+                C'est le recours le plus efficace ,  et pourtant le moins connu.
               </p>
               <p className="mt-4 text-base leading-relaxed text-foreground">
                 Un <strong>expert d'assuré</strong> est un professionnel indépendant dont le seul rôle est de
@@ -256,18 +256,18 @@ export function AssureurRefusePayerPage() {
               </p>
               <p className="mt-2 text-base leading-relaxed text-foreground">
                 <strong>Résultat moyen :</strong> les dossiers traités avec un expert d'assuré aboutissent à des
-                indemnisations significativement supérieures aux offres initiales des assureurs — souvent le
+                indemnisations significativement supérieures aux offres initiales des assureurs ,  souvent le
                 double ou plus.
               </p>
             </section>
 
             <section id="mediateur" className="scroll-mt-24">
               <h2 className="font-sans text-2xl font-semibold tracking-tight text-[#5B50F0]">
-                Recours 4 — Saisir le médiateur de l'assurance
+                Recours 4 ,  Saisir le médiateur de l'assurance
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
                 Si votre assureur maintient son refus après votre lettre de contestation, vous pouvez saisir le{" "}
-                <strong>Médiateur de l'Assurance</strong> — un organisme indépendant gratuit.
+                <strong>Médiateur de l'Assurance</strong> ,  un organisme indépendant gratuit.
               </p>
               <h3 className="mt-6 font-sans text-lg font-semibold text-foreground">
                 Conditions pour saisir le médiateur :
@@ -306,7 +306,7 @@ export function AssureurRefusePayerPage() {
 
             <section id="judiciaire" className="scroll-mt-24">
               <h2 className="font-sans text-2xl font-semibold tracking-tight text-[#5B50F0]">
-                Recours 5 — Engager une procédure judiciaire
+                Recours 5 ,  Engager une procédure judiciaire
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
                 C'est le recours de dernier ressort. Il est envisageable quand tous les autres ont échoué et que les
@@ -315,7 +315,7 @@ export function AssureurRefusePayerPage() {
               <h3 className="mt-6 font-sans text-lg font-semibold text-foreground">Avant de saisir un tribunal :</h3>
               <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground">
                 <li>
-                  Vérifiez si votre contrat inclut une <strong>garantie protection juridique</strong> — elle peut
+                  Vérifiez si votre contrat inclut une <strong>garantie protection juridique</strong> ,  elle peut
                   couvrir vos frais d'avocat
                 </li>
                 <li>Consultez un avocat spécialisé en droit des assurances pour évaluer vos chances</li>
@@ -345,25 +345,25 @@ export function AssureurRefusePayerPage() {
               </p>
               <ol className="mt-6 space-y-5 text-base leading-relaxed text-foreground">
                 <li>
-                  <strong>Étape 1 (immédiat)</strong> — Demandez le refus par écrit avec les clauses invoquées.
+                  <strong>Étape 1 (immédiat)</strong> ,  Demandez le refus par écrit avec les clauses invoquées.
                 </li>
                 <li>
-                  <strong>Étape 2 (1 à 2 semaines)</strong> — Relisez votre contrat en détail, identifiez les
+                  <strong>Étape 2 (1 à 2 semaines)</strong> ,  Relisez votre contrat en détail, identifiez les
                   points contestables.
                 </li>
                 <li>
-                  <strong>Étape 3 (en parallèle)</strong> — Mandatez un expert d'assuré. C'est l'étape qui change le
+                  <strong>Étape 3 (en parallèle)</strong> ,  Mandatez un expert d'assuré. C'est l'étape qui change le
                   plus le rapport de force, sans risque financier pour vous.
                 </li>
                 <li>
-                  <strong>Étape 4 (si l'expert n'a pas suffi)</strong> — Envoyez une lettre de contestation formelle
+                  <strong>Étape 4 (si l'expert n'a pas suffi)</strong> ,  Envoyez une lettre de contestation formelle
                   au service réclamation.
                 </li>
                 <li>
-                  <strong>Étape 5 (2 mois après la lettre)</strong> — Saisissez le médiateur de l'assurance.
+                  <strong>Étape 5 (2 mois après la lettre)</strong> ,  Saisissez le médiateur de l'assurance.
                 </li>
                 <li>
-                  <strong>Étape 6 (dernier recours)</strong> — Consultez un avocat et évaluez la voie judiciaire.
+                  <strong>Étape 6 (dernier recours)</strong> ,  Consultez un avocat et évaluez la voie judiciaire.
                 </li>
               </ol>
               <blockquote className="mt-6 border-l-4 border-[#5B50F0] bg-[#F8F9FF] py-3 pl-4 pr-4 text-sm leading-relaxed text-foreground">
@@ -435,14 +435,14 @@ export function AssureurRefusePayerPage() {
                 de l'intérieur.
               </p>
               <p className="mt-4 text-base font-medium leading-relaxed text-foreground">
-                Votre assureur refuse de payer ? Décrivez votre situation — nous analysons gratuitement si votre
+                Votre assureur refuse de payer ? Décrivez votre situation ,  nous analysons gratuitement si votre
                 dossier mérite un recours.
               </p>
             </section>
           </div>
 
           <p className="mt-12 text-center text-xs text-muted-foreground">
-            Article rédigé par l'équipe Vertual — avril 2026 · Dernière mise à jour : avril 2026
+            Article rédigé par l'équipe Vertual ,  avril 2026 · Dernière mise à jour : avril 2026
           </p>
 
           <footer className="mt-10 border-t border-border pt-10 text-center">

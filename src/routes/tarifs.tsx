@@ -5,13 +5,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/tarifs")({
   head: () => ({
     meta: [
-      { title: "Tarifs — Vertual" },
+      { title: "Tarifs ,  Vertual" },
       {
         name: "description",
         content:
           "Rémunération uniquement au succès : 10 % de l'indemnisation supplémentaire obtenue. Gratuit si nous n'obtenons rien. Aucun frais caché.",
       },
-      { property: "og:title", content: "Tarifs — Vertual" },
+      { property: "og:title", content: "Tarifs ,  Vertual" },
       {
         property: "og:description",
         content:

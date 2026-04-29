@@ -268,9 +268,9 @@ function ExpertDossierDetailPage() {
 
               <div className="w-full max-w-sm rounded-xl border border-border bg-secondary p-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Assuré</p>
-                <p className="mt-2 text-sm font-semibold text-foreground">{assure?.full_name || "—"}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{assure?.id ? `Email : ${assure.id}` : "Email : —"}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{assure?.phone ? `Téléphone : ${assure.phone}` : "Téléphone : —"}</p>
+                <p className="mt-2 text-sm font-semibold text-foreground">{assure?.full_name || ", "}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{assure?.id ? `Email : ${assure.id}` : "Email : , "}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{assure?.phone ? `Téléphone : ${assure.phone}` : "Téléphone : , "}</p>
               </div>
             </div>
           </section>

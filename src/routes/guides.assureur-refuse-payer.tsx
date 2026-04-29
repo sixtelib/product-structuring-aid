@@ -17,7 +17,7 @@ export const Route = createFileRoute("/guides/assureur-refuse-payer")({
       {
         property: "og:description",
         content:
-          "Refus total, partiel ou offre insuffisante : contrat, lettre, expert d'assuré, médiateur, justice — et dans quel ordre agir.",
+          "Refus total, partiel ou offre insuffisante : contrat, lettre, expert d'assuré, médiateur, justice ,  et dans quel ordre agir.",
       },
     ],
     links: [{ rel: "canonical", href: "https://vertual.fr/guides/assureur-refuse-payer" }],

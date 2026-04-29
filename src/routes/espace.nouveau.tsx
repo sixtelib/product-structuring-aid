@@ -90,7 +90,7 @@ function NouveauDossierPage() {
 
       <h1 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Nouveau dossier</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Décrivez votre sinistre — un expert le qualifiera sous 48 h.
+        Décrivez votre sinistre ,  un expert le qualifiera sous 48 h.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6 rounded-lg border border-border bg-background p-6">

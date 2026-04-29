@@ -227,7 +227,7 @@ function AdminIndexPage() {
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-semibold text-foreground">{d.titre || "—"}</p>
+                          <p className="truncate text-sm font-semibold text-foreground">{d.titre || ", "}</p>
                           <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-medium ${meta.toneClass}`}>
                             {meta.label}
                           </span>

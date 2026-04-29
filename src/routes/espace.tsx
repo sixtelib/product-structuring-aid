@@ -6,7 +6,7 @@ export const Route = createFileRoute("/espace")({
   },
   head: () => ({
     meta: [
-      { title: "Espace assuré — Vertual" },
+      { title: "Espace assuré ,  Vertual" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),

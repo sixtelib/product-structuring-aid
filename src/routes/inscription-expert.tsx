@@ -8,7 +8,7 @@ import { Logo } from "@/components/site/Logo";
 export const Route = createFileRoute("/inscription-expert")({
   head: () => ({
     meta: [
-      { title: "Inscription expert — Vertual" },
+      { title: "Inscription expert ,  Vertual" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),

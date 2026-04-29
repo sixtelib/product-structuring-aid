@@ -15,8 +15,8 @@ export const CASE_STATUS_LABELS: Record<string, { label: string; tone: "info" | 
   en_analyse: { label: "En analyse", tone: "warning" },
   en_negociation: { label: "En négociation", tone: "warning" },
   expertise: { label: "Expertise", tone: "warning" },
-  cloture_succes: { label: "Clôturé — succès", tone: "success" },
-  cloture_echec: { label: "Clôturé — échec", tone: "danger" },
+  cloture_succes: { label: "Clôturé ,  succès", tone: "success" },
+  cloture_echec: { label: "Clôturé ,  échec", tone: "danger" },
   abandonne: { label: "Abandonné", tone: "muted" },
 };
 

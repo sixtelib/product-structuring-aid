@@ -6,13 +6,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — Vertual" },
+      { title: "Contact ,  Vertual" },
       {
         name: "description",
         content:
           "Une question, un dossier complexe, un partenariat ? Notre équipe vous répond sous 24h ouvrées.",
       },
-      { property: "og:title", content: "Contact — Vertual" },
+      { property: "og:title", content: "Contact ,  Vertual" },
       {
         property: "og:description",
         content: "Écrivez-nous, nous vous répondons sous 24h ouvrées.",
@@ -144,7 +144,7 @@ function ContactPage() {
                     required
                     className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                   >
-                    <option value="">— Choisir —</option>
+                    <option value="">,  Choisir , </option>
                     <option>Question sur un dossier en cours</option>
                     <option>Sinistre complexe / partenariat</option>
                     <option>Presse</option>

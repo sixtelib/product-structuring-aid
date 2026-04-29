@@ -5,13 +5,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/a-propos")({
   head: () => ({
     meta: [
-      { title: "À propos — Vertual" },
+      { title: "À propos ,  Vertual" },
       {
         name: "description",
         content:
           "Vertual est née d'un constat : l'IA est utilisée massivement par les assureurs. Notre mission : remettre l'équilibre du côté de l'assuré.",
       },
-      { property: "og:title", content: "Notre mission — Vertual" },
+      { property: "og:title", content: "Notre mission ,  Vertual" },
       {
         property: "og:description",
         content: "Pourquoi nous existons et ce qui nous différencie.",

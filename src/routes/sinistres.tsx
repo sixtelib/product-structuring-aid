@@ -15,13 +15,13 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/sinistres")({
   head: () => ({
     meta: [
-      { title: "Sinistres traités — Vertual" },
+      { title: "Sinistres traités ,  Vertual" },
       {
         name: "description",
         content:
           "Habitation, dégât des eaux, incendie, auto, catastrophe naturelle, santé : nous défendons les assurés sur tous les sinistres dont l'enjeu dépasse 3 000 €.",
       },
-      { property: "og:title", content: "Sinistres traités — Vertual" },
+      { property: "og:title", content: "Sinistres traités ,  Vertual" },
       {
         property: "og:description",
         content: "Tous les sinistres où une renégociation peut faire la différence.",
@@ -137,7 +137,7 @@ function ClaimsPage() {
               Votre cas n'est pas listé ?
             </h3>
             <p className="mt-3 text-muted-foreground">
-              C'est normal — la liste n'est pas exhaustive. Décrivez-nous votre
+              C'est normal ,  la liste n'est pas exhaustive. Décrivez-nous votre
               situation, nous vous dirons en 48h si une renégociation est possible.
             </p>
             <Link

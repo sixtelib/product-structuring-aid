@@ -19,7 +19,7 @@ const oauthRedirect = () => {
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Connexion — Vertual" },
+      { title: "Connexion ,  Vertual" },
       { name: "description", content: "Connectez-vous à votre espace client." },
       { name: "robots", content: "noindex,nofollow" },
     ],
