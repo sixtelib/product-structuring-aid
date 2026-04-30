@@ -51,9 +51,9 @@ const claims = [
 ];
 
 const stats = [
-  { value: "+27%", label: "Indemnisation moyenne récupérée", icon: TrendingUp, tone: "primary" as const },
-  { value: "48h", label: "Pour analyser votre dossier", icon: Clock, tone: "primary" as const },
-  { value: "0€", label: "Si nous n'obtenons rien, vous ne payez rien.", icon: Shield, tone: "coral" as const },
+  { value: "+27%", label: "Indemnisation moyenne récupérée", icon: TrendingUp },
+  { value: "48h", label: "Pour analyser votre dossier", icon: Clock },
+  { value: "0€", label: "Si nous n'obtenons rien, vous ne payez rien.", icon: Shield },
 ];
 
 const steps = [
@@ -99,7 +99,7 @@ function HomePage() {
   return (
     <SiteLayout>
       {/* HERO */}
-      <section className="bg-[#F8F9FF] pb-6 pt-12">
+      <section className="bg-white py-16 sm:py-[100px]">
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-start lg:gap-16">
             <div className="flex flex-col">
@@ -107,9 +107,13 @@ function HomePage() {
                 <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
                 IA + experts agréés
               </span>
-              <h1 className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-[56px] lg:leading-[1.06]">
-                Mal indemnisé ?<br />
-                <span className="text-primary">On se bat pour vous.</span>
+              <h1 className="mt-6 tracking-tight">
+                <span className="block text-[clamp(3rem,6vw,5.5rem)] font-black leading-[1.05] text-foreground">
+                  Mal indemnisé ?
+                </span>
+                <span className="block text-[clamp(3rem,6vw,5.5rem)] font-black leading-[1.05] text-[#5B50F0]">
+                  On se bat pour vous.
+                </span>
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
                 Vertual est la première plateforme française qui défend l'assuré, pas l'assureur. Notre IA analyse votre
@@ -145,36 +149,21 @@ function HomePage() {
       </section>
 
       {/* STATS */}
-      <section className="bg-[#F8F9FF] pb-8 pt-6">
+      <section className="bg-[#F8F7FF] py-16 sm:py-[100px]">
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid gap-4 sm:grid-cols-3">
             {stats.map((s) => {
               const Icon = s.icon;
-              const isCoral = s.tone === "coral";
               return (
                 <div
                   key={s.label}
-                  className={`rounded-xl border px-5 py-5 shadow-[var(--shadow-soft)] ${
-                    isCoral ? "border-red-100 bg-[#FFF5F5]" : "border-border bg-white"
-                  }`}
+                  className="rounded-xl bg-[#F8F7FF] px-6 py-8 text-center"
                 >
-                  <div className="flex items-center gap-2">
-                    <Icon className={`h-5 w-5 ${isCoral ? "text-[#FF6B6B]" : "text-primary"}`} aria-hidden />
-                    <p
-                      className={`text-2xl font-bold tracking-tight sm:text-3xl ${
-                        isCoral ? "text-[#FF6B6B]" : "text-primary"
-                      }`}
-                    >
-                      {s.value}
-                    </p>
-                  </div>
-                  <p
-                    className={`mt-2 text-xs leading-snug ${
-                      isCoral ? "font-medium text-foreground" : "font-medium text-muted-foreground"
-                    }`}
-                  >
-                    {s.label}
+                  <Icon className="mx-auto h-6 w-6 text-[#5B50F0]" aria-hidden />
+                  <p className="mt-3 text-[clamp(2.5rem,5vw,4rem)] font-black leading-none tracking-tight text-[#5B50F0]">
+                    {s.value}
                   </p>
+                  <p className="mt-2 text-[0.95rem] font-medium leading-snug text-[#6B7280]">{s.label}</p>
                 </div>
               );
             })}
@@ -183,10 +172,10 @@ function HomePage() {
       </section>
 
       {/* TÉMOIGNAGES */}
-      <section className="bg-[#F8F9FF] py-8">
+      <section className="bg-white py-16 sm:py-[100px]">
         <div className="mx-auto max-w-7xl px-6">
-          <h2 className="text-center text-lg font-semibold tracking-tight text-foreground">
-            Ils ont fait valoir leurs droits
+          <h2 className="text-center text-[clamp(2.2rem,4vw,3.5rem)] font-extrabold leading-[1.1] tracking-tight text-foreground">
+            Ils ont fait valoir leurs droits.
           </h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {[
@@ -203,8 +192,11 @@ function HomePage() {
                 quote: "Je ne savais pas que je pouvais contester. L'expert a tout géré, je n'ai rien eu à faire.",
               },
             ].map((t) => (
-              <div key={t.name} className="rounded-xl border border-border bg-white p-5 shadow-[var(--shadow-soft)]">
-                <p className="text-4xl font-bold leading-none text-primary" aria-hidden>
+              <div
+                key={t.name}
+                className="rounded-2xl bg-white p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
+              >
+                <p className="text-[3rem] font-black leading-none text-[#5B50F0]" aria-hidden>
                   “
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-foreground">{t.quote}</p>
@@ -216,29 +208,27 @@ function HomePage() {
       </section>
 
       {/* SIGNAL */}
-      <section className="border-y border-border bg-[#F8F9FF]">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <div className="grid items-center gap-8 lg:grid-cols-[auto_1fr] lg:gap-12">
-            <span className="inline-flex w-fit items-center gap-2 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-              <TrendingUp className="h-3.5 w-3.5" aria-hidden /> Signal fort
-            </span>
-            <p className="text-xl font-semibold leading-snug tracking-tight text-foreground sm:text-2xl">
-              <span className="text-primary">71 %</span> des assureurs utilisent désormais l'IA pour décider de vos
-              remboursements.{" "}
-              <span className="font-normal text-muted-foreground">
-                L'assuré se retrouve seul face à un algorithme ,  sans outil pour se défendre.
-              </span>
-            </p>
-          </div>
+      <section className="bg-[#5B50F0] px-10 py-[120px] text-white">
+        <div className="mx-auto max-w-7xl text-center">
+          <span className="mx-auto inline-flex w-fit items-center gap-2 rounded-lg border border-white/30 bg-white/15 px-3 py-1.5 text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-white">
+            <TrendingUp className="h-3.5 w-3.5" aria-hidden /> Signal fort
+          </span>
+          <p className="mx-auto mt-6 max-w-[700px] text-[1.25rem] leading-relaxed text-white/90">
+            <span className="mb-2 block text-[clamp(3rem,6vw,5rem)] font-black leading-[1.05] text-white">71%</span>
+            des assureurs utilisent désormais l'IA pour décider de vos remboursements. L'assuré se retrouve seul face à
+            un algorithme, sans outil pour se défendre.
+          </p>
         </div>
       </section>
 
       {/* COMMENT ÇA MARCHE */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-24">
+      <section className="bg-[#F5F0EB]">
+        <div className="mx-auto max-w-7xl px-6 py-16 sm:py-[100px]">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary">Notre méthode</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">4 étapes, zéro paperasse.</h2>
+            <p className="text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-[#5B50F0]">Notre méthode</p>
+            <h2 className="mt-3 text-[clamp(2.2rem,4vw,3.5rem)] font-extrabold leading-[1.1] tracking-tight text-foreground">
+              4 étapes, zéro paperasse.
+            </h2>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
               Vous nous confiez le dossier, nous gérons toutes les interactions avec l'assureur. Vous suivez
               l'avancement en temps réel.
@@ -250,7 +240,7 @@ function HomePage() {
               return (
                 <div
                   key={s.title}
-                  className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)] transition-shadow hover:shadow-[var(--shadow-elegant)]"
+                  className="rounded-2xl bg-white p-8 shadow-[0_4px_24px_rgba(91,80,240,0.08)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_8px_40px_rgba(91,80,240,0.15)]"
                 >
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
                     <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
@@ -265,12 +255,12 @@ function HomePage() {
       </section>
 
       {/* SINISTRES */}
-      <section className="border-t border-border bg-[#F8F9FF]">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-24">
+      <section className="bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-16 sm:py-[100px]">
           <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
             <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary">Sinistres traités</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              <p className="text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-[#5B50F0]">Sinistres traités</p>
+              <h2 className="mt-3 text-[clamp(2.2rem,4vw,3.5rem)] font-extrabold leading-[1.1] tracking-tight text-foreground">
                 Tous les sinistres où une renégociation peut faire la différence.
               </h2>
             </div>
@@ -299,7 +289,7 @@ function HomePage() {
 
       {/* TRUST */}
       <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-7xl px-6 py-16 sm:py-[100px]">
           <div className="grid gap-12 lg:grid-cols-3 lg:gap-10">
             {[
               {
@@ -334,10 +324,12 @@ function HomePage() {
       </section>
 
       {/* CTA FINAL */}
-      <section className="bg-primary py-16 text-primary-foreground sm:py-20">
-        <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+      <section className="bg-primary py-16 text-primary-foreground sm:py-[100px]">
+        <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Votre indemnisation mérite un défenseur.</h2>
+            <h2 className="text-[clamp(2.2rem,4vw,3.5rem)] font-extrabold leading-[1.1] tracking-tight">
+              Votre indemnisation mérite un défenseur.
+            </h2>
             <p className="mt-3 text-base text-primary-foreground/85">Évaluation gratuite en 2 minutes. Vous décidez ensuite.</p>
           </div>
           <a
@@ -351,11 +343,11 @@ function HomePage() {
 
       {/* GUIDES */}
       <section aria-labelledby="guides-home-heading" className="border-t border-[#E5E7EB] bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nos guides gratuits</p>
+        <div className="mx-auto max-w-7xl px-6 py-16 sm:py-[100px]">
+          <p className="text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-[#5B50F0]">Nos guides gratuits</p>
           <h2
             id="guides-home-heading"
-            className="mt-3 max-w-3xl text-2xl font-bold tracking-tight text-[#5B50F0] sm:text-3xl"
+            className="mt-3 max-w-3xl text-[clamp(2.2rem,4vw,3.5rem)] font-extrabold leading-[1.1] tracking-tight text-foreground"
           >
             Tout comprendre sur vos droits face à l'assureur
           </h2>

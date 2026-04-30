@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Send } from "lucide-react";
+import { Send, X } from "lucide-react";
 import {
   migrateLegacyQualificationLocalStorage,
   QUALIFICATION_STORAGE_KEYS,
@@ -55,6 +55,7 @@ Types disponibles :
 - <suggest>montant</suggest> → quand tu demandes un montant d'indemnisation
 - <suggest>assureur</suggest> → quand tu demandes le nom de l'assureur
 - <suggest>anciennete</suggest> → quand tu demandes depuis quand date le sinistre
+- <suggest>oui_non</suggest> → quand tu poses une question dont la réponse est oui ou non (ex: "Avez-vous des documents ?", "Avez-vous déjà contesté ?", "Êtes-vous propriétaire ?")
 - <suggest>none</suggest> → pour les questions ouvertes ou si aucune suggestion n'est pertinente
 
 La balise <suggest> doit toujours être présente, même si c'est <suggest>none</suggest>.
@@ -72,6 +73,18 @@ const STARTUP_TYPE_SINISTRE_PILLS: { label: string; text: string }[] = [
 
 function uid() {
   return Math.random().toString(36).slice(2);
+}
+
+function claudeAsksForDocuments(text: string): boolean {
+  const t = text.toLowerCase();
+  return (
+    t.includes("document") ||
+    t.includes("police d'assurance") ||
+    t.includes("police d’assurance") ||
+    t.includes("rapport") ||
+    t.includes("courrier") ||
+    t.includes("pièce")
+  );
 }
 
 function parseClaudeResponse(text: string) {
@@ -116,6 +129,7 @@ function suggestionsFromLastClaude(text: string): string[] {
     ],
     assureur: ["AXA", "MAAF", "Allianz", "MMA", "Groupama", "Macif", "MAIF", "Autre assureur"],
     anciennete: ["Moins d'1 mois", "1 à 3 mois", "3 à 6 mois", "Plus de 6 mois"],
+    oui_non: ["Oui", "Non"],
     none: [],
   };
 
@@ -163,8 +177,12 @@ export function QualificationChatbot() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [collectedData, setCollectedData] = useState<CollectedData>(EMPTY_DATA);
   const [evaluationPreview, setEvaluationPreview] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [dismissedUploadForClaudeMsgId, setDismissedUploadForClaudeMsgId] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     migrateLegacyQualificationLocalStorage();
@@ -278,6 +296,61 @@ export function QualificationChatbot() {
   const onlyWelcome =
     messages.length === 1 && messages[0]?.role === "claude" && messages[0]?.text === WELCOME;
 
+  const lastClaude = messages.filter((m) => m.role === "claude").slice(-1)[0];
+  const lastClaudeVisibleText = cleanMessageText(lastClaude?.text ?? "");
+  const wantsDocumentsUpload =
+    !onlyWelcome &&
+    !!lastClaude &&
+    claudeAsksForDocuments(lastClaudeVisibleText) &&
+    dismissedUploadForClaudeMsgId !== lastClaude.id;
+
+  function addFiles(incoming: File[]) {
+    const acceptedExt = [".pdf", ".jpg", ".jpeg", ".png"];
+    const maxBytes = 10 * 1024 * 1024;
+
+    const next: File[] = [];
+    for (const f of incoming) {
+      const nameLower = f.name.toLowerCase();
+      const okExt = acceptedExt.some((ext) => nameLower.endsWith(ext));
+      if (!okExt) continue;
+      if (f.size > maxBytes) continue;
+      next.push(f);
+    }
+
+    const rejectedCount = incoming.length - next.length;
+    if (rejectedCount > 0) {
+      setUploadError("Certains fichiers ont été ignorés (formats: PDF/JPG/PNG, 10 Mo max par fichier).");
+    } else {
+      setUploadError(null);
+    }
+
+    setSelectedFiles((prev) => {
+      const merged = [...prev];
+      for (const f of next) {
+        const exists = merged.some(
+          (m) => m.name === f.name && m.size === f.size && m.lastModified === f.lastModified,
+        );
+        if (!exists) merged.push(f);
+      }
+      return merged;
+    });
+  }
+
+  function removeSelectedFile(idx: number) {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  async function sendDocuments() {
+    if (!lastClaude) return;
+    if (selectedFiles.length === 0) return;
+    const names = selectedFiles.map((f) => f.name).join(", ");
+    const msg = `📎 ${selectedFiles.length} document(s) envoyé(s) : ${names}`;
+    setDismissedUploadForClaudeMsgId(lastClaude.id);
+    setSelectedFiles([]);
+    setUploadError(null);
+    await sendUserText(msg);
+  }
+
   return (
     <div
       id="chatbot"
@@ -285,14 +358,89 @@ export function QualificationChatbot() {
     >
       <div className="min-h-[120px] max-h-[320px] space-y-3 overflow-y-auto bg-transparent">
         {messages.map((m) => (
-          <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`max-w-[85%] rounded-[12px] px-4 py-2.5 ${
-                m.role === "user" ? "bg-[#5B50F0] text-white" : "bg-white text-foreground shadow-sm"
-              }`}
-            >
-              {renderTextBubble(m.role === "claude" ? cleanMessageText(m.text) : m.text)}
+          <div key={m.id} className="space-y-3">
+            <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`max-w-[85%] rounded-[12px] px-4 py-2.5 ${
+                  m.role === "user" ? "bg-[#5B50F0] text-white" : "bg-white text-foreground shadow-sm"
+                }`}
+              >
+                {renderTextBubble(m.role === "claude" ? cleanMessageText(m.text) : m.text)}
+              </div>
             </div>
+
+            {m.role === "claude" && lastClaude?.id === m.id && wantsDocumentsUpload && (
+              <div className="flex justify-start">
+                <div className="w-full max-w-[85%]">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const dropped = Array.from(e.dataTransfer.files ?? []);
+                      addFiles(dropped);
+                    }}
+                    className="cursor-pointer rounded-[12px] border-2 border-dashed border-[#5B50F0]/60 bg-[#F8F9FF] p-4 text-left shadow-sm"
+                  >
+                    <p className="text-sm font-semibold text-foreground">
+                      Glissez vos documents ici ou cliquez pour parcourir
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG, 10 Mo max par fichier</p>
+                    {uploadError && <p className="mt-2 text-xs font-medium text-red-600">{uploadError}</p>}
+
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files ?? []);
+                        addFiles(files);
+                        // permettre de resélectionner le même fichier
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                  </div>
+
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-3 rounded-[12px] border border-border bg-white p-3 shadow-sm">
+                      <ul className="space-y-2">
+                        {selectedFiles.map((f, idx) => (
+                          <li key={`${f.name}-${f.size}-${f.lastModified}`} className="flex items-center justify-between">
+                            <span className="truncate text-sm text-foreground">{f.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeSelectedFile(idx)}
+                              className="ml-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
+                              aria-label={`Retirer ${f.name}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => void sendDocuments()}
+                          className="inline-flex items-center justify-center rounded-lg bg-[#5B50F0] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5]"
+                        >
+                          Envoyer les documents →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ))}
 
