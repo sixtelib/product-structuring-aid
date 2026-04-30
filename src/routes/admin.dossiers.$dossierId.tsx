@@ -8,6 +8,7 @@ import {
   Image as ImageIcon,
   MessageSquare,
   Send,
+  Shield,
   Users,
   X,
 } from "lucide-react";
@@ -147,6 +148,7 @@ function AdminDossierDetailPage() {
   const [loading, setLoading] = useState(true);
   const [dossier, setDossier] = useState<DossierRow | null>(null);
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
+  const [mandatDocuments, setMandatDocuments] = useState<DocumentRow[]>([]);
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [assureProfile, setAssureProfile] = useState<ProfileRow | null>(null);
   const [expertProfile, setExpertProfile] = useState<ProfileRow | null>(null);
@@ -180,6 +182,7 @@ function AdminDossierDetailPage() {
       if (!dRow) {
         setDossier(null);
         setDocuments([]);
+        setMandatDocuments([]);
         setMessages([]);
         setAssureProfile(null);
         setExpertProfile(null);
@@ -196,6 +199,14 @@ function AdminDossierDetailPage() {
       if (msgRes.error) console.error(msgRes.error);
       setDocuments((docRes.data as DocumentRow[]) ?? []);
       setMessages((msgRes.data as MessageRow[]) ?? []);
+
+      const { data: mandatRows, error: mandatErr } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("user_id", d.user_id)
+        .eq("type", "mandat");
+      if (mandatErr) console.error(mandatErr);
+      setMandatDocuments((mandatRows as DocumentRow[]) ?? []);
 
       const aRes = await supabase.from("profiles").select("full_name, email").eq("id", d.user_id).maybeSingle();
       if (aRes.error) console.error(aRes.error);
@@ -885,6 +896,40 @@ function AdminDossierDetailPage() {
             </button>
           </div>
         </section>
+
+        {mandatDocuments.length > 0 ? (
+          <section className={`${cardClass()} mt-6`}>
+            <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">
+              <Shield className="h-5 w-5 text-[#5B50F0]" aria-hidden />
+              <h2 className="text-lg font-semibold text-[#111827]">Mandat de représentation</h2>
+            </div>
+            <ul className="space-y-3">
+              {mandatDocuments.map((doc) => (
+                <li
+                  key={doc.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    {docIcon(doc.nom)}
+                    <span className="truncate text-sm font-medium text-[#111827]">{doc.nom}</span>
+                    <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                      Signé
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={downloadingId === doc.id}
+                    onClick={() => void downloadDoc(doc)}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-[#5B50F0] bg-white px-3 py-2 text-sm font-semibold text-[#5B50F0] hover:bg-[#F5F3FF] disabled:opacity-50"
+                  >
+                    <Download className="h-4 w-4" aria-hidden />
+                    Télécharger
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <section className={`${cardClass()} mt-6`}>
           <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">

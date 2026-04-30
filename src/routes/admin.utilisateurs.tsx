@@ -182,7 +182,7 @@ function AdminUtilisateursPage() {
             "id, user_id, nom_assure, prenom_assure, date_ouverture, expert_id, statut, montant_estime, type_sinistre",
           )
           .order("date_ouverture", { ascending: false }),
-        supabase.from("profiles").select("id, full_name, role"),
+        supabase.from("profiles").select("id, full_name"),
       ]);
 
       if (!isMountedRef.current) return;
@@ -192,7 +192,7 @@ function AdminUtilisateursPage() {
       setDossiersAll(dossiers);
 
       const profileById = new Map(
-        (profilesData ?? []).map((p: { id: string; full_name: string | null; role: string }) => [p.id, p]),
+        (profilesData ?? []).map((p: { id: string; full_name: string | null }) => [p.id, p]),
       );
 
       const map = new Map<string, any>();

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Download, FileText, MessageSquare, Save, Send } from "lucide-react";
+import { ArrowLeft, Download, FileText, MessageSquare, Save, Send, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -82,6 +82,7 @@ function ExpertDossierDetailPage() {
   const [dossier, setDossier] = useState<DossierRow | null>(null);
   const [assure, setAssure] = useState<ProfileRow | null>(null);
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
+  const [mandatDocuments, setMandatDocuments] = useState<DocumentRow[]>([]);
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [downloadingPath, setDownloadingPath] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -123,11 +124,13 @@ function ExpertDossierDetailPage() {
       if (dErr) {
         toast.error(dErr.message);
         setDossier(null);
+        setMandatDocuments([]);
         setLoading(false);
         return;
       }
       if (!d) {
         setDossier(null);
+        setMandatDocuments([]);
         setLoading(false);
         return;
       }
@@ -148,6 +151,14 @@ function ExpertDossierDetailPage() {
 
       if (docRes.error) toast.error(docRes.error.message);
       setDocuments((docRes.data as DocumentRow[]) ?? []);
+
+      const { data: mandatRows, error: mandatErr } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("user_id", (d as DossierRow).user_id)
+        .eq("type", "mandat");
+      if (mandatErr) console.error(mandatErr);
+      setMandatDocuments((mandatRows as DocumentRow[]) ?? []);
 
       if (msgRes.error) toast.error(msgRes.error.message);
       setMessages((msgRes.data as MessageRow[]) ?? []);
@@ -342,6 +353,42 @@ function ExpertDossierDetailPage() {
               </div>
             )}
           </section>
+
+          {/* Mandat de représentation (hors dossier) */}
+          {mandatDocuments.length > 0 ? (
+            <section className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
+              <div className="flex items-center gap-2.5 border-b border-border pb-4">
+                <Shield className="h-5 w-5 text-primary" aria-hidden />
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">Mandat de représentation</h2>
+              </div>
+              <ul className="mt-4 divide-y divide-border">
+                {mandatDocuments.map((doc) => (
+                  <li key={doc.id} className="flex flex-col gap-3 py-4 first:pt-0 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">{doc.nom}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(doc.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                        Signé
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void downloadDoc(doc)}
+                        disabled={!doc.storage_path || downloadingPath === doc.storage_path}
+                        className="inline-flex items-center gap-2 rounded-lg border-2 border-primary bg-transparent px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 disabled:opacity-50"
+                      >
+                        <Download className="h-4 w-4" />
+                        Télécharger
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
           {/* 2) Documents */}
           <section className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">

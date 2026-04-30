@@ -237,28 +237,37 @@ export type Database = {
       }
       documents: {
         Row: {
+          chemin: string | null
           created_at: string
-          dossier_id: string
+          dossier_id: string | null
           id: string
           nom: string
           storage_path: string | null
           statut: string
+          type: string | null
+          user_id: string | null
         }
         Insert: {
+          chemin?: string | null
           created_at?: string
-          dossier_id: string
+          dossier_id?: string | null
           id?: string
           nom: string
           storage_path?: string | null
           statut?: string
+          type?: string | null
+          user_id?: string | null
         }
         Update: {
+          chemin?: string | null
           created_at?: string
-          dossier_id?: string
+          dossier_id?: string | null
           id?: string
           nom?: string
           storage_path?: string | null
           statut?: string
+          type?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -408,45 +417,66 @@ export type Database = {
       }
       profiles: {
         Row: {
+          adresse: string | null
+          assureur_principal: string | null
           created_at: string
           email: string | null
+          email_contact: string | null
           full_name: string | null
           id: string
           mandat_email: string | null
           mandat_signe: boolean
           mandat_signe_le: string | null
           mandat_signature: string | null
+          nom: string | null
+          numero_contrat: string | null
           phone: string | null
+          prenom: string | null
           role: string
           specialite: string | null
+          telephone: string | null
           updated_at: string
         }
         Insert: {
+          adresse?: string | null
+          assureur_principal?: string | null
           created_at?: string
           email?: string | null
+          email_contact?: string | null
           full_name?: string | null
           id: string
           mandat_email?: string | null
           mandat_signe?: boolean
           mandat_signe_le?: string | null
           mandat_signature?: string | null
+          nom?: string | null
+          numero_contrat?: string | null
           phone?: string | null
+          prenom?: string | null
           role?: string
           specialite?: string | null
+          telephone?: string | null
           updated_at?: string
         }
         Update: {
+          adresse?: string | null
+          assureur_principal?: string | null
           created_at?: string
           email?: string | null
+          email_contact?: string | null
           full_name?: string | null
           id?: string
           mandat_email?: string | null
           mandat_signe?: boolean
           mandat_signe_le?: string | null
           mandat_signature?: string | null
+          nom?: string | null
+          numero_contrat?: string | null
           phone?: string | null
+          prenom?: string | null
           role?: string
           specialite?: string | null
+          telephone?: string | null
           updated_at?: string
         }
         Relationships: []

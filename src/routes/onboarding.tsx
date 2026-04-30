@@ -54,6 +54,89 @@ function isMandatSigned(profile: { mandat_signe?: boolean } | null | undefined, 
   return profile?.mandat_signe === true || meta?.mandat_signe === true;
 }
 
+function generateMandatText(userEmail: string, signature: string, date: string, userId: string): string {
+  return `MANDAT DE REPRÉSENTATION ET CONVENTION D'HONORAIRES
+
+Date de signature : ${date}
+Signataire : ${signature}
+Email : ${userEmail}
+
+Mandant : ${signature}
+Mandataire : Vertual
+
+Article 1 - Objet du mandat
+Le mandant confie à Vertual mission de le représenter 
+et défendre ses intérêts auprès de son assureur 
+pour tout sinistre confié à la plateforme.
+
+Article 2 - Étendue du mandat
+Vertual est autorisée à contacter l'assureur, accéder 
+aux pièces du dossier, mandater un expert agréé et 
+négocier le montant de l'indemnisation.
+Vertual ne peut pas accepter une offre sans accord 
+explicite du mandant.
+
+Article 3 - Honoraires
+Rémunération au succès uniquement : 10% HT du montant 
+supplémentaire obtenu. Aucun frais en cas d'échec.
+
+Article 4 - Engagements du mandant
+Fournir les documents demandés et informer Vertual 
+de tout contact direct avec l'assureur.
+
+Article 5 - Durée et résiliation
+Prend effet à la signature électronique.
+Résiliable à tout moment avec préavis de 15 jours.
+
+Article 6 - Droit applicable
+Soumis au droit français.
+
+---
+Document signé électroniquement le ${date}
+Signature : ${signature}
+Référence : MANDAT-${userId.slice(0, 8)}-${Date.now()}
+`;
+}
+
+async function persistSignedMandatAsDocument(user: User, signatureText: string, signedAtIso: string) {
+  const email = user.email?.trim() ?? "";
+  if (!email) {
+    console.error("persistSignedMandatAsDocument: email manquant");
+    return;
+  }
+  try {
+    const dateLabel = new Date(signedAtIso).toLocaleDateString("fr-FR");
+    const mandatContent = generateMandatText(email, signatureText, dateLabel, user.id);
+    const blob = new Blob([mandatContent], { type: "text/plain;charset=utf-8" });
+    const fileName = `mandats/${user.id}/mandat_${Date.now()}.txt`;
+
+    const { error: uploadError } = await supabase.storage.from("documents").upload(fileName, blob, {
+      contentType: "text/plain",
+      upsert: true,
+    });
+    if (uploadError) {
+      console.error("Mandat storage upload:", uploadError);
+      return;
+    }
+
+    const nom = `Mandat de représentation - ${dateLabel}`;
+    const fullRow = {
+      user_id: user.id,
+      nom,
+      chemin: fileName,
+      storage_path: fileName,
+      statut: "signé",
+      type: "mandat",
+      dossier_id: null as string | null,
+    };
+
+    const { error: insertErr } = await supabase.from("documents").insert(fullRow);
+    if (insertErr) console.error("Mandat document insert:", insertErr);
+  } catch (e) {
+    console.error("persistSignedMandatAsDocument:", e);
+  }
+}
+
 function OnboardingPage() {
   return (
     <AppGuard signInRedirect="/login">
@@ -155,6 +238,8 @@ function OnboardingContent() {
 
       if (upErr && metaErr) throw upErr;
       if (metaErr && !upErr) console.warn("Mandat enregistré en base ; métadonnées session :", metaErr.message);
+
+      await persistSignedMandatAsDocument(user, sig, signedAt);
 
       const hasEvaluation =
         typeof window !== "undefined" && !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);

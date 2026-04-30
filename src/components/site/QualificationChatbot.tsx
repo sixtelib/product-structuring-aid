@@ -400,6 +400,54 @@ export function QualificationChatbot() {
     return null;
   }
 
+  function profileFieldFilled(v: unknown): boolean {
+    return v != null && String(v).trim() !== "";
+  }
+
+  async function enrichProfileFromExtraction(data: Record<string, any>) {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: row, error: selErr } = await supabase
+        .from("profiles")
+        .select("nom, prenom, adresse, telephone, email_contact, numero_contrat, assureur_principal")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (selErr) {
+        console.error("Profile fetch for enrichment:", selErr);
+        return;
+      }
+
+      const cur = (row ?? {}) as Record<string, unknown>;
+      const profileUpdate: Record<string, string> = {};
+
+      const maybeSet = (profileKey: string, extractedVal: unknown) => {
+        const t = typeof extractedVal === "string" ? extractedVal.trim() : extractedVal != null ? String(extractedVal).trim() : "";
+        if (!t) return;
+        if (profileFieldFilled(cur[profileKey])) return;
+        profileUpdate[profileKey] = t;
+      };
+
+      maybeSet("nom", data.nom_assure);
+      maybeSet("prenom", data.prenom_assure);
+      maybeSet("adresse", data.adresse_assure);
+      maybeSet("telephone", data.telephone_assure);
+      maybeSet("email_contact", data.email_assure);
+      maybeSet("numero_contrat", data.numero_contrat);
+      maybeSet("assureur_principal", data.nom_assureur);
+
+      if (Object.keys(profileUpdate).length === 0) return;
+
+      const { error: upProfErr } = await supabase.from("profiles").update(profileUpdate).eq("id", user.id);
+      if (upProfErr) console.error("Profile enrichment update:", upProfErr);
+    } catch (e) {
+      console.error("enrichProfileFromExtraction:", e);
+    }
+  }
+
   async function saveExtractionToDossier(dossierId: string, data: Record<string, any>) {
     const update: Record<string, any> = {
       nom_assure: data.nom_assure || undefined,
@@ -414,12 +462,19 @@ export function QualificationChatbot() {
     for (const [k, v] of Object.entries(update)) {
       if (v !== undefined && v !== null && !(typeof v === "number" && Number.isNaN(v))) cleaned[k] = v;
     }
-    if (Object.keys(cleaned).length === 0) return;
     try {
-      const { error: upErr } = await supabase.from("dossiers").update(cleaned).eq("id", dossierId);
-      if (upErr) throw upErr;
+      if (Object.keys(cleaned).length > 0) {
+        const { error: upErr } = await supabase.from("dossiers").update(cleaned).eq("id", dossierId);
+        if (upErr) throw upErr;
+      }
     } catch (e) {
       console.error("Save extraction to dossier failed:", e);
+    }
+
+    try {
+      await enrichProfileFromExtraction(data);
+    } catch (e) {
+      console.error("enrichProfileFromExtraction:", e);
     }
   }
 
