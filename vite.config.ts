@@ -12,6 +12,20 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/react-dom") || id.includes("/node_modules/react/")) {
+            return "vendor";
+          }
+          if (id.includes("node_modules/@tanstack/react-router")) {
+            return "router";
+          }
+        },
+      },
+    },
+  },
   plugins: [
     tailwindcss(),
     tsconfigPaths(),

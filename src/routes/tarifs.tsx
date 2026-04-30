@@ -5,19 +5,20 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 export const Route = createFileRoute("/tarifs")({
   head: () => ({
     meta: [
-      { title: "Tarifs ,  Vertual" },
+      { title: "Tarifs Vertual : 10% du gain obtenu, zéro risque | Expert d'assuré" },
       {
         name: "description",
         content:
-          "Rémunération uniquement au succès : 10 % de l'indemnisation supplémentaire obtenue. Gratuit si nous n'obtenons rien. Aucun frais caché.",
+          "Vertual est rémunéré uniquement sur les résultats obtenus : 10% du gain supplémentaire négocié avec votre assureur. Zéro frais si zéro résultat.",
       },
-      { property: "og:title", content: "Tarifs ,  Vertual" },
+      { property: "og:title", content: "Tarifs Vertual : 10% du gain obtenu, zéro risque | Expert d'assuré" },
       {
         property: "og:description",
         content:
-          "Modèle au succès : vous ne payez que si nous obtenons plus pour vous.",
+          "Vertual est rémunéré uniquement sur les résultats obtenus : 10% du gain supplémentaire négocié avec votre assureur. Zéro frais si zéro résultat.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://vertual.fr/tarifs" }],
   }),
   component: PricingPage,
 });
@@ -58,8 +59,37 @@ const inclus = [
 const fmt = (n: number) => n.toLocaleString("fr-FR") + " €";
 
 function PricingPage() {
+  const faqItems = [
+    {
+      q: "Comment sont calculés les honoraires ?",
+      a: "Nos honoraires sont de 10% du gain supplémentaire obtenu par rapport à l'offre initiale de votre assureur. Si votre assureur proposait 10 000€ et que nous obtenons 15 000€, nos honoraires sont de 500€ (10% de 5 000€).",
+    },
+    {
+      q: "Que se passe-t-il si vous n'obtenez rien ?",
+      a: "Vous ne payez absolument rien. Notre rémunération est conditionnée à l'obtention d'un résultat. Zéro gain = zéro honoraires, sans exception.",
+    },
+    {
+      q: "Y a-t-il des frais cachés ou une avance ?",
+      a: "Non. L'analyse initiale est gratuite. Aucune avance n'est demandée. Les honoraires sont prélevés uniquement à la clôture du dossier.",
+    },
+  ] as const;
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqItems.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.a,
+      },
+    })),
+  } as const;
+
   return (
     <SiteLayout>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <section className="bg-[#F8F9FF]">
         <div className="mx-auto max-w-4xl px-4 py-20 text-foreground sm:px-6 lg:px-8">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">
@@ -116,10 +146,11 @@ function PricingPage() {
             {/* Exemples chiffrés */}
             <div>
               <h2 className="font-sans tracking-tight text-2xl font-semibold text-primary">
-                Exemples concrets
+                Simulez votre gain potentiel
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Voici ce que vous percevez réellement, après notre rémunération.
+                Illustration du modèle sur des cas types. Chaque dossier est unique — le gain réel dépend de votre contrat
+                et de vos dommages.
               </p>
               <div className="mt-6 space-y-4">
                 {examples.map((e) => (
@@ -162,6 +193,27 @@ function PricingPage() {
                   </div>
                 ))}
               </div>
+              <p className="mt-6 text-[12px] text-[#9CA3AF]">
+                Ces simulations sont fournies à titre illustratif. Vertual ne garantit pas de résultat spécifique.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="pricing-faq-heading" className="bg-background">
+        <div className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
+          <div className="rounded-xl border border-border bg-card p-8 shadow-[var(--shadow-soft)] sm:p-10">
+            <h2 id="pricing-faq-heading" className="font-sans tracking-tight text-2xl font-semibold text-foreground">
+              FAQ
+            </h2>
+            <div className="mt-6 space-y-6">
+              {faqItems.map((item) => (
+                <div key={item.q} className="border-b border-border pb-6 last:border-b-0 last:pb-0">
+                  <h3 className="text-base font-semibold text-foreground">{item.q}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>

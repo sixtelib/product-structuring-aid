@@ -6,9 +6,7 @@ import {
   Sparkles,
   TrendingUp,
   Clock,
-  Building2,
   Home,
-  Car,
   Droplets,
   Flame,
   CloudRain,
@@ -24,17 +22,20 @@ import { QualificationChatbot } from "@/components/site/QualificationChatbot";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Vertual ,  Expert d'assuré en ligne" },
+      { title: "Vertual — Expert d'assuré en ligne | Défendez votre indemnisation" },
       {
         name: "description",
         content:
-          "Vertual défend les assurés sinistrés face à leurs assureurs. Analyse gratuite de votre dossier, success fee uniquement.",
+          "Vertual est la première plateforme française d'expert d'assuré en ligne. Notre IA analyse votre contrat, nos experts négocient face à votre assureur. Succès fee 10%, zéro risque.",
       },
-      { property: "og:title", content: "Vertual ,  Expert d'assuré en ligne" },
+      { property: "og:title", content: "Vertual — Expert d'assuré en ligne | Défendez votre indemnisation" },
       {
         property: "og:description",
-        content: "Vertual défend les assurés sinistrés face à leurs assureurs.",
+        content:
+          "Vertual est la première plateforme française d'expert d'assuré en ligne. Notre IA analyse votre contrat, nos experts négocient face à votre assureur. Succès fee 10%, zéro risque.",
       },
+      { property: "og:url", content: "https://vertual.fr" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://vertual.fr" }],
   }),
@@ -42,12 +43,10 @@ export const Route = createFileRoute("/")({
 });
 
 const claims = [
-  { icon: Home, label: "Habitation" },
-  { icon: Droplets, label: "Dégât des eaux" },
-  { icon: Car, label: "Auto" },
-  { icon: Flame, label: "Incendie" },
-  { icon: CloudRain, label: "Catastrophe naturelle" },
-  { icon: Building2, label: "Pertes d'exploitation" },
+  { icon: Droplets, label: "Dégât des eaux", to: "/sinistres/degat-des-eaux" as const },
+  { icon: Flame, label: "Incendie", to: "/sinistres/incendie" as const },
+  { icon: CloudRain, label: "Catastrophe naturelle", to: "/sinistres/catastrophe-naturelle" as const },
+  { icon: Home, label: "Habitation", to: "/sinistres" as const },
 ];
 
 const stats = [
@@ -107,17 +106,32 @@ function HomePage() {
                 <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
                 IA + experts agréés
               </span>
-              <h1 className="mt-6 max-w-[600px] tracking-tight">
-                <span className="block text-[clamp(2.4rem,5vw,5.5rem)] font-black leading-[1.05] text-foreground">
+              <h1 style={{ maxWidth: '540px' }}>
+                <span style={{
+                  display: 'block',
+                  fontSize: 'clamp(1.8rem, 3.5vw, 4rem)',
+                  fontWeight: 900,
+                  lineHeight: 1.1,
+                  color: '#111827',
+                  whiteSpace: 'nowrap'
+                }}>
                   Mal indemnisé ?
                 </span>
-                <span className="block text-[clamp(2.4rem,5vw,5.5rem)] font-black leading-[1.05] text-[#5B50F0]">
+                <span style={{
+                  display: 'block',
+                  fontSize: 'clamp(1.8rem, 3.5vw, 4rem)',
+                  fontWeight: 900,
+                  lineHeight: 1.1,
+                  color: '#5B50F0',
+                  whiteSpace: 'nowrap'
+                }}>
                   On se bat pour vous.
                 </span>
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-                Vertual est la première plateforme française qui défend l'assuré, pas l'assureur. Notre IA analyse votre
-                contrat, nos experts négocient, vous encaissez la différence.
+                Vertual est la première plateforme française d'expert d'assuré en ligne. Notre IA analyse votre contrat,
+                identifie la marge de négociation sur votre sinistre, nos experts négocient face à votre assureur — vous
+                encaissez la différence.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <button
@@ -177,12 +191,22 @@ function HomePage() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div className="order-1 flex justify-center lg:order-2">
-              <div
-                aria-label="Aperçu de l'application"
-                className="flex h-[400px] w-[600px] max-w-full items-center justify-center rounded-xl bg-[#F3F4F6] text-center text-[#9CA3AF]"
-              >
-                Aperçu de l'application
-              </div>
+              <img
+                src="/app-mockup.png"
+                alt="Aperçu de l'application Vertual"
+                width={960}
+                height={600}
+                loading="lazy"
+                decoding="async"
+                style={{
+                  width: "100%",
+                  maxWidth: "520px",
+                  height: "auto",
+                  display: "block",
+                  borderRadius: "16px",
+                  filter: "drop-shadow(0 24px 60px rgba(0,0,0,0.18))",
+                }}
+              />
             </div>
 
             <div className="order-2 lg:order-1">
@@ -325,9 +349,10 @@ function HomePage() {
               Voir tout <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {claims.map(({ icon: Icon, label }) => (
-              <div
+        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {claims.map(({ icon: Icon, label, to }) => (
+            <Link
+              to={to}
                 key={label}
                 className="flex flex-col items-center gap-3 rounded-xl border border-border bg-white px-4 py-6 text-center shadow-[var(--shadow-soft)] transition-shadow hover:shadow-[var(--shadow-elegant)]"
               >
@@ -335,7 +360,7 @@ function HomePage() {
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
                 <p className="text-sm font-medium text-foreground">{label}</p>
-              </div>
+            </Link>
             ))}
           </div>
         </div>
@@ -398,14 +423,24 @@ function HomePage() {
       {/* GUIDES */}
       <section aria-labelledby="guides-home-heading" className="border-t border-[#E5E7EB] bg-white">
         <div className="mx-auto max-w-7xl px-6 py-16 sm:py-[100px]">
-          <p className="text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-[#5B50F0]">Nos guides gratuits</p>
-          <h2
-            id="guides-home-heading"
-            className="mt-3 max-w-3xl text-[clamp(2.2rem,4vw,3.5rem)] font-extrabold leading-[1.1] tracking-tight text-foreground"
-          >
-            Tout comprendre sur vos droits face à l'assureur
-          </h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-[#5B50F0]">Nos guides gratuits</p>
+              <h2
+                id="guides-home-heading"
+                className="mt-3 max-w-3xl text-[clamp(2.2rem,4vw,3.5rem)] font-extrabold leading-[1.1] tracking-tight text-foreground"
+              >
+                Tout comprendre sur vos droits face à l'assureur
+              </h2>
+            </div>
+            <Link
+              to="/guides"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary-glow"
+            >
+              Voir tous les guides <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Link
               to="/guides/expert-assure"
               className="flex items-center justify-between gap-4 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] px-5 py-5 transition-colors hover:border-[#5B50F0]/30 hover:bg-[#F0F2FF] sm:px-6 sm:py-6"
@@ -421,6 +456,15 @@ function HomePage() {
             >
               <span className="text-left text-base font-semibold leading-snug text-[#5B50F0] sm:text-lg">
                 Que faire si mon assureur refuse de payer ?
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-[#5B50F0]" aria-hidden />
+            </Link>
+            <Link
+              to="/guides/sous-indemnisation"
+              className="flex items-center justify-between gap-4 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] px-5 py-5 transition-colors hover:border-[#5B50F0]/30 hover:bg-[#F0F2FF] sm:px-6 sm:py-6"
+            >
+              <span className="text-left text-base font-semibold leading-snug text-[#5B50F0] sm:text-lg">
+                Sous-indemnisation : comment le détecter ?
               </span>
               <ChevronRight className="h-5 w-5 shrink-0 text-[#5B50F0]" aria-hidden />
             </Link>

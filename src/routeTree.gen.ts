@@ -9,12 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VillesRouteImport } from './routes/villes'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as SinistresRouteImport } from './routes/sinistres'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InscriptionExpertRouteImport } from './routes/inscription-expert'
 import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ExpertsRouteImport } from './routes/experts'
+import { Route as ExpertAssureToulouseRouteImport } from './routes/expert-assure-toulouse'
+import { Route as ExpertAssureParisRouteImport } from './routes/expert-assure-paris'
+import { Route as ExpertAssureMarseilleRouteImport } from './routes/expert-assure-marseille'
+import { Route as ExpertAssureLyonRouteImport } from './routes/expert-assure-lyon'
+import { Route as ExpertAssureBordeauxRouteImport } from './routes/expert-assure-bordeaux'
 import { Route as ExpertRouteImport } from './routes/expert'
 import { Route as EspaceRouteImport } from './routes/espace'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -34,6 +41,7 @@ import { Route as SinistresIncendieRouteImport } from './routes/sinistres.incend
 import { Route as SinistresDommagesElectriquesRouteImport } from './routes/sinistres.dommages-electriques'
 import { Route as SinistresDegatDesEauxRouteImport } from './routes/sinistres.degat-des-eaux'
 import { Route as SinistresCatastropheNaturelleRouteImport } from './routes/sinistres.catastrophe-naturelle'
+import { Route as GuidesSousIndemnisationRouteImport } from './routes/guides.sous-indemnisation'
 import { Route as GuidesExpertAssureRouteImport } from './routes/guides.expert-assure'
 import { Route as GuidesAssureurRefusePayerRouteImport } from './routes/guides.assureur-refuse-payer'
 import { Route as EspaceNouveauRouteImport } from './routes/espace.nouveau'
@@ -43,6 +51,11 @@ import { Route as ExpertDossiersIdRouteImport } from './routes/expert.dossiers.$
 import { Route as EspaceDossiersCaseIdRouteImport } from './routes/espace.dossiers.$caseId'
 import { Route as DashboardDossiersIdRouteImport } from './routes/dashboard.dossiers.$id'
 
+const VillesRoute = VillesRouteImport.update({
+  id: '/villes',
+  path: '/villes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TarifsRoute = TarifsRouteImport.update({
   id: '/tarifs',
   path: '/tarifs',
@@ -71,6 +84,36 @@ const GuidesRoute = GuidesRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpertsRoute = ExpertsRouteImport.update({
+  id: '/experts',
+  path: '/experts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpertAssureToulouseRoute = ExpertAssureToulouseRouteImport.update({
+  id: '/expert-assure-toulouse',
+  path: '/expert-assure-toulouse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpertAssureParisRoute = ExpertAssureParisRouteImport.update({
+  id: '/expert-assure-paris',
+  path: '/expert-assure-paris',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpertAssureMarseilleRoute = ExpertAssureMarseilleRouteImport.update({
+  id: '/expert-assure-marseille',
+  path: '/expert-assure-marseille',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpertAssureLyonRoute = ExpertAssureLyonRouteImport.update({
+  id: '/expert-assure-lyon',
+  path: '/expert-assure-lyon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpertAssureBordeauxRoute = ExpertAssureBordeauxRouteImport.update({
+  id: '/expert-assure-bordeaux',
+  path: '/expert-assure-bordeaux',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExpertRoute = ExpertRouteImport.update({
@@ -170,6 +213,11 @@ const SinistresCatastropheNaturelleRoute =
     path: '/catastrophe-naturelle',
     getParentRoute: () => SinistresRoute,
   } as any)
+const GuidesSousIndemnisationRoute = GuidesSousIndemnisationRouteImport.update({
+  id: '/sous-indemnisation',
+  path: '/sous-indemnisation',
+  getParentRoute: () => GuidesRoute,
+} as any)
 const GuidesExpertAssureRoute = GuidesExpertAssureRouteImport.update({
   id: '/expert-assure',
   path: '/expert-assure',
@@ -222,17 +270,25 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/espace': typeof EspaceRouteWithChildren
   '/expert': typeof ExpertRouteWithChildren
+  '/expert-assure-bordeaux': typeof ExpertAssureBordeauxRoute
+  '/expert-assure-lyon': typeof ExpertAssureLyonRoute
+  '/expert-assure-marseille': typeof ExpertAssureMarseilleRoute
+  '/expert-assure-paris': typeof ExpertAssureParisRoute
+  '/expert-assure-toulouse': typeof ExpertAssureToulouseRoute
+  '/experts': typeof ExpertsRoute
   '/faq': typeof FaqRoute
   '/guides': typeof GuidesRouteWithChildren
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
   '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
+  '/villes': typeof VillesRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/expert-assure': typeof GuidesExpertAssureRoute
+  '/guides/sous-indemnisation': typeof GuidesSousIndemnisationRoute
   '/sinistres/catastrophe-naturelle': typeof SinistresCatastropheNaturelleRoute
   '/sinistres/degat-des-eaux': typeof SinistresDegatDesEauxRoute
   '/sinistres/dommages-electriques': typeof SinistresDommagesElectriquesRoute
@@ -254,15 +310,23 @@ export interface FileRoutesByTo {
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/contact': typeof ContactRoute
   '/espace': typeof EspaceRouteWithChildren
+  '/expert-assure-bordeaux': typeof ExpertAssureBordeauxRoute
+  '/expert-assure-lyon': typeof ExpertAssureLyonRoute
+  '/expert-assure-marseille': typeof ExpertAssureMarseilleRoute
+  '/expert-assure-paris': typeof ExpertAssureParisRoute
+  '/expert-assure-toulouse': typeof ExpertAssureToulouseRoute
+  '/experts': typeof ExpertsRoute
   '/faq': typeof FaqRoute
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
   '/tarifs': typeof TarifsRoute
+  '/villes': typeof VillesRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/expert-assure': typeof GuidesExpertAssureRoute
+  '/guides/sous-indemnisation': typeof GuidesSousIndemnisationRoute
   '/sinistres/catastrophe-naturelle': typeof SinistresCatastropheNaturelleRoute
   '/sinistres/degat-des-eaux': typeof SinistresDegatDesEauxRoute
   '/sinistres/dommages-electriques': typeof SinistresDommagesElectriquesRoute
@@ -288,17 +352,25 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/espace': typeof EspaceRouteWithChildren
   '/expert': typeof ExpertRouteWithChildren
+  '/expert-assure-bordeaux': typeof ExpertAssureBordeauxRoute
+  '/expert-assure-lyon': typeof ExpertAssureLyonRoute
+  '/expert-assure-marseille': typeof ExpertAssureMarseilleRoute
+  '/expert-assure-paris': typeof ExpertAssureParisRoute
+  '/expert-assure-toulouse': typeof ExpertAssureToulouseRoute
+  '/experts': typeof ExpertsRoute
   '/faq': typeof FaqRoute
   '/guides': typeof GuidesRouteWithChildren
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
   '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
+  '/villes': typeof VillesRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/expert-assure': typeof GuidesExpertAssureRoute
+  '/guides/sous-indemnisation': typeof GuidesSousIndemnisationRoute
   '/sinistres/catastrophe-naturelle': typeof SinistresCatastropheNaturelleRoute
   '/sinistres/degat-des-eaux': typeof SinistresDegatDesEauxRoute
   '/sinistres/dommages-electriques': typeof SinistresDommagesElectriquesRoute
@@ -325,17 +397,25 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/espace'
     | '/expert'
+    | '/expert-assure-bordeaux'
+    | '/expert-assure-lyon'
+    | '/expert-assure-marseille'
+    | '/expert-assure-paris'
+    | '/expert-assure-toulouse'
+    | '/experts'
     | '/faq'
     | '/guides'
     | '/inscription-expert'
     | '/login'
     | '/sinistres'
     | '/tarifs'
+    | '/villes'
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
     | '/guides/assureur-refuse-payer'
     | '/guides/expert-assure'
+    | '/guides/sous-indemnisation'
     | '/sinistres/catastrophe-naturelle'
     | '/sinistres/degat-des-eaux'
     | '/sinistres/dommages-electriques'
@@ -357,15 +437,23 @@ export interface FileRouteTypes {
     | '/comment-ca-marche'
     | '/contact'
     | '/espace'
+    | '/expert-assure-bordeaux'
+    | '/expert-assure-lyon'
+    | '/expert-assure-marseille'
+    | '/expert-assure-paris'
+    | '/expert-assure-toulouse'
+    | '/experts'
     | '/faq'
     | '/inscription-expert'
     | '/login'
     | '/tarifs'
+    | '/villes'
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
     | '/guides/assureur-refuse-payer'
     | '/guides/expert-assure'
+    | '/guides/sous-indemnisation'
     | '/sinistres/catastrophe-naturelle'
     | '/sinistres/degat-des-eaux'
     | '/sinistres/dommages-electriques'
@@ -390,17 +478,25 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/espace'
     | '/expert'
+    | '/expert-assure-bordeaux'
+    | '/expert-assure-lyon'
+    | '/expert-assure-marseille'
+    | '/expert-assure-paris'
+    | '/expert-assure-toulouse'
+    | '/experts'
     | '/faq'
     | '/guides'
     | '/inscription-expert'
     | '/login'
     | '/sinistres'
     | '/tarifs'
+    | '/villes'
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
     | '/guides/assureur-refuse-payer'
     | '/guides/expert-assure'
+    | '/guides/sous-indemnisation'
     | '/sinistres/catastrophe-naturelle'
     | '/sinistres/degat-des-eaux'
     | '/sinistres/dommages-electriques'
@@ -426,16 +522,30 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   EspaceRoute: typeof EspaceRouteWithChildren
   ExpertRoute: typeof ExpertRouteWithChildren
+  ExpertAssureBordeauxRoute: typeof ExpertAssureBordeauxRoute
+  ExpertAssureLyonRoute: typeof ExpertAssureLyonRoute
+  ExpertAssureMarseilleRoute: typeof ExpertAssureMarseilleRoute
+  ExpertAssureParisRoute: typeof ExpertAssureParisRoute
+  ExpertAssureToulouseRoute: typeof ExpertAssureToulouseRoute
+  ExpertsRoute: typeof ExpertsRoute
   FaqRoute: typeof FaqRoute
   GuidesRoute: typeof GuidesRouteWithChildren
   InscriptionExpertRoute: typeof InscriptionExpertRoute
   LoginRoute: typeof LoginRoute
   SinistresRoute: typeof SinistresRouteWithChildren
   TarifsRoute: typeof TarifsRoute
+  VillesRoute: typeof VillesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/villes': {
+      id: '/villes'
+      path: '/villes'
+      fullPath: '/villes'
+      preLoaderRoute: typeof VillesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tarifs': {
       id: '/tarifs'
       path: '/tarifs'
@@ -476,6 +586,48 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/experts': {
+      id: '/experts'
+      path: '/experts'
+      fullPath: '/experts'
+      preLoaderRoute: typeof ExpertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/expert-assure-toulouse': {
+      id: '/expert-assure-toulouse'
+      path: '/expert-assure-toulouse'
+      fullPath: '/expert-assure-toulouse'
+      preLoaderRoute: typeof ExpertAssureToulouseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/expert-assure-paris': {
+      id: '/expert-assure-paris'
+      path: '/expert-assure-paris'
+      fullPath: '/expert-assure-paris'
+      preLoaderRoute: typeof ExpertAssureParisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/expert-assure-marseille': {
+      id: '/expert-assure-marseille'
+      path: '/expert-assure-marseille'
+      fullPath: '/expert-assure-marseille'
+      preLoaderRoute: typeof ExpertAssureMarseilleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/expert-assure-lyon': {
+      id: '/expert-assure-lyon'
+      path: '/expert-assure-lyon'
+      fullPath: '/expert-assure-lyon'
+      preLoaderRoute: typeof ExpertAssureLyonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/expert-assure-bordeaux': {
+      id: '/expert-assure-bordeaux'
+      path: '/expert-assure-bordeaux'
+      fullPath: '/expert-assure-bordeaux'
+      preLoaderRoute: typeof ExpertAssureBordeauxRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/expert': {
@@ -611,6 +763,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SinistresCatastropheNaturelleRouteImport
       parentRoute: typeof SinistresRoute
     }
+    '/guides/sous-indemnisation': {
+      id: '/guides/sous-indemnisation'
+      path: '/sous-indemnisation'
+      fullPath: '/guides/sous-indemnisation'
+      preLoaderRoute: typeof GuidesSousIndemnisationRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/expert-assure': {
       id: '/guides/expert-assure'
       path: '/expert-assure'
@@ -737,12 +896,14 @@ const ExpertRouteWithChildren =
 interface GuidesRouteChildren {
   GuidesAssureurRefusePayerRoute: typeof GuidesAssureurRefusePayerRoute
   GuidesExpertAssureRoute: typeof GuidesExpertAssureRoute
+  GuidesSousIndemnisationRoute: typeof GuidesSousIndemnisationRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
 }
 
 const GuidesRouteChildren: GuidesRouteChildren = {
   GuidesAssureurRefusePayerRoute: GuidesAssureurRefusePayerRoute,
   GuidesExpertAssureRoute: GuidesExpertAssureRoute,
+  GuidesSousIndemnisationRoute: GuidesSousIndemnisationRoute,
   GuidesIndexRoute: GuidesIndexRoute,
 }
 
@@ -781,12 +942,19 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   EspaceRoute: EspaceRouteWithChildren,
   ExpertRoute: ExpertRouteWithChildren,
+  ExpertAssureBordeauxRoute: ExpertAssureBordeauxRoute,
+  ExpertAssureLyonRoute: ExpertAssureLyonRoute,
+  ExpertAssureMarseilleRoute: ExpertAssureMarseilleRoute,
+  ExpertAssureParisRoute: ExpertAssureParisRoute,
+  ExpertAssureToulouseRoute: ExpertAssureToulouseRoute,
+  ExpertsRoute: ExpertsRoute,
   FaqRoute: FaqRoute,
   GuidesRoute: GuidesRouteWithChildren,
   InscriptionExpertRoute: InscriptionExpertRoute,
   LoginRoute: LoginRoute,
   SinistresRoute: SinistresRouteWithChildren,
   TarifsRoute: TarifsRoute,
+  VillesRoute: VillesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

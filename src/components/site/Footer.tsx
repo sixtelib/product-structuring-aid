@@ -28,6 +28,16 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/guides" className="transition-colors hover:text-primary">
+                  Guides
+                </Link>
+              </li>
+              <li>
+                <Link to="/guides/expert-assure" className="transition-colors hover:text-primary">
+                  Expert d'assuré
+                </Link>
+              </li>
+              <li>
                 <Link to="/tarifs" className="transition-colors hover:text-primary">
                   Tarifs
                 </Link>
@@ -51,11 +61,6 @@ export function Footer() {
               <li>
                 <Link to="/contact" className="transition-colors hover:text-primary">
                   Contact
-                </Link>
-              </li>
-              <li>
-                <Link to="/inscription-expert" className="transition-colors hover:text-primary">
-                  Vous êtes expert d'assuré ? Rejoignez-nous
                 </Link>
               </li>
             </ul>

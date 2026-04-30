@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, ArrowRight, Scale } from "lucide-react";
+import { BookOpen, ArrowRight, Scale, Search } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export function GuidesIndexPage() {
@@ -58,6 +58,28 @@ export function GuidesIndexPage() {
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     Les 5 recours concrets ,  contrat, contestation, expert d'assuré, médiateur, justice ,  et
                     l'ordre dans lequel les enchaîner.
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    Lire le guide
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/guides/sous-indemnisation"
+                className="group flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition-shadow hover:shadow-md sm:flex-row sm:items-start sm:gap-5"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
+                  <Search className="h-6 w-6" />
+                </span>
+                <div className="mt-4 sm:mt-0">
+                  <h2 className="font-sans text-xl font-semibold tracking-tight text-primary group-hover:underline">
+                    Sous-indemnisation : comment le détecter ?
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    Signes, mécanismes fréquents (vétusté, règle proportionnelle) et recours pour obtenir la différence.
                   </p>
                   <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
                     Lire le guide

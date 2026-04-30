@@ -4,6 +4,16 @@ import { AuthProvider } from "@/lib/auth";
 
 import appCss from "../styles.css?url";
 
+const GOOGLE_FONT_STYLESHEET =
+  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap";
+
+const asyncCssActivationScript = `(function(){
+  document.querySelectorAll('link[data-async-css]').forEach(function(link){
+    if (link.sheet) { link.media = 'all'; return; }
+    link.addEventListener('load', function(){ link.media = 'all'; });
+  });
+})();`;
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -50,13 +60,10 @@ export const Route = createRootRoute({
       },
     ],
     links: [
-      { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
-      },
+      { rel: "preload", href: appCss, as: "style" },
+      { rel: "preload", href: GOOGLE_FONT_STYLESHEET, as: "style", crossOrigin: "anonymous" },
     ],
   }),
   shellComponent: RootShell,
@@ -69,6 +76,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="fr">
       <head>
         <HeadContent />
+        <link rel="stylesheet" href={appCss} media="print" data-async-css />
+        <link
+          rel="stylesheet"
+          href={GOOGLE_FONT_STYLESHEET}
+          media="print"
+          crossOrigin="anonymous"
+          data-async-css
+        />
+        <noscript>
+          <link rel="stylesheet" href={appCss} />
+          <link rel="stylesheet" href={GOOGLE_FONT_STYLESHEET} crossOrigin="anonymous" />
+        </noscript>
+        <script dangerouslySetInnerHTML={{ __html: asyncCssActivationScript }} />
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-81EYKE18FC" />
         <script
           dangerouslySetInnerHTML={{
