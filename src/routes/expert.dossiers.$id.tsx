@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import type { Tables } from "@/integrations/supabase/types";
 import { useDossierSummary } from "@/hooks/useDossierSummary";
+import { DossierAnalyseIA } from "@/components/DossierAnalyseIA";
 
 export const Route = createFileRoute("/expert/dossiers/$id")({
   component: ExpertDossierDetailPage,
@@ -168,6 +169,31 @@ function ExpertDossierDetailPage() {
       amount: eur(dossier.montant_estime),
     };
   }, [dossier]);
+
+  const dossierAnalysePayload = useMemo(() => {
+    if (!dossier) return null;
+    const full = (assure?.full_name ?? "").trim();
+    const parts = full.split(/\s+/).filter(Boolean);
+    const prenom_assure = parts.length > 1 ? parts[0] : undefined;
+    const nom_assure = parts.length > 1 ? parts.slice(1).join(" ") : parts[0];
+    return {
+      dossier: {
+        id: dossier.id,
+        type_sinistre: dossier.type_sinistre,
+        montant_estime: Number(dossier.montant_estime),
+        statut: dossier.statut,
+        assureur: dossier.assureur_nom ?? undefined,
+        description: dossier.description ?? undefined,
+        nom_assure: nom_assure ?? undefined,
+        prenom_assure: prenom_assure,
+      },
+      documents: documents.map((d) => ({
+        id: d.id,
+        nom: d.nom,
+        chemin: d.storage_path ?? undefined,
+      })),
+    };
+  }, [dossier, assure, documents]);
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault();
@@ -403,6 +429,10 @@ function ExpertDossierDetailPage() {
               </button>
             </form>
           </section>
+
+          {dossierAnalysePayload ? (
+            <DossierAnalyseIA dossier={dossierAnalysePayload.dossier} documents={dossierAnalysePayload.documents} />
+          ) : null}
 
           {/* 4) Notes internes */}
           <section className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">

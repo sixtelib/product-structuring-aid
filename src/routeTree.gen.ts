@@ -53,10 +53,12 @@ import { Route as AdminReportingRouteImport } from './routes/admin.reporting'
 import { Route as AdminFacturationRouteImport } from './routes/admin.facturation'
 import { Route as AdminExpertsRouteImport } from './routes/admin.experts'
 import { Route as AdminDossiersRouteImport } from './routes/admin.dossiers'
+import { Route as AdminDossiersIndexRouteImport } from './routes/admin.dossiers.index'
 import { Route as ExpertDossiersIdRouteImport } from './routes/expert.dossiers.$id'
 import { Route as EspaceDossiersCaseIdRouteImport } from './routes/espace.dossiers.$caseId'
 import { Route as DashboardDossiersIdRouteImport } from './routes/dashboard.dossiers.$id'
 import { Route as AdminUtilisateursUserIdRouteImport } from './routes/admin.utilisateurs.$userId'
+import { Route as AdminDossiersDossierIdRouteImport } from './routes/admin.dossiers.$dossierId'
 
 const VillesRoute = VillesRouteImport.update({
   id: '/villes',
@@ -281,6 +283,11 @@ const AdminDossiersRoute = AdminDossiersRouteImport.update({
   path: '/dossiers',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDossiersIndexRoute = AdminDossiersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminDossiersRoute,
+} as any)
 const ExpertDossiersIdRoute = ExpertDossiersIdRouteImport.update({
   id: '/dossiers/$id',
   path: '/dossiers/$id',
@@ -300,6 +307,11 @@ const AdminUtilisateursUserIdRoute = AdminUtilisateursUserIdRouteImport.update({
   id: '/$userId',
   path: '/$userId',
   getParentRoute: () => AdminUtilisateursRoute,
+} as any)
+const AdminDossiersDossierIdRoute = AdminDossiersDossierIdRouteImport.update({
+  id: '/$dossierId',
+  path: '/$dossierId',
+  getParentRoute: () => AdminDossiersRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -326,7 +338,7 @@ export interface FileRoutesByFullPath {
   '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
   '/villes': typeof VillesRoute
-  '/admin/dossiers': typeof AdminDossiersRoute
+  '/admin/dossiers': typeof AdminDossiersRouteWithChildren
   '/admin/experts': typeof AdminExpertsRoute
   '/admin/facturation': typeof AdminFacturationRoute
   '/admin/reporting': typeof AdminReportingRoute
@@ -347,10 +359,12 @@ export interface FileRoutesByFullPath {
   '/expert/': typeof ExpertIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/sinistres/': typeof SinistresIndexRoute
+  '/admin/dossiers/$dossierId': typeof AdminDossiersDossierIdRoute
   '/admin/utilisateurs/$userId': typeof AdminUtilisateursUserIdRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
+  '/admin/dossiers/': typeof AdminDossiersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -371,7 +385,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/tarifs': typeof TarifsRoute
   '/villes': typeof VillesRoute
-  '/admin/dossiers': typeof AdminDossiersRoute
   '/admin/experts': typeof AdminExpertsRoute
   '/admin/facturation': typeof AdminFacturationRoute
   '/admin/reporting': typeof AdminReportingRoute
@@ -392,10 +405,12 @@ export interface FileRoutesByTo {
   '/expert': typeof ExpertIndexRoute
   '/guides': typeof GuidesIndexRoute
   '/sinistres': typeof SinistresIndexRoute
+  '/admin/dossiers/$dossierId': typeof AdminDossiersDossierIdRoute
   '/admin/utilisateurs/$userId': typeof AdminUtilisateursUserIdRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
+  '/admin/dossiers': typeof AdminDossiersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -422,7 +437,7 @@ export interface FileRoutesById {
   '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
   '/villes': typeof VillesRoute
-  '/admin/dossiers': typeof AdminDossiersRoute
+  '/admin/dossiers': typeof AdminDossiersRouteWithChildren
   '/admin/experts': typeof AdminExpertsRoute
   '/admin/facturation': typeof AdminFacturationRoute
   '/admin/reporting': typeof AdminReportingRoute
@@ -443,10 +458,12 @@ export interface FileRoutesById {
   '/expert/': typeof ExpertIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/sinistres/': typeof SinistresIndexRoute
+  '/admin/dossiers/$dossierId': typeof AdminDossiersDossierIdRoute
   '/admin/utilisateurs/$userId': typeof AdminUtilisateursUserIdRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
+  '/admin/dossiers/': typeof AdminDossiersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -495,10 +512,12 @@ export interface FileRouteTypes {
     | '/expert/'
     | '/guides/'
     | '/sinistres/'
+    | '/admin/dossiers/$dossierId'
     | '/admin/utilisateurs/$userId'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
+    | '/admin/dossiers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -519,7 +538,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/tarifs'
     | '/villes'
-    | '/admin/dossiers'
     | '/admin/experts'
     | '/admin/facturation'
     | '/admin/reporting'
@@ -540,10 +558,12 @@ export interface FileRouteTypes {
     | '/expert'
     | '/guides'
     | '/sinistres'
+    | '/admin/dossiers/$dossierId'
     | '/admin/utilisateurs/$userId'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
+    | '/admin/dossiers'
   id:
     | '__root__'
     | '/'
@@ -590,10 +610,12 @@ export interface FileRouteTypes {
     | '/expert/'
     | '/guides/'
     | '/sinistres/'
+    | '/admin/dossiers/$dossierId'
     | '/admin/utilisateurs/$userId'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
+    | '/admin/dossiers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -932,6 +954,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDossiersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/dossiers/': {
+      id: '/admin/dossiers/'
+      path: '/'
+      fullPath: '/admin/dossiers/'
+      preLoaderRoute: typeof AdminDossiersIndexRouteImport
+      parentRoute: typeof AdminDossiersRoute
+    }
     '/expert/dossiers/$id': {
       id: '/expert/dossiers/$id'
       path: '/dossiers/$id'
@@ -960,8 +989,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUtilisateursUserIdRouteImport
       parentRoute: typeof AdminUtilisateursRoute
     }
+    '/admin/dossiers/$dossierId': {
+      id: '/admin/dossiers/$dossierId'
+      path: '/$dossierId'
+      fullPath: '/admin/dossiers/$dossierId'
+      preLoaderRoute: typeof AdminDossiersDossierIdRouteImport
+      parentRoute: typeof AdminDossiersRoute
+    }
   }
 }
+
+interface AdminDossiersRouteChildren {
+  AdminDossiersDossierIdRoute: typeof AdminDossiersDossierIdRoute
+  AdminDossiersIndexRoute: typeof AdminDossiersIndexRoute
+}
+
+const AdminDossiersRouteChildren: AdminDossiersRouteChildren = {
+  AdminDossiersDossierIdRoute: AdminDossiersDossierIdRoute,
+  AdminDossiersIndexRoute: AdminDossiersIndexRoute,
+}
+
+const AdminDossiersRouteWithChildren = AdminDossiersRoute._addFileChildren(
+  AdminDossiersRouteChildren,
+)
 
 interface AdminUtilisateursRouteChildren {
   AdminUtilisateursUserIdRoute: typeof AdminUtilisateursUserIdRoute
@@ -975,7 +1025,7 @@ const AdminUtilisateursRouteWithChildren =
   AdminUtilisateursRoute._addFileChildren(AdminUtilisateursRouteChildren)
 
 interface AdminRouteChildren {
-  AdminDossiersRoute: typeof AdminDossiersRoute
+  AdminDossiersRoute: typeof AdminDossiersRouteWithChildren
   AdminExpertsRoute: typeof AdminExpertsRoute
   AdminFacturationRoute: typeof AdminFacturationRoute
   AdminReportingRoute: typeof AdminReportingRoute
@@ -984,7 +1034,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminDossiersRoute: AdminDossiersRoute,
+  AdminDossiersRoute: AdminDossiersRouteWithChildren,
   AdminExpertsRoute: AdminExpertsRoute,
   AdminFacturationRoute: AdminFacturationRoute,
   AdminReportingRoute: AdminReportingRoute,
