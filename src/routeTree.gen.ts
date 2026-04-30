@@ -47,6 +47,11 @@ import { Route as GuidesAssureurRefusePayerRouteImport } from './routes/guides.a
 import { Route as EspaceNouveauRouteImport } from './routes/espace.nouveau'
 import { Route as EspaceDossiersRouteImport } from './routes/espace.dossiers'
 import { Route as DashboardNouveauRouteImport } from './routes/dashboard.nouveau'
+import { Route as AdminUtilisateursRouteImport } from './routes/admin.utilisateurs'
+import { Route as AdminReportingRouteImport } from './routes/admin.reporting'
+import { Route as AdminFacturationRouteImport } from './routes/admin.facturation'
+import { Route as AdminExpertsRouteImport } from './routes/admin.experts'
+import { Route as AdminDossiersRouteImport } from './routes/admin.dossiers'
 import { Route as ExpertDossiersIdRouteImport } from './routes/expert.dossiers.$id'
 import { Route as EspaceDossiersCaseIdRouteImport } from './routes/espace.dossiers.$caseId'
 import { Route as DashboardDossiersIdRouteImport } from './routes/dashboard.dossiers.$id'
@@ -244,6 +249,31 @@ const DashboardNouveauRoute = DashboardNouveauRouteImport.update({
   path: '/nouveau',
   getParentRoute: () => DashboardRoute,
 } as any)
+const AdminUtilisateursRoute = AdminUtilisateursRouteImport.update({
+  id: '/utilisateurs',
+  path: '/utilisateurs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportingRoute = AdminReportingRouteImport.update({
+  id: '/reporting',
+  path: '/reporting',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFacturationRoute = AdminFacturationRouteImport.update({
+  id: '/facturation',
+  path: '/facturation',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminExpertsRoute = AdminExpertsRouteImport.update({
+  id: '/experts',
+  path: '/experts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDossiersRoute = AdminDossiersRouteImport.update({
+  id: '/dossiers',
+  path: '/dossiers',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ExpertDossiersIdRoute = ExpertDossiersIdRouteImport.update({
   id: '/dossiers/$id',
   path: '/dossiers/$id',
@@ -283,6 +313,11 @@ export interface FileRoutesByFullPath {
   '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
   '/villes': typeof VillesRoute
+  '/admin/dossiers': typeof AdminDossiersRoute
+  '/admin/experts': typeof AdminExpertsRoute
+  '/admin/facturation': typeof AdminFacturationRoute
+  '/admin/reporting': typeof AdminReportingRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
@@ -321,6 +356,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/tarifs': typeof TarifsRoute
   '/villes': typeof VillesRoute
+  '/admin/dossiers': typeof AdminDossiersRoute
+  '/admin/experts': typeof AdminExpertsRoute
+  '/admin/facturation': typeof AdminFacturationRoute
+  '/admin/reporting': typeof AdminReportingRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
@@ -365,6 +405,11 @@ export interface FileRoutesById {
   '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
   '/villes': typeof VillesRoute
+  '/admin/dossiers': typeof AdminDossiersRoute
+  '/admin/experts': typeof AdminExpertsRoute
+  '/admin/facturation': typeof AdminFacturationRoute
+  '/admin/reporting': typeof AdminReportingRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
@@ -410,6 +455,11 @@ export interface FileRouteTypes {
     | '/sinistres'
     | '/tarifs'
     | '/villes'
+    | '/admin/dossiers'
+    | '/admin/experts'
+    | '/admin/facturation'
+    | '/admin/reporting'
+    | '/admin/utilisateurs'
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
@@ -448,6 +498,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/tarifs'
     | '/villes'
+    | '/admin/dossiers'
+    | '/admin/experts'
+    | '/admin/facturation'
+    | '/admin/reporting'
+    | '/admin/utilisateurs'
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
@@ -491,6 +546,11 @@ export interface FileRouteTypes {
     | '/sinistres'
     | '/tarifs'
     | '/villes'
+    | '/admin/dossiers'
+    | '/admin/experts'
+    | '/admin/facturation'
+    | '/admin/reporting'
+    | '/admin/utilisateurs'
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
@@ -805,6 +865,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardNouveauRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/admin/utilisateurs': {
+      id: '/admin/utilisateurs'
+      path: '/utilisateurs'
+      fullPath: '/admin/utilisateurs'
+      preLoaderRoute: typeof AdminUtilisateursRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reporting': {
+      id: '/admin/reporting'
+      path: '/reporting'
+      fullPath: '/admin/reporting'
+      preLoaderRoute: typeof AdminReportingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/facturation': {
+      id: '/admin/facturation'
+      path: '/facturation'
+      fullPath: '/admin/facturation'
+      preLoaderRoute: typeof AdminFacturationRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/experts': {
+      id: '/admin/experts'
+      path: '/experts'
+      fullPath: '/admin/experts'
+      preLoaderRoute: typeof AdminExpertsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dossiers': {
+      id: '/admin/dossiers'
+      path: '/dossiers'
+      fullPath: '/admin/dossiers'
+      preLoaderRoute: typeof AdminDossiersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/expert/dossiers/$id': {
       id: '/expert/dossiers/$id'
       path: '/dossiers/$id'
@@ -830,10 +925,20 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminDossiersRoute: typeof AdminDossiersRoute
+  AdminExpertsRoute: typeof AdminExpertsRoute
+  AdminFacturationRoute: typeof AdminFacturationRoute
+  AdminReportingRoute: typeof AdminReportingRoute
+  AdminUtilisateursRoute: typeof AdminUtilisateursRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminDossiersRoute: AdminDossiersRoute,
+  AdminExpertsRoute: AdminExpertsRoute,
+  AdminFacturationRoute: AdminFacturationRoute,
+  AdminReportingRoute: AdminReportingRoute,
+  AdminUtilisateursRoute: AdminUtilisateursRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

@@ -1,10 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, LogOut, Shield, UserPlus } from "lucide-react";
+import { Check, ChevronDown, Shield, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
-import { Logo } from "@/components/site/Logo";
 import { dossierStatusMeta } from "@/lib/client-dashboard-ui";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -39,9 +37,6 @@ function eur(amount: number | string | null | undefined) {
 }
 
 function AdminIndexPage() {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dossiers, setDossiers] = useState<DossierForList[]>([]);
@@ -113,11 +108,6 @@ function AdminIndexPage() {
     return { total, unassigned, totalAmount };
   }, [dossiers]);
 
-  async function handleSignOut() {
-    await signOut();
-    navigate({ to: "/login", replace: true });
-  }
-
   function openAssign(d: DossierForList) {
     setAssigningDossier(d);
     setAssigningExpertId(null);
@@ -155,134 +145,101 @@ function AdminIndexPage() {
     }
   }
 
-  const displayName = user?.email ?? "Admin";
-
   return (
-    <div className="min-h-screen bg-[#F8F9FF] font-sans text-foreground antialiased">
-      <header className="sticky top-0 z-40 border-b border-border bg-white">
-        <div className="mx-auto flex h-[4.25rem] max-w-7xl items-center justify-between gap-6 px-5 sm:px-8">
-          <Link to="/" className="inline-flex items-center gap-2 opacity-90 hover:opacity-100">
-            <Logo />
-          </Link>
-          <div className="flex items-center gap-4">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium text-foreground">{displayName}</p>
-              <p className="text-xs text-muted-foreground">Administrateur</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void handleSignOut()}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-            >
-              <LogOut className="h-4 w-4 text-muted-foreground" aria-hidden />
-              <span className="hidden sm:inline">Se déconnecter</span>
-            </button>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
+            <Shield className="h-4 w-4 text-[#5B50F0]" aria-hidden />
+            <p className="text-sm font-semibold text-[#111827]">Espace admin</p>
           </div>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-[#111827] sm:text-3xl">Pilotage des dossiers</h1>
+          <p className="mt-2 text-sm text-[#6B7280]">Assignez des experts et mettez à jour les statuts.</p>
         </div>
-      </header>
+      </div>
 
-      <main className="mx-auto max-w-7xl space-y-6 px-5 py-10 sm:px-8 sm:py-14">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 shadow-[var(--shadow-soft)]">
-              <Shield className="h-4 w-4 text-primary" aria-hidden />
-              <p className="text-sm font-semibold text-foreground">Espace admin</p>
-            </div>
-            <h1 className="mt-4 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Pilotage des dossiers</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Assignez des experts et mettez à jour les statuts.</p>
-          </div>
+      <section className="grid gap-4 md:grid-cols-3">
+        <StatCard label="Total dossiers" value={String(stats.total)} />
+        <StatCard label="Sans expert assigné" value={String(stats.unassigned)} />
+        <StatCard label="Montant total estimé" value={eur(stats.totalAmount)} />
+      </section>
+
+      {loading ? (
+        <div className="flex justify-center py-24">
+          <div className="h-9 w-9 animate-spin rounded-full border-2 border-border border-t-primary" />
         </div>
-
-        <section className="grid gap-4 md:grid-cols-3">
-          <StatCard label="Total dossiers" value={String(stats.total)} />
-          <StatCard label="Sans expert assigné" value={String(stats.unassigned)} />
-          <StatCard label="Montant total estimé" value={eur(stats.totalAmount)} />
-        </section>
-
-        {loading ? (
-          <div className="flex justify-center py-24">
-            <div className="h-9 w-9 animate-spin rounded-full border-2 border-border border-t-primary" />
+      ) : error ? (
+        <div className="rounded-xl bg-white p-6 text-sm text-destructive shadow-[0_1px_4px_rgba(0,0,0,0.08)]">{error}</div>
+      ) : (
+        <section className="rounded-xl bg-white shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E5E7EB] px-6 py-5 sm:px-8">
+            <p className="text-sm font-semibold text-[#111827]">{dossiers.length} dossier(s)</p>
+            <p className="text-xs text-[#6B7280]">Cliquez sur “Assigner” pour sélectionner un expert.</p>
           </div>
-        ) : error ? (
-          <div className="rounded-xl border border-destructive/25 bg-white p-6 text-sm text-destructive shadow-[var(--shadow-soft)]">
-            {error}
-          </div>
-        ) : (
-          <section className="rounded-xl border border-border bg-white shadow-[var(--shadow-soft)]">
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-5 sm:px-8">
-              <p className="text-sm font-semibold text-foreground">{dossiers.length} dossier(s)</p>
-              <p className="text-xs text-muted-foreground">Cliquez sur “Assigner” pour sélectionner un expert.</p>
-            </div>
 
-            <ul className="divide-y divide-border">
-              {dossiers.map((d) => {
-                const meta = dossierStatusMeta(d.statut);
-                const assuredLabel =
-                  (d.assured?.full_name && d.assured.full_name.trim()) || d.assured?.email || d.user_id;
-                const expertLabel =
-                  (d.expert?.full_name && d.expert.full_name.trim()) || d.expert?.email || (d.expert_id ?? "");
+          <ul className="divide-y divide-[#E5E7EB]">
+            {dossiers.map((d) => {
+              const meta = dossierStatusMeta(d.statut);
+              const assuredLabel = (d.assured?.full_name && d.assured.full_name.trim()) || d.assured?.email || d.user_id;
+              const expertLabel =
+                (d.expert?.full_name && d.expert.full_name.trim()) || d.expert?.email || (d.expert_id ?? "");
 
-                return (
-                  <li key={d.id} className="px-6 py-5 sm:px-8">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-semibold text-foreground">{d.titre || ", "}</p>
-                          <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-medium ${meta.toneClass}`}>
-                            {meta.label}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {d.type_sinistre} · Ouvert le{" "}
-                          {new Date(d.date_ouverture).toLocaleDateString("fr-FR", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                          {" · "}
-                          <span className="font-medium text-foreground">{eur(d.montant_estime)}</span>
-                        </p>
-
-                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                          <span className="rounded-lg border border-border bg-secondary px-2 py-1 text-muted-foreground">
-                            Assuré : <span className="font-medium text-foreground">{assuredLabel}</span>
-                          </span>
-                          {d.expert_id ? (
-                            <span className="rounded-lg border border-border bg-secondary px-2 py-1 text-muted-foreground">
-                              Expert : <span className="font-medium text-foreground">{expertLabel}</span>
-                            </span>
-                          ) : (
-                            <span className="rounded-lg bg-accent/10 px-2 py-1 font-medium text-accent">Non assigné</span>
-                          )}
-                        </div>
+              return (
+                <li key={d.id} className="px-6 py-5 sm:px-8">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-[#111827]">{d.titre || ", "}</p>
+                        <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-medium ${meta.toneClass}`}>
+                          {meta.label}
+                        </span>
                       </div>
+                      <p className="mt-1 text-xs text-[#6B7280]">
+                        {d.type_sinistre} · Ouvert le{" "}
+                        {new Date(d.date_ouverture).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                        {" · "}
+                        <span className="font-medium text-[#111827]">{eur(d.montant_estime)}</span>
+                      </p>
 
-                      <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                        <StatusSelect
-                          value={toAdminStatus(d.statut)}
-                          disabled={updatingStatusId === d.id}
-                          onChange={(v) => void updateStatus(d.id, v)}
-                        />
-
-                        {!d.expert_id && (
-                          <button
-                            type="button"
-                            onClick={() => openAssign(d)}
-                            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
-                          >
-                            <UserPlus className="h-4 w-4" aria-hidden />
-                            Assigner
-                          </button>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="rounded-lg bg-[#F3F4F6] px-2 py-1 text-[#6B7280]">
+                          Assuré : <span className="font-medium text-[#111827]">{assuredLabel}</span>
+                        </span>
+                        {d.expert_id ? (
+                          <span className="rounded-lg bg-[#F3F4F6] px-2 py-1 text-[#6B7280]">
+                            Expert : <span className="font-medium text-[#111827]">{expertLabel}</span>
+                          </span>
+                        ) : (
+                          <span className="rounded-lg bg-accent/10 px-2 py-1 font-medium text-accent">Non assigné</span>
                         )}
                       </div>
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        )}
-      </main>
+
+                    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                      <StatusSelect value={toAdminStatus(d.statut)} disabled={updatingStatusId === d.id} onChange={(v) => void updateStatus(d.id, v)} />
+
+                      {!d.expert_id && (
+                        <button
+                          type="button"
+                          onClick={() => openAssign(d)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
+                        >
+                          <UserPlus className="h-4 w-4" aria-hidden />
+                          Assigner
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {assignOpen && assigningDossier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
@@ -369,9 +326,9 @@ function AdminIndexPage() {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)]">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{value}</p>
+    <div className="rounded-xl bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
+      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">{label}</p>
+      <p className="mt-2 text-[2rem] font-bold leading-none text-[#111827]">{value}</p>
     </div>
   );
 }
