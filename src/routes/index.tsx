@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { QualificationChatbot } from "@/components/site/QualificationChatbot";
-import appMockup from "../assets/app-mockup.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -178,12 +177,12 @@ function HomePage() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div className="order-1 flex justify-center lg:order-2">
-              <img
-                src={appMockup}
-                alt="Aperçu de l'espace client Vertual"
-                className="w-full max-w-[300px] rotate-0 lg:max-w-[480px] lg:rotate-[2deg]"
-                style={{ filter: "drop-shadow(0 24px 48px rgba(91, 80, 240, 0.2))" }}
-              />
+              <div
+                aria-label="Aperçu de l'application"
+                className="flex h-[400px] w-[600px] max-w-full items-center justify-center rounded-xl bg-[#F3F4F6] text-center text-[#9CA3AF]"
+              >
+                Aperçu de l'application
+              </div>
             </div>
 
             <div className="order-2 lg:order-1">

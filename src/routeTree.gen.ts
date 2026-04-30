@@ -24,10 +24,16 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SinistresIndexRouteImport } from './routes/sinistres.index'
 import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as ExpertIndexRouteImport } from './routes/expert.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as SinistresTempeteRouteImport } from './routes/sinistres.tempete'
+import { Route as SinistresIncendieRouteImport } from './routes/sinistres.incendie'
+import { Route as SinistresDommagesElectriquesRouteImport } from './routes/sinistres.dommages-electriques'
+import { Route as SinistresDegatDesEauxRouteImport } from './routes/sinistres.degat-des-eaux'
+import { Route as SinistresCatastropheNaturelleRouteImport } from './routes/sinistres.catastrophe-naturelle'
 import { Route as GuidesExpertAssureRouteImport } from './routes/guides.expert-assure'
 import { Route as GuidesAssureurRefusePayerRouteImport } from './routes/guides.assureur-refuse-payer'
 import { Route as EspaceNouveauRouteImport } from './routes/espace.nouveau'
@@ -112,6 +118,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SinistresIndexRoute = SinistresIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SinistresRoute,
+} as any)
 const GuidesIndexRoute = GuidesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -132,6 +143,33 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const SinistresTempeteRoute = SinistresTempeteRouteImport.update({
+  id: '/tempete',
+  path: '/tempete',
+  getParentRoute: () => SinistresRoute,
+} as any)
+const SinistresIncendieRoute = SinistresIncendieRouteImport.update({
+  id: '/incendie',
+  path: '/incendie',
+  getParentRoute: () => SinistresRoute,
+} as any)
+const SinistresDommagesElectriquesRoute =
+  SinistresDommagesElectriquesRouteImport.update({
+    id: '/dommages-electriques',
+    path: '/dommages-electriques',
+    getParentRoute: () => SinistresRoute,
+  } as any)
+const SinistresDegatDesEauxRoute = SinistresDegatDesEauxRouteImport.update({
+  id: '/degat-des-eaux',
+  path: '/degat-des-eaux',
+  getParentRoute: () => SinistresRoute,
+} as any)
+const SinistresCatastropheNaturelleRoute =
+  SinistresCatastropheNaturelleRouteImport.update({
+    id: '/catastrophe-naturelle',
+    path: '/catastrophe-naturelle',
+    getParentRoute: () => SinistresRoute,
+  } as any)
 const GuidesExpertAssureRoute = GuidesExpertAssureRouteImport.update({
   id: '/expert-assure',
   path: '/expert-assure',
@@ -188,17 +226,23 @@ export interface FileRoutesByFullPath {
   '/guides': typeof GuidesRouteWithChildren
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
-  '/sinistres': typeof SinistresRoute
+  '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/expert-assure': typeof GuidesExpertAssureRoute
+  '/sinistres/catastrophe-naturelle': typeof SinistresCatastropheNaturelleRoute
+  '/sinistres/degat-des-eaux': typeof SinistresDegatDesEauxRoute
+  '/sinistres/dommages-electriques': typeof SinistresDommagesElectriquesRoute
+  '/sinistres/incendie': typeof SinistresIncendieRoute
+  '/sinistres/tempete': typeof SinistresTempeteRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/expert/': typeof ExpertIndexRoute
   '/guides/': typeof GuidesIndexRoute
+  '/sinistres/': typeof SinistresIndexRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
@@ -213,17 +257,22 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
-  '/sinistres': typeof SinistresRoute
   '/tarifs': typeof TarifsRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/expert-assure': typeof GuidesExpertAssureRoute
+  '/sinistres/catastrophe-naturelle': typeof SinistresCatastropheNaturelleRoute
+  '/sinistres/degat-des-eaux': typeof SinistresDegatDesEauxRoute
+  '/sinistres/dommages-electriques': typeof SinistresDommagesElectriquesRoute
+  '/sinistres/incendie': typeof SinistresIncendieRoute
+  '/sinistres/tempete': typeof SinistresTempeteRoute
   '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/expert': typeof ExpertIndexRoute
   '/guides': typeof GuidesIndexRoute
+  '/sinistres': typeof SinistresIndexRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
@@ -243,17 +292,23 @@ export interface FileRoutesById {
   '/guides': typeof GuidesRouteWithChildren
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
-  '/sinistres': typeof SinistresRoute
+  '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/expert-assure': typeof GuidesExpertAssureRoute
+  '/sinistres/catastrophe-naturelle': typeof SinistresCatastropheNaturelleRoute
+  '/sinistres/degat-des-eaux': typeof SinistresDegatDesEauxRoute
+  '/sinistres/dommages-electriques': typeof SinistresDommagesElectriquesRoute
+  '/sinistres/incendie': typeof SinistresIncendieRoute
+  '/sinistres/tempete': typeof SinistresTempeteRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/expert/': typeof ExpertIndexRoute
   '/guides/': typeof GuidesIndexRoute
+  '/sinistres/': typeof SinistresIndexRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
@@ -281,10 +336,16 @@ export interface FileRouteTypes {
     | '/espace/nouveau'
     | '/guides/assureur-refuse-payer'
     | '/guides/expert-assure'
+    | '/sinistres/catastrophe-naturelle'
+    | '/sinistres/degat-des-eaux'
+    | '/sinistres/dommages-electriques'
+    | '/sinistres/incendie'
+    | '/sinistres/tempete'
     | '/admin/'
     | '/dashboard/'
     | '/expert/'
     | '/guides/'
+    | '/sinistres/'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
@@ -299,17 +360,22 @@ export interface FileRouteTypes {
     | '/faq'
     | '/inscription-expert'
     | '/login'
-    | '/sinistres'
     | '/tarifs'
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
     | '/guides/assureur-refuse-payer'
     | '/guides/expert-assure'
+    | '/sinistres/catastrophe-naturelle'
+    | '/sinistres/degat-des-eaux'
+    | '/sinistres/dommages-electriques'
+    | '/sinistres/incendie'
+    | '/sinistres/tempete'
     | '/admin'
     | '/dashboard'
     | '/expert'
     | '/guides'
+    | '/sinistres'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
@@ -335,10 +401,16 @@ export interface FileRouteTypes {
     | '/espace/nouveau'
     | '/guides/assureur-refuse-payer'
     | '/guides/expert-assure'
+    | '/sinistres/catastrophe-naturelle'
+    | '/sinistres/degat-des-eaux'
+    | '/sinistres/dommages-electriques'
+    | '/sinistres/incendie'
+    | '/sinistres/tempete'
     | '/admin/'
     | '/dashboard/'
     | '/expert/'
     | '/guides/'
+    | '/sinistres/'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
@@ -358,7 +430,7 @@ export interface RootRouteChildren {
   GuidesRoute: typeof GuidesRouteWithChildren
   InscriptionExpertRoute: typeof InscriptionExpertRoute
   LoginRoute: typeof LoginRoute
-  SinistresRoute: typeof SinistresRoute
+  SinistresRoute: typeof SinistresRouteWithChildren
   TarifsRoute: typeof TarifsRoute
 }
 
@@ -469,6 +541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sinistres/': {
+      id: '/sinistres/'
+      path: '/'
+      fullPath: '/sinistres/'
+      preLoaderRoute: typeof SinistresIndexRouteImport
+      parentRoute: typeof SinistresRoute
+    }
     '/guides/': {
       id: '/guides/'
       path: '/'
@@ -496,6 +575,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/sinistres/tempete': {
+      id: '/sinistres/tempete'
+      path: '/tempete'
+      fullPath: '/sinistres/tempete'
+      preLoaderRoute: typeof SinistresTempeteRouteImport
+      parentRoute: typeof SinistresRoute
+    }
+    '/sinistres/incendie': {
+      id: '/sinistres/incendie'
+      path: '/incendie'
+      fullPath: '/sinistres/incendie'
+      preLoaderRoute: typeof SinistresIncendieRouteImport
+      parentRoute: typeof SinistresRoute
+    }
+    '/sinistres/dommages-electriques': {
+      id: '/sinistres/dommages-electriques'
+      path: '/dommages-electriques'
+      fullPath: '/sinistres/dommages-electriques'
+      preLoaderRoute: typeof SinistresDommagesElectriquesRouteImport
+      parentRoute: typeof SinistresRoute
+    }
+    '/sinistres/degat-des-eaux': {
+      id: '/sinistres/degat-des-eaux'
+      path: '/degat-des-eaux'
+      fullPath: '/sinistres/degat-des-eaux'
+      preLoaderRoute: typeof SinistresDegatDesEauxRouteImport
+      parentRoute: typeof SinistresRoute
+    }
+    '/sinistres/catastrophe-naturelle': {
+      id: '/sinistres/catastrophe-naturelle'
+      path: '/catastrophe-naturelle'
+      fullPath: '/sinistres/catastrophe-naturelle'
+      preLoaderRoute: typeof SinistresCatastropheNaturelleRouteImport
+      parentRoute: typeof SinistresRoute
     }
     '/guides/expert-assure': {
       id: '/guides/expert-assure'
@@ -635,6 +749,28 @@ const GuidesRouteChildren: GuidesRouteChildren = {
 const GuidesRouteWithChildren =
   GuidesRoute._addFileChildren(GuidesRouteChildren)
 
+interface SinistresRouteChildren {
+  SinistresCatastropheNaturelleRoute: typeof SinistresCatastropheNaturelleRoute
+  SinistresDegatDesEauxRoute: typeof SinistresDegatDesEauxRoute
+  SinistresDommagesElectriquesRoute: typeof SinistresDommagesElectriquesRoute
+  SinistresIncendieRoute: typeof SinistresIncendieRoute
+  SinistresTempeteRoute: typeof SinistresTempeteRoute
+  SinistresIndexRoute: typeof SinistresIndexRoute
+}
+
+const SinistresRouteChildren: SinistresRouteChildren = {
+  SinistresCatastropheNaturelleRoute: SinistresCatastropheNaturelleRoute,
+  SinistresDegatDesEauxRoute: SinistresDegatDesEauxRoute,
+  SinistresDommagesElectriquesRoute: SinistresDommagesElectriquesRoute,
+  SinistresIncendieRoute: SinistresIncendieRoute,
+  SinistresTempeteRoute: SinistresTempeteRoute,
+  SinistresIndexRoute: SinistresIndexRoute,
+}
+
+const SinistresRouteWithChildren = SinistresRoute._addFileChildren(
+  SinistresRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AProposRoute: AProposRoute,
@@ -649,7 +785,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuidesRoute: GuidesRouteWithChildren,
   InscriptionExpertRoute: InscriptionExpertRoute,
   LoginRoute: LoginRoute,
-  SinistresRoute: SinistresRoute,
+  SinistresRoute: SinistresRouteWithChildren,
   TarifsRoute: TarifsRoute,
 }
 export const routeTree = rootRouteImport

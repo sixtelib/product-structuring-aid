@@ -67,6 +67,47 @@ export function GuidesIndexPage() {
               </Link>
             </li>
           </ul>
+
+          <section className="mt-10 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] p-6">
+            <h2 className="text-[16px] font-semibold text-[#374151]">Nos pages par type de sinistre</h2>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                to="/sinistres/degat-des-eaux"
+                className="inline-flex w-full items-center justify-between gap-3 rounded-lg bg-white/60 px-4 py-3 text-sm font-semibold text-[#5B50F0] hover:bg-white sm:w-auto"
+              >
+                <span>Dégât des eaux</span>
+                <span aria-hidden>→</span>
+              </Link>
+              <Link
+                to="/sinistres/incendie"
+                className="inline-flex w-full items-center justify-between gap-3 rounded-lg bg-white/60 px-4 py-3 text-sm font-semibold text-[#5B50F0] hover:bg-white sm:w-auto"
+              >
+                <span>Incendie</span>
+                <span aria-hidden>→</span>
+              </Link>
+              <Link
+                to="/sinistres/tempete"
+                className="inline-flex w-full items-center justify-between gap-3 rounded-lg bg-white/60 px-4 py-3 text-sm font-semibold text-[#5B50F0] hover:bg-white sm:w-auto"
+              >
+                <span>Tempête</span>
+                <span aria-hidden>→</span>
+              </Link>
+              <Link
+                to="/sinistres/catastrophe-naturelle"
+                className="inline-flex w-full items-center justify-between gap-3 rounded-lg bg-white/60 px-4 py-3 text-sm font-semibold text-[#5B50F0] hover:bg-white sm:w-auto"
+              >
+                <span>Catastrophe naturelle</span>
+                <span aria-hidden>→</span>
+              </Link>
+              <Link
+                to="/sinistres/dommages-electriques"
+                className="inline-flex w-full items-center justify-between gap-3 rounded-lg bg-white/60 px-4 py-3 text-sm font-semibold text-[#5B50F0] hover:bg-white sm:w-auto"
+              >
+                <span>Dommages électriques</span>
+                <span aria-hidden>→</span>
+              </Link>
+            </div>
+          </section>
         </div>
       </section>
     </SiteLayout>

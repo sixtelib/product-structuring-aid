@@ -446,6 +446,33 @@ export function AssureurRefusePayerPage() {
             Article rédigé par l'équipe Vertual ,  avril 2026 · Dernière mise à jour : avril 2026
           </p>
 
+          <section className="mt-8 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] p-6">
+            <h2 className="text-[16px] font-semibold text-[#374151]">À lire aussi</h2>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                to="/guides/expert-assure"
+                className="inline-flex w-full items-center justify-between gap-3 rounded-lg bg-white/60 px-4 py-3 text-sm font-semibold text-[#5B50F0] hover:bg-white sm:w-auto"
+              >
+                <span>Qu'est-ce qu'un expert d'assuré ?</span>
+                <span aria-hidden>→</span>
+              </Link>
+              <Link
+                to="/sinistres/degat-des-eaux"
+                className="inline-flex w-full items-center justify-between gap-3 rounded-lg bg-white/60 px-4 py-3 text-sm font-semibold text-[#5B50F0] hover:bg-white sm:w-auto"
+              >
+                <span>Sinistre dégât des eaux : vos droits</span>
+                <span aria-hidden>→</span>
+              </Link>
+              <Link
+                to="/sinistres/tempete"
+                className="inline-flex w-full items-center justify-between gap-3 rounded-lg bg-white/60 px-4 py-3 text-sm font-semibold text-[#5B50F0] hover:bg-white sm:w-auto"
+              >
+                <span>Sinistre tempête : vos droits</span>
+                <span aria-hidden>→</span>
+              </Link>
+            </div>
+          </section>
+
           <footer className="mt-10 border-t border-border pt-10 text-center">
             <p className="text-sm text-muted-foreground">Prêt à faire analyser votre dossier ?</p>
             <Link
