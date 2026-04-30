@@ -107,11 +107,11 @@ function HomePage() {
                 <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
                 IA + experts agréés
               </span>
-              <h1 className="mt-6 tracking-tight">
-                <span className="block text-[clamp(3rem,6vw,5.5rem)] font-black leading-[1.05] text-foreground">
+              <h1 className="mt-6 max-w-[600px] tracking-tight">
+                <span className="block text-[clamp(2.4rem,5vw,5.5rem)] font-black leading-[1.05] text-foreground">
                   Mal indemnisé ?
                 </span>
-                <span className="block text-[clamp(3rem,6vw,5.5rem)] font-black leading-[1.05] text-[#5B50F0]">
+                <span className="block text-[clamp(2.4rem,5vw,5.5rem)] font-black leading-[1.05] text-[#5B50F0]">
                   On se bat pour vous.
                 </span>
               </h1>
@@ -149,18 +149,19 @@ function HomePage() {
       </section>
 
       {/* STATS */}
-      <section className="bg-[#F8F7FF] py-16 sm:py-[100px]">
+      <section className="border-y border-[#E5E1FF] bg-[#F0EFFE] py-16 sm:py-[100px]">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-3">
             {stats.map((s) => {
               const Icon = s.icon;
+              const withDivider = s.value !== stats[stats.length - 1]?.value;
               return (
                 <div
                   key={s.label}
-                  className="rounded-xl bg-[#F8F7FF] px-6 py-8 text-center"
+                  className={`px-2 py-2 text-center sm:px-8 ${withDivider ? "sm:border-r sm:border-[#E5E1FF]" : ""}`}
                 >
                   <Icon className="mx-auto h-6 w-6 text-[#5B50F0]" aria-hidden />
-                  <p className="mt-3 text-[clamp(2.5rem,5vw,4rem)] font-black leading-none tracking-tight text-[#5B50F0]">
+                  <p className="mt-3 text-[clamp(2.8rem,5vw,4rem)] font-black leading-none tracking-tight text-[#5B50F0]">
                     {s.value}
                   </p>
                   <p className="mt-2 text-[0.95rem] font-medium leading-snug text-[#6B7280]">{s.label}</p>
