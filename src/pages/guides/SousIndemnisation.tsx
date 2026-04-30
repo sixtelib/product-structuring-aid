@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { useJsonLdInHead } from "@/hooks/use-json-ld-head";
 
 const toc = [
   { href: "#definition", label: "Qu'est-ce que la sous-indemnisation ?" },
@@ -90,17 +91,10 @@ const faqPageJsonLd = {
 } as const;
 
 export function SousIndemnisationPage() {
+  useJsonLdInHead(articleJsonLd, faqPageJsonLd);
+
   return (
     <SiteLayout>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd) }}
-      />
-
       <div className="bg-white font-sans text-foreground">
         <article className="mx-auto max-w-[760px] px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
           <header className="border-b border-border pb-8">

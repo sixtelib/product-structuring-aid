@@ -3,6 +3,7 @@ import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { Minus, Plus } from "lucide-react";
 
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { useJsonLdInHead } from "@/hooks/use-json-ld-head";
 import { cn } from "@/lib/utils";
 
 type FaqItem = {
@@ -219,13 +220,10 @@ function FaqAccordionItem({
 }
 
 export function FaqSeoPage() {
+  useJsonLdInHead(jsonLd);
+
   return (
     <SiteLayout>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
       <section className="bg-[#F8F9FF]">
         <div className="mx-auto max-w-4xl px-4 py-16 text-foreground sm:px-6 sm:py-20 lg:px-8">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">FAQ</p>
