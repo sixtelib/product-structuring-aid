@@ -19,8 +19,14 @@ const articleJsonLd = {
   description:
     "Votre assureur refuse de rembourser votre sinistre ? Découvrez les 5 recours concrets pour contester un refus d'indemnisation et obtenir ce à quoi vous avez droit.",
   url: "https://vertual.fr/guides/assureur-refuse-payer",
-  datePublished: "2026-04-29",
-  dateModified: "2026-04-29",
+  datePublished: "2026-04-29T00:00:00+02:00",
+  dateModified: "2026-04-29T00:00:00+02:00",
+  image: {
+    "@type": "ImageObject",
+    url: "https://vertual.fr/og-image.png",
+    width: 1200,
+    height: 630,
+  },
   author: {
     "@type": "Organization",
     name: "Vertual",

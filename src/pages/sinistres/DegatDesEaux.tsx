@@ -17,8 +17,14 @@ const articleJsonLd = {
   description:
     "Votre assureur sous-évalue votre dégât des eaux ? Un expert d'assuré indépendant analyse votre dossier gratuitement et défend vos intérêts. Sans avance de frais.",
   url: "https://vertual.fr/sinistres/degat-des-eaux",
-  datePublished: "2026-04-30",
-  dateModified: "2026-04-30",
+  datePublished: "2026-04-30T00:00:00+02:00",
+  dateModified: "2026-04-30T00:00:00+02:00",
+  image: {
+    "@type": "ImageObject",
+    url: "https://vertual.fr/og-image.png",
+    width: 1200,
+    height: 630,
+  },
   author: {
     "@type": "Organization",
     name: "Vertual",

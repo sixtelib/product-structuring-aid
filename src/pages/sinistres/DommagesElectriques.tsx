@@ -18,8 +18,14 @@ const articleJsonLd = {
   description:
     "Votre assureur refuse ou minimise votre sinistre électrique ? Un expert d'assuré indépendant défend vos intérêts. Analyse gratuite, sans avance de frais.",
   url: "https://vertual.fr/sinistres/dommages-electriques",
-  datePublished: "2026-04-30",
-  dateModified: "2026-04-30",
+  datePublished: "2026-04-30T00:00:00+02:00",
+  dateModified: "2026-04-30T00:00:00+02:00",
+  image: {
+    "@type": "ImageObject",
+    url: "https://vertual.fr/og-image.png",
+    width: 1200,
+    height: 630,
+  },
   author: {
     "@type": "Organization",
     name: "Vertual",

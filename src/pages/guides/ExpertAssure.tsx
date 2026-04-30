@@ -18,8 +18,14 @@ const articleJsonLd = {
   description:
     "L'expert d'assuré défend vos intérêts face à votre assureur après un sinistre. Rôle, honoraires, différence avec l'expert de l'assureur : tout comprendre en 5 minutes.",
   url: "https://vertual.fr/guides/expert-assure",
-  datePublished: "2026-04-29",
-  dateModified: "2026-04-29",
+  datePublished: "2026-04-29T00:00:00+02:00",
+  dateModified: "2026-04-29T00:00:00+02:00",
+  image: {
+    "@type": "ImageObject",
+    url: "https://vertual.fr/og-image.png",
+    width: 1200,
+    height: 630,
+  },
   author: {
     "@type": "Organization",
     name: "Vertual",

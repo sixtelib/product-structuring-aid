@@ -2,21 +2,57 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
+const howToJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "Comment obtenir une juste indemnisation avec Vertual",
+  description: "Vertual gère 100% de votre dossier sinistre face à votre assureur en 4 étapes.",
+  step: [
+    {
+      "@type": "HowToStep",
+      position: 1,
+      name: "Qualification en 2 minutes",
+      text: "Notre chatbot analyse votre situation : type de sinistre, statut du dossier, marge de négociation potentielle.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 2,
+      name: "Création de votre espace sécurisé",
+      text: "Vous déposez votre contrat, les courriers reçus, devis, photos et rapport d'expert. Tout est centralisé.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 3,
+      name: "Analyse IA + expert dédié",
+      text: "Notre IA extrait les garanties applicables et identifie les postes sous-évalués. Un expert humain valide la stratégie.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 4,
+      name: "Négociation et indemnisation",
+      text: "Nous prenons en charge tous les échanges avec l'assureur jusqu'à l'indemnisation finale.",
+    },
+  ],
+} as const;
+
 export const Route = createFileRoute("/comment-ca-marche")({
   head: () => ({
     meta: [
-      { title: "Comment ça marche ,  Vertual" },
+      { title: "Comment ça marche : expert d'assuré en ligne | Vertual" },
       {
         name: "description",
         content:
-          "De la qualification à l'indemnisation : 4 étapes pour confier votre dossier à nos experts. Délais, méthode, transparence totale.",
+          "Vertual gère 100% de votre dossier sinistre face à votre assureur. Qualification en 2 minutes, analyse IA, expert dédié, négociation jusqu'à l'indemnisation finale.",
       },
-      { property: "og:title", content: "Comment ça marche ,  Vertual" },
+      { property: "og:title", content: "Comment ça marche : expert d'assuré en ligne | Vertual" },
       {
         property: "og:description",
-        content: "4 étapes simples pour récupérer ce que votre assureur vous doit.",
+        content:
+          "Vertual gère 100% de votre dossier sinistre face à votre assureur. Qualification en 2 minutes, analyse IA, expert dédié, négociation jusqu'à l'indemnisation finale.",
       },
+      { property: "og:url", content: "https://vertual.fr/comment-ca-marche" },
     ],
+    links: [{ rel: "canonical", href: "https://vertual.fr/comment-ca-marche" }],
   }),
   component: HowItWorksPage,
 });
@@ -71,6 +107,7 @@ const phases = [
 function HowItWorksPage() {
   return (
     <SiteLayout>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }} />
       <section className="relative bg-[#F8F9FF]">
         <div className="mx-auto max-w-4xl px-4 py-20 text-foreground sm:px-6 lg:px-8">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">
@@ -81,8 +118,8 @@ function HowItWorksPage() {
             Nous gérons tout le reste.
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-            Une méthode éprouvée combinant IA et expertise humaine, pour transformer
-            une indemnisation insuffisante en juste réparation.
+            Notre méthode d&apos;expert d&apos;assuré en ligne combine IA et expertise humaine pour transformer chaque
+            sinistre sous-indemnisé en juste réparation.
           </p>
         </div>
       </section>
@@ -117,6 +154,32 @@ function HowItWorksPage() {
               </li>
             ))}
           </ol>
+
+          <section
+            className="mt-16 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] p-6 sm:p-8"
+            aria-labelledby="a-lire-aussi-heading"
+          >
+            <h3 id="a-lire-aussi-heading" className="font-sans text-lg font-semibold text-foreground">
+              À lire aussi
+            </h3>
+            <ul className="mt-4 space-y-3 text-sm font-medium">
+              <li>
+                <Link to="/guides/expert-assure" className="text-[#5B50F0] underline-offset-2 hover:underline">
+                  Qu&apos;est-ce qu&apos;un expert d&apos;assuré ?
+                </Link>
+              </li>
+              <li>
+                <Link to="/guides/assureur-refuse-payer" className="text-[#5B50F0] underline-offset-2 hover:underline">
+                  Que faire si mon assureur refuse de payer ?
+                </Link>
+              </li>
+              <li>
+                <Link to="/tarifs" className="text-[#5B50F0] underline-offset-2 hover:underline">
+                  Nos tarifs
+                </Link>
+              </li>
+            </ul>
+          </section>
 
           <div className="mt-16 rounded-xl border border-border bg-white p-8 shadow-[var(--shadow-soft)] sm:p-10">
             <h3 className="font-sans tracking-tight text-2xl font-semibold text-primary">
