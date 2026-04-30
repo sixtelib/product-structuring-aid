@@ -12,8 +12,7 @@ import {
 const oauthRedirect = () => {
   if (typeof window === "undefined") return "";
   migrateLegacyQualificationLocalStorage();
-  const hasEvaluation = !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);
-  return `${window.location.origin}${hasEvaluation ? "/dashboard/nouveau" : "/dashboard"}`;
+  return `${window.location.origin}/onboarding`;
 };
 
 export const Route = createFileRoute("/login")({
@@ -50,9 +49,25 @@ function LoginPage() {
       navigate({ to: "/expert", replace: true });
       return;
     }
-    const hasEvaluation =
-      typeof window !== "undefined" && !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);
-    navigate({ to: hasEvaluation ? "/dashboard/nouveau" : "/dashboard", replace: true });
+
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.from("profiles").select("mandat_signe").eq("id", user.id).maybeSingle();
+      if (cancelled) return;
+      const meta = user.user_metadata as { mandat_signe?: boolean } | undefined;
+      const signed = data?.mandat_signe === true || meta?.mandat_signe === true;
+      if (!signed) {
+        navigate({ to: "/onboarding", replace: true });
+        return;
+      }
+      const hasEvaluation =
+        typeof window !== "undefined" && !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);
+      navigate({ to: hasEvaluation ? "/dashboard/nouveau" : "/dashboard", replace: true });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [loading, isAdmin, isExpert, user, navigate]);
 
   async function signInWithOAuth(provider: "google" | "apple") {

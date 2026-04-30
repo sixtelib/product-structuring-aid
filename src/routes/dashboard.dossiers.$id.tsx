@@ -91,6 +91,29 @@ function eur(amount: number | string | null | undefined) {
   );
 }
 
+function timeAgo(dateString: string): string {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "à l'instant";
+  if (diffMins < 60) return `il y a ${diffMins} min`;
+  if (diffHours < 24) return `il y a ${diffHours}h`;
+  return `il y a ${diffDays} jour${diffDays > 1 ? "s" : ""}`;
+}
+
+function isMessageFromExpertSide(auteur: string): boolean {
+  return auteur === "admin" || auteur === "expert";
+}
+
+function isMessageFromClient(auteur: string, userId: string | undefined): boolean {
+  if (!userId) return false;
+  return auteur === userId || auteur === "client";
+}
+
 function ClientDossierDetailPage() {
   return (
     <AppGuard signInRedirect="/login">
@@ -168,8 +191,21 @@ function ClientDossierDetailContent() {
       setLoading(false);
     })();
 
+    const channel = supabase
+      .channel(`messages-${id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `dossier_id=eq.${id}` },
+        (payload) => {
+          const row = payload.new as MessageRow;
+          setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
+        },
+      )
+      .subscribe();
+
     return () => {
       cancelled = true;
+      void supabase.removeChannel(channel);
     };
   }, [id, user?.id]);
 
@@ -254,16 +290,25 @@ function ClientDossierDetailContent() {
     e.preventDefault();
     const text = draft.trim();
     if (!text) return;
+    if (!user?.id) {
+      toast.error("Vous devez être connecté pour envoyer un message.");
+      return;
+    }
     setSending(true);
     try {
       const { data, error } = await supabase
         .from("messages")
-        .insert({ dossier_id: id, auteur: "client", contenu: text })
+        .insert({
+          dossier_id: id,
+          auteur: user.id,
+          contenu: text,
+          created_at: new Date().toISOString(),
+        })
         .select()
         .single();
       if (error) throw error;
       setDraft("");
-      if (data) setMessages((prev) => [...prev, data as MessageRow]);
+      if (data) setMessages((prev) => (prev.some((m) => m.id === data.id) ? prev : [...prev, data as MessageRow]));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Impossible d'envoyer le message.");
     } finally {
@@ -418,46 +463,61 @@ function ClientDossierDetailContent() {
               )}
             </section>
 
-            {/* 3) Messagerie */}
+            {/* 3) Messages avec votre expert */}
             <section className="overflow-hidden rounded-xl border border-border bg-white shadow-[var(--shadow-soft)]">
               <div className="flex items-center gap-2.5 border-b border-border px-6 py-4 sm:px-8">
-                <MessageSquare className="h-5 w-5 text-primary" aria-hidden />
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">Messagerie</h2>
+                <MessageSquare className="h-5 w-5 text-[#5B50F0]" aria-hidden />
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">Messages avec votre expert</h2>
               </div>
               <div className="max-h-[420px] space-y-4 overflow-y-auto px-6 py-6 sm:px-8">
                 {messages.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">Aucun message.</p>
+                  <p className="py-6 text-center text-sm italic text-muted-foreground">
+                    Votre expert vous contactera ici prochainement.
+                  </p>
                 ) : (
                   messages.map((m) => {
-                    const mine = m.auteur === "expert";
+                    const fromExpertSide = isMessageFromExpertSide(m.auteur);
+                    const fromClient = isMessageFromClient(m.auteur, user?.id);
                     return (
-                      <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                        <div
-                          className={`max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[70%] ${
-                            mine ? "bg-primary text-primary-foreground" : "border border-border bg-secondary text-foreground"
-                          }`}
-                        >
-                          <p className="whitespace-pre-line">{m.contenu}</p>
-                          <p className={`mt-2 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                            {new Date(m.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                      <div key={m.id} className={`flex ${fromClient ? "justify-end" : "justify-start"}`}>
+                        <div className="max-w-[85%] sm:max-w-[70%]">
+                          <p className="mb-1 text-[0.75rem] text-muted-foreground">
+                            {fromClient ? "Vous" : "Votre expert"}
                           </p>
+                          <div
+                            className={`px-4 py-3 text-[0.95rem] leading-relaxed ${
+                              fromClient
+                                ? "rounded-2xl rounded-bl-[2px] bg-[#5B50F0] text-white"
+                                : "rounded-2xl rounded-br-[2px] bg-[#F3F4F6] text-[#111827]"
+                            }`}
+                          >
+                            <p className="whitespace-pre-wrap">{m.contenu}</p>
+                            <p className={`mt-2 text-[0.75rem] ${fromClient ? "text-white/75" : "text-muted-foreground"}`}>
+                              {timeAgo(m.created_at)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     );
                   })
                 )}
               </div>
-              <form onSubmit={(e) => void sendMessage(e)} className="flex gap-3 border-t border-border bg-white px-5 py-4 sm:px-8">
-                <input
+              <form
+                onSubmit={(e) => void sendMessage(e)}
+                className="flex flex-col gap-3 border-t border-border bg-white px-5 py-4 sm:flex-row sm:items-end sm:px-8"
+              >
+                <textarea
+                  rows={3}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Écrire un message…"
-                  className="min-h-10 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/25"
+                  placeholder="Répondre à votre expert..."
+                  disabled={!user?.id}
+                  className="min-h-[88px] w-full flex-1 resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/25 disabled:opacity-60"
                 />
                 <button
                   type="submit"
-                  disabled={sending || !draft.trim()}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow disabled:opacity-45"
+                  disabled={sending || !draft.trim() || !user?.id}
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#5B50F0] px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-45"
                 >
                   <Send className="h-4 w-4" />
                   Envoyer

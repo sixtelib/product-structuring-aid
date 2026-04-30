@@ -27,7 +27,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === "TOKEN_REFRESHED") {
+        // session rafraîchie, tout va bien
+      }
+      if (event === "SIGNED_OUT" || !newSession) {
+        if (typeof window !== "undefined") {
+          const path = window.location.pathname;
+          const publicPaths = ["/", "/login", "/auth", "/comment-ca-marche", "/tarifs", "/faq"];
+          const isPublic =
+            publicPaths.some((p) => path === p) ||
+            path.startsWith("/guides") ||
+            path.startsWith("/sinistres");
+          if (!isPublic) {
+            window.location.href = "/login";
+          }
+        }
+      }
+
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {

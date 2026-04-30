@@ -1,15 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Download,
+  Eye,
   FileText,
   Image as ImageIcon,
   MessageSquare,
   Send,
   Users,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,15 +51,19 @@ function normalize(s: string | null | undefined) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function statusBadgeClass(statut: string | null | undefined) {
-  const s = normalize(statut);
-  if (s.includes("gagn")) return "bg-green-50 text-green-700";
-  if (s.includes("perdu")) return "bg-red-50 text-red-700";
-  if (s.includes("negoc")) return "bg-[#EDE9FE] text-[#5B50F0]";
-  if (s.includes("analyse")) return "bg-orange-50 text-orange-700";
-  if (s.includes("clotur") || s.includes("clos")) return "bg-[#F3F4F6] text-[#6B7280]";
-  if (s.includes("en_cours") || s.includes("en cours")) return "bg-blue-50 text-blue-700";
-  return "bg-[#F3F4F6] text-[#6B7280]";
+function formatStatut(statut: string): { label: string; bg: string; color: string } {
+  const map: Record<string, { label: string; bg: string; color: string }> = {
+    en_analyse: { label: "En analyse", bg: "#FFF3CD", color: "#856404" },
+    en_cours: { label: "En cours", bg: "#D1ECF1", color: "#0C5460" },
+    negociation: { label: "Négociation", bg: "#EEE9FF", color: "#5B50F0" },
+    "négociation": { label: "Négociation", bg: "#EEE9FF", color: "#5B50F0" },
+    gagne: { label: "Gagné", bg: "#D4EDDA", color: "#155724" },
+    gagné: { label: "Gagné", bg: "#D4EDDA", color: "#155724" },
+    perdu: { label: "Perdu", bg: "#F8D7DA", color: "#721C24" },
+    cloture: { label: "Clôturé", bg: "#E2E3E5", color: "#383D41" },
+    clôturé: { label: "Clôturé", bg: "#E2E3E5", color: "#383D41" },
+  };
+  return map[statut] ?? { label: statut, bg: "#E2E3E5", color: "#383D41" };
 }
 
 function eur(n: number | null | undefined) {
@@ -74,6 +78,20 @@ function dateFr(d: string | null | undefined) {
   const t = new Date(d);
   if (Number.isNaN(t.getTime())) return "Non renseigné";
   return t.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+function timeAgo(dateString: string): string {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "à l'instant";
+  if (diffMins < 60) return `il y a ${diffMins} min`;
+  if (diffHours < 24) return `il y a ${diffHours}h`;
+  return `il y a ${diffDays} jour${diffDays > 1 ? "s" : ""}`;
 }
 
 function authorLabel(auteur: string) {
@@ -101,8 +119,25 @@ function storagePathFor(doc: DocumentRow): string | null {
   return path && String(path).trim() ? String(path).trim() : null;
 }
 
+function previewKindFromNom(nom: string): "pdf" | "image" | "other" {
+  const lower = nom.toLowerCase();
+  if (lower.endsWith(".pdf")) return "pdf";
+  if (/\.(jpg|jpeg|png|webp)$/i.test(lower)) return "image";
+  return "other";
+}
+
 function cardClass() {
   return "rounded-[12px] border border-[#E5E7EB] bg-white p-6 shadow-[0_1px_8px_rgba(0,0,0,0.06)]";
+}
+
+function expertRowLabel(e: {
+  full_name?: string | null;
+  prenom_expert?: string | null;
+  nom_expert?: string | null;
+}) {
+  const fn = (e.full_name ?? "").trim();
+  if (fn) return fn;
+  return `${String(e.prenom_expert ?? "").trim()} ${String(e.nom_expert ?? "").trim()}`.trim();
 }
 
 function AdminDossierDetailPage() {
@@ -117,15 +152,28 @@ function AdminDossierDetailPage() {
   const [expertProfile, setExpertProfile] = useState<ProfileRow | null>(null);
 
   const [statusUpdating, setStatusUpdating] = useState(false);
-  const [expertUuid, setExpertUuid] = useState("");
+  const [expertSearch, setExpertSearch] = useState("");
+  const [showExpertDropdown, setShowExpertDropdown] = useState(false);
+  const [selectedExpertId, setSelectedExpertId] = useState("");
+  const [experts, setExperts] = useState<any[]>([]);
   const [assigningExpert, setAssigningExpert] = useState(false);
+  const expertPickerRef = useRef<HTMLDivElement | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const [previewDoc, setPreviewDoc] = useState<DocumentRow | null>(null);
+  const [previewSignedUrl, setPreviewSignedUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
 
   const [messageText, setMessageText] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
+    setExpertSearch("");
+    setSelectedExpertId("");
+    setShowExpertDropdown(false);
+    setExperts([]);
     try {
       const { data: dRow, error: dErr } = await supabase.from("dossiers").select("*").eq("id", dossierId).maybeSingle();
       if (dErr) throw dErr;
@@ -160,6 +208,35 @@ function AdminDossierDetailPage() {
         expertProf = (eRes.data as ProfileRow) ?? null;
       }
       setExpertProfile(expertProf);
+
+      const profRes = await supabase.from("profiles").select("id, full_name, role, specialite").eq("role", "expert");
+      let expertsList: any[] = [];
+      if (!profRes.error && profRes.data && profRes.data.length > 0) {
+        expertsList = profRes.data;
+      } else {
+        const dRes = await supabase
+          .from("dossiers")
+          .select("expert_id, nom_expert, prenom_expert")
+          .not("expert_id", "is", null);
+        if (!dRes.error && dRes.data) {
+          const seen = new Map<string, any>();
+          for (const row of dRes.data as Array<{ expert_id: string | null; nom_expert: string | null; prenom_expert: string | null }>) {
+            const eid = row.expert_id;
+            if (!eid || seen.has(eid)) continue;
+            seen.set(eid, {
+              id: eid,
+              expert_id: eid,
+              full_name: null,
+              nom_expert: row.nom_expert,
+              prenom_expert: row.prenom_expert,
+              role: "expert",
+              specialite: null,
+            });
+          }
+          expertsList = Array.from(seen.values());
+        }
+      }
+      setExperts(expertsList);
     } catch (e) {
       console.error(e);
       toast.error(e instanceof Error ? e.message : "Impossible de charger le dossier.");
@@ -172,6 +249,16 @@ function AdminDossierDetailPage() {
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const el = expertPickerRef.current;
+      if (el && e.target instanceof Node && el.contains(e.target)) return;
+      setShowExpertDropdown(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const commission = useMemo(() => {
     if (dossier?.montant_estime == null) return null;
@@ -210,6 +297,22 @@ function AdminDossierDetailPage() {
     return "";
   }, [dossier?.nom_expert, dossier?.prenom_expert, expertProfile?.full_name]);
 
+  const headerTitle = useMemo(() => {
+    if (!dossier) return "";
+    const nom = (dossier.nom_assure ?? "").trim();
+    const prenom = (dossier.prenom_assure ?? "").trim();
+    if (nom && prenom) return `${prenom} ${nom}`;
+    return `Dossier ${dossier.type_sinistre}`;
+  }, [dossier]);
+
+  const headerSubtitle = useMemo(() => {
+    if (!dossier) return null;
+    const type = dossier.type_sinistre;
+    const ds = (dossier.date_sinistre ?? "").trim();
+    const suffix = ds ? ` · Sinistre du ${dateFr(ds)}` : ` · Ouvert le ${dateFr(dossier.date_ouverture)}`;
+    return { type, suffix };
+  }, [dossier]);
+
   async function copyId() {
     if (!dossier?.id) return;
     try {
@@ -236,13 +339,15 @@ function AdminDossierDetailPage() {
   }
 
   async function confirmAssignExpert() {
-    const id = expertUuid.trim();
+    const id = selectedExpertId.trim();
     if (!id || !dossier) return;
     setAssigningExpert(true);
     try {
       const { error } = await supabase.from("dossiers").update({ expert_id: id }).eq("id", dossierId);
       if (error) throw error;
-      setExpertUuid("");
+      setSelectedExpertId("");
+      setExpertSearch("");
+      setShowExpertDropdown(false);
       toast.success("Expert assigné.");
       await loadAll();
     } catch (e) {
@@ -270,6 +375,34 @@ function AdminDossierDetailPage() {
     }
   }
 
+  function closePreview() {
+    setPreviewDoc(null);
+    setPreviewSignedUrl(null);
+    setPreviewError(false);
+    setPreviewLoading(false);
+  }
+
+  async function openPreview(doc: DocumentRow) {
+    const path = storagePathFor(doc);
+    if (!path) {
+      toast.error("Chemin de fichier manquant.");
+      return;
+    }
+    setPreviewDoc(doc);
+    setPreviewSignedUrl(null);
+    setPreviewError(false);
+    setPreviewLoading(true);
+    try {
+      const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 3600);
+      if (error || !data?.signedUrl) throw error ?? new Error("signed url");
+      setPreviewSignedUrl(data.signedUrl);
+    } catch {
+      setPreviewError(true);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
   async function sendMessage() {
     const text = messageText.trim();
     if (!text) return;
@@ -279,6 +412,7 @@ function AdminDossierDetailPage() {
         dossier_id: dossierId,
         auteur: "admin",
         contenu: text,
+        created_at: new Date().toISOString(),
       });
       if (error) throw error;
       setMessageText("");
@@ -315,8 +449,99 @@ function AdminDossierDetailPage() {
     );
   }
 
+  const statutFmt = formatStatut(dossier.statut);
+
   return (
     <div className="bg-[#F8F9FF] pb-12">
+      {previewDoc ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div role="presentation" className="absolute inset-0 bg-[rgba(0,0,0,0.7)]" onClick={closePreview} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="preview-doc-title"
+            className="relative z-10 flex max-h-[90vh] w-[90vw] max-w-[900px] flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+          >
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#E5E7EB] px-6 py-5">
+              <h2 id="preview-doc-title" className="min-w-0 flex-1 break-words pr-2 text-base font-semibold text-[#111827]">
+                {previewDoc.nom}
+              </h2>
+              <button
+                type="button"
+                onClick={closePreview}
+                className="shrink-0 rounded-lg p-2 text-[#6B7280] transition-colors hover:bg-[#F3F4F6] hover:text-[#111827]"
+                aria-label="Fermer"
+              >
+                <X className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto p-6">
+              {previewLoading ? (
+                <div className="flex min-h-[200px] flex-col items-center justify-center gap-4 py-12">
+                  <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#E5E7EB] border-t-[#5B50F0]" />
+                  <p className="text-sm font-medium text-[#6B7280]">Chargement de l&apos;aperçu…</p>
+                </div>
+              ) : previewError || !previewSignedUrl ? (
+                <div className="flex flex-col items-center justify-center gap-6 py-8 text-center">
+                  <p className="max-w-md text-sm leading-relaxed text-[#374151]">
+                    Impossible de charger l&apos;aperçu. Essayez de télécharger le fichier.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void downloadDoc(previewDoc)}
+                    disabled={downloadingId === previewDoc.id}
+                    className="inline-flex items-center gap-2 rounded-[10px] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                    style={{ backgroundColor: "#5B50F0" }}
+                  >
+                    <Download className="h-4 w-4" aria-hidden />
+                    Télécharger
+                  </button>
+                </div>
+              ) : (
+                (() => {
+                  const kind = previewKindFromNom(previewDoc.nom);
+                  if (kind === "pdf") {
+                    return (
+                      <iframe
+                        title={previewDoc.nom}
+                        src={previewSignedUrl}
+                        className="w-full rounded-lg border-0"
+                        style={{ height: "70vh", border: "none", borderRadius: "8px" }}
+                      />
+                    );
+                  }
+                  if (kind === "image") {
+                    return (
+                      <img
+                        src={previewSignedUrl}
+                        alt={previewDoc.nom}
+                        className="mx-auto rounded-lg"
+                        style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: "8px" }}
+                      />
+                    );
+                  }
+                  return (
+                    <div className="flex flex-col items-center justify-center gap-6 py-8 text-center">
+                      <p className="text-sm leading-relaxed text-[#374151]">Aperçu non disponible pour ce type de fichier</p>
+                      <button
+                        type="button"
+                        onClick={() => void downloadDoc(previewDoc)}
+                        disabled={downloadingId === previewDoc.id}
+                        className="inline-flex items-center gap-2 rounded-[10px] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                        style={{ backgroundColor: "#5B50F0" }}
+                      >
+                        <Download className="h-4 w-4" aria-hidden />
+                        Télécharger
+                      </button>
+                    </div>
+                  );
+                })()
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6">
         <button
           type="button"
@@ -329,10 +554,21 @@ function AdminDossierDetailPage() {
         </button>
 
         <header className="mt-6 flex flex-wrap items-start justify-between gap-4">
-          <h1 className="text-2xl font-bold tracking-tight text-[#111827] sm:text-3xl">{dossier.type_sinistre}</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-bold tracking-tight text-[#111827] sm:text-3xl">{headerTitle}</h1>
+            {headerSubtitle ? (
+              <p className="mt-2 text-sm">
+                <span className="text-[#6B7280]">{headerSubtitle.type}</span>
+                <span className="text-[#6B7280]">{headerSubtitle.suffix}</span>
+              </p>
+            ) : null}
+          </div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(dossier.statut)}`}>
-              {dossier.statut}
+            <span
+              className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+              style={{ backgroundColor: statutFmt.bg, color: statutFmt.color }}
+            >
+              {statutFmt.label}
             </span>
             <div className="relative">
               <select
@@ -383,7 +619,14 @@ function AdminDossierDetailPage() {
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Statut</dt>
-                <dd className="mt-1 text-sm font-medium text-[#111827]">{dossier.statut}</dd>
+                <dd className="mt-1">
+                  <span
+                    className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+                    style={{ backgroundColor: statutFmt.bg, color: statutFmt.color }}
+                  >
+                    {statutFmt.label}
+                  </span>
+                </dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Montant estimé</dt>
@@ -449,15 +692,119 @@ function AdminDossierDetailPage() {
                     </span>
                     <p className="text-sm font-semibold text-[#111827]">Assigner un expert</p>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <input
-                        value={expertUuid}
-                        onChange={(e) => setExpertUuid(e.target.value)}
-                        placeholder="UUID de l'expert"
-                        className="h-10 w-full flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20 sm:max-w-md"
-                      />
+                      <div ref={expertPickerRef} className="w-full sm:max-w-md" style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          placeholder="Rechercher un expert..."
+                          value={expertSearch}
+                          onChange={(e) => {
+                            setExpertSearch(e.target.value);
+                            setShowExpertDropdown(true);
+                          }}
+                          onFocus={() => setShowExpertDropdown(true)}
+                          style={{
+                            width: "100%",
+                            border: "1px solid #E5E7EB",
+                            borderRadius: "8px",
+                            padding: "10px 16px",
+                            fontSize: "0.95rem",
+                          }}
+                        />
+
+                        {showExpertDropdown && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "100%",
+                              left: 0,
+                              right: 0,
+                              background: "white",
+                              border: "1px solid #E5E7EB",
+                              borderRadius: "8px",
+                              boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                              zIndex: 50,
+                              maxHeight: "240px",
+                              overflowY: "auto",
+                            }}
+                          >
+                            {(() => {
+                              const filtered = experts.filter((ex) =>
+                                expertRowLabel(ex).toLowerCase().includes(expertSearch.toLowerCase()),
+                              );
+                              return (
+                                <>
+                                  {filtered.map((expert) => (
+                                    <div
+                                      key={expert.id || expert.expert_id}
+                                      role="button"
+                                      tabIndex={0}
+                                      onKeyDown={(ev) => {
+                                        if (ev.key === "Enter" || ev.key === " ") {
+                                          ev.preventDefault();
+                                          const eid = String(expert.id || expert.expert_id);
+                                          setSelectedExpertId(eid);
+                                          setExpertSearch(expertRowLabel(expert));
+                                          setShowExpertDropdown(false);
+                                        }
+                                      }}
+                                      onClick={() => {
+                                        const eid = String(expert.id || expert.expert_id);
+                                        setSelectedExpertId(eid);
+                                        setExpertSearch(expertRowLabel(expert));
+                                        setShowExpertDropdown(false);
+                                      }}
+                                      style={{
+                                        padding: "12px 16px",
+                                        cursor: "pointer",
+                                        borderBottom: "1px solid #F3F4F6",
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                      }}
+                                      onMouseEnter={(ev) => {
+                                        ev.currentTarget.style.background = "#F8F7FF";
+                                      }}
+                                      onMouseLeave={(ev) => {
+                                        ev.currentTarget.style.background = "white";
+                                      }}
+                                    >
+                                      <span style={{ fontWeight: 500 }}>{expertRowLabel(expert)}</span>
+                                      {expert.specialite ? (
+                                        <span
+                                          style={{
+                                            fontSize: "0.75rem",
+                                            background: "#EEE9FF",
+                                            color: "#5B50F0",
+                                            padding: "2px 8px",
+                                            borderRadius: "999px",
+                                          }}
+                                        >
+                                          {expert.specialite}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  ))}
+                                  {filtered.length === 0 && (
+                                    <div
+                                      style={{
+                                        padding: "16px",
+                                        color: "#9CA3AF",
+                                        textAlign: "center",
+                                        fontSize: "0.875rem",
+                                      }}
+                                    >
+                                      Aucun expert trouvé
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
                       <button
                         type="button"
-                        disabled={!expertUuid.trim() || assigningExpert}
+                        disabled={!selectedExpertId.trim() || assigningExpert}
                         onClick={() => void confirmAssignExpert()}
                         className="h-10 shrink-0 rounded-lg bg-[#5B50F0] px-4 text-sm font-semibold text-white hover:opacity-95 disabled:opacity-50"
                       >
@@ -471,42 +818,23 @@ function AdminDossierDetailPage() {
           </section>
         </div>
 
-        <section className={`${cardClass()} mt-6`}>
-          <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">
-            <FileText className="h-5 w-5 text-[#5B50F0]" aria-hidden />
-            <h2 className="text-lg font-semibold text-[#111827]">Documents ({documents.length})</h2>
-          </div>
-          {documents.length === 0 ? (
-            <p className="text-sm text-[#6B7280]">Aucun document</p>
-          ) : (
-            <ul className="space-y-3">
-              {documents.map((doc) => {
-                const st = formatDocumentStatusDb(doc.statut);
-                return (
-                  <li
-                    key={doc.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      {docIcon(doc.nom)}
-                      <span className="truncate text-sm font-medium text-[#111827]">{doc.nom}</span>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${st.className}`}>{st.label}</span>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={downloadingId === doc.id}
-                      onClick={() => void downloadDoc(doc)}
-                      className="inline-flex items-center gap-2 rounded-lg border border-[#5B50F0] bg-white px-3 py-2 text-sm font-semibold text-[#5B50F0] hover:bg-[#F5F3FF] disabled:opacity-50"
-                    >
-                      <Download className="h-4 w-4" aria-hidden />
-                      Télécharger
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
+        <DossierAnalyseIA
+          dossier={{
+            id: dossier.id,
+            type_sinistre: dossier.type_sinistre,
+            montant_estime: Number(dossier.montant_estime),
+            statut: dossier.statut,
+            assureur: (dossier.assureur_nom ?? dossier.assureur) ?? undefined,
+            description: dossier.description ?? undefined,
+            nom_assure: dossier.nom_assure ?? undefined,
+            prenom_assure: dossier.prenom_assure ?? undefined,
+          }}
+          documents={documents.map((d) => ({
+            id: d.id,
+            nom: d.nom,
+            chemin: d.chemin ?? (d as DocumentRow & { storage_path?: string | null }).storage_path ?? undefined,
+          }))}
+        />
 
         <section className={`${cardClass()} mt-6`}>
           <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">
@@ -529,7 +857,7 @@ function AdminDossierDetailPage() {
                       <p className="text-xs font-semibold text-[#6B7280]">{authorLabel(m.auteur)}</p>
                       <p className="mt-2 whitespace-pre-wrap leading-relaxed">{m.contenu}</p>
                       <p className="mt-2 text-[11px] text-[#6B7280]">
-                        {formatDistanceToNow(new Date(m.created_at), { addSuffix: true, locale: fr })}
+                        {timeAgo(m.created_at)}
                       </p>
                     </div>
                   </div>
@@ -558,23 +886,59 @@ function AdminDossierDetailPage() {
           </div>
         </section>
 
-        <DossierAnalyseIA
-          dossier={{
-            id: dossier.id,
-            type_sinistre: dossier.type_sinistre,
-            montant_estime: Number(dossier.montant_estime),
-            statut: dossier.statut,
-            assureur: (dossier.assureur_nom ?? dossier.assureur) ?? undefined,
-            description: dossier.description ?? undefined,
-            nom_assure: dossier.nom_assure ?? undefined,
-            prenom_assure: dossier.prenom_assure ?? undefined,
-          }}
-          documents={documents.map((d) => ({
-            id: d.id,
-            nom: d.nom,
-            chemin: d.chemin ?? (d as DocumentRow & { storage_path?: string | null }).storage_path ?? undefined,
-          }))}
-        />
+        <section className={`${cardClass()} mt-6`}>
+          <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">
+            <FileText className="h-5 w-5 text-[#5B50F0]" aria-hidden />
+            <h2 className="text-lg font-semibold text-[#111827]">Documents ({documents.length})</h2>
+          </div>
+          {documents.length === 0 ? (
+            <p className="text-sm text-[#6B7280]">Aucun document</p>
+          ) : (
+            <ul className="space-y-3">
+              {documents.map((doc) => {
+                const st = formatDocumentStatusDb(doc.statut);
+                return (
+                  <li
+                    key={doc.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3"
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => void openPreview(doc)}
+                        className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left transition-opacity hover:opacity-80"
+                      >
+                        {docIcon(doc.nom)}
+                        <span className="truncate text-sm font-medium text-[#111827]">{doc.nom}</span>
+                      </button>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${st.className}`}>{st.label}</span>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void openPreview(doc)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-solid border-[#E5E7EB] bg-white px-[14px] py-2 text-sm font-semibold text-[#111827] hover:bg-[#F9FAFB]"
+                        style={{ paddingTop: 8, paddingBottom: 8 }}
+                      >
+                        <Eye className="h-4 w-4 shrink-0" aria-hidden />
+                        Aperçu
+                      </button>
+                      <button
+                        type="button"
+                        disabled={downloadingId === doc.id}
+                        onClick={() => void downloadDoc(doc)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-[#5B50F0] bg-white px-3 py-2 text-sm font-semibold text-[#5B50F0] hover:bg-[#F5F3FF] disabled:opacity-50"
+                      >
+                        <Download className="h-4 w-4" aria-hidden />
+                        Télécharger
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   );

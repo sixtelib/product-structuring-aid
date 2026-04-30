@@ -279,6 +279,9 @@ export type Database = {
           description: string | null
           expert_id: string | null
           id: string
+          mandat_signe: boolean
+          mandat_signe_le: string | null
+          mandat_signature: string | null
           montant_estime: number
           notes_expert: string | null
           numero_contrat: string | null
@@ -296,6 +299,9 @@ export type Database = {
           description?: string | null
           expert_id?: string | null
           id?: string
+          mandat_signe?: boolean
+          mandat_signe_le?: string | null
+          mandat_signature?: string | null
           montant_estime?: number
           notes_expert?: string | null
           numero_contrat?: string | null
@@ -313,6 +319,9 @@ export type Database = {
           description?: string | null
           expert_id?: string | null
           id?: string
+          mandat_signe?: boolean
+          mandat_signe_le?: string | null
+          mandat_signature?: string | null
           montant_estime?: number
           notes_expert?: string | null
           numero_contrat?: string | null
@@ -403,6 +412,10 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          mandat_email: string | null
+          mandat_signe: boolean
+          mandat_signe_le: string | null
+          mandat_signature: string | null
           phone: string | null
           role: string
           specialite: string | null
@@ -413,6 +426,10 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          mandat_email?: string | null
+          mandat_signe?: boolean
+          mandat_signe_le?: string | null
+          mandat_signature?: string | null
           phone?: string | null
           role?: string
           specialite?: string | null
@@ -423,6 +440,10 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          mandat_email?: string | null
+          mandat_signe?: boolean
+          mandat_signe_le?: string | null
+          mandat_signature?: string | null
           phone?: string | null
           role?: string
           specialite?: string | null

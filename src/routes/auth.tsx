@@ -45,21 +45,35 @@ function AuthPage() {
       navigate({ to: "/expert", replace: true });
       return;
     }
-    const hasEvaluation =
-      typeof window !== "undefined" && !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);
-    navigate({ to: hasEvaluation ? "/dashboard/nouveau" : "/dashboard", replace: true });
+
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.from("profiles").select("mandat_signe").eq("id", user.id).maybeSingle();
+      if (cancelled) return;
+      const meta = user.user_metadata as { mandat_signe?: boolean } | undefined;
+      const signed = data?.mandat_signe === true || meta?.mandat_signe === true;
+      if (!signed) {
+        navigate({ to: "/onboarding", replace: true });
+        return;
+      }
+      const hasEvaluation =
+        typeof window !== "undefined" && !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);
+      navigate({ to: hasEvaluation ? "/dashboard/nouveau" : "/dashboard", replace: true });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [loading, isAdmin, isExpert, user, navigate]);
 
   async function signInWithOAuth(provider: "google" | "apple") {
     setBusy(provider);
     try {
       migrateLegacyQualificationLocalStorage();
-      const hasEvaluation =
-        typeof window !== "undefined" && !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}${hasEvaluation ? "/dashboard/nouveau" : "/dashboard"}`,
+          redirectTo: `${window.location.origin}/onboarding`,
         },
       });
       if (error) throw error;
@@ -96,14 +110,12 @@ function AuthPage() {
         navigate({ to: "/admin", replace: true });
       } else if (isExpert) {
         navigate({ to: "/expert", replace: true });
-      } else if (
-        mode === "signup" &&
-        typeof window !== "undefined" &&
-        !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation)
-      ) {
-        navigate({ to: "/dashboard/nouveau", replace: true });
+      } else if (mode === "signup") {
+        navigate({ to: "/onboarding", replace: true });
       } else {
-        navigate({ to: "/dashboard", replace: true });
+        const hasEvaluation =
+          typeof window !== "undefined" && !!window.localStorage.getItem(QUALIFICATION_STORAGE_KEYS.evaluation);
+        navigate({ to: hasEvaluation ? "/dashboard/nouveau" : "/dashboard", replace: true });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";

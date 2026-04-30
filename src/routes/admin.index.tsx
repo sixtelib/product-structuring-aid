@@ -193,17 +193,14 @@ function AdminIndexPage() {
               return (
                 <li
                   key={d.id}
-                  onClick={() => navigate({ to: "/admin/dossiers" })}
+                  onClick={() => navigate({ to: "/admin/dossiers/$dossierId", params: { dossierId: d.id } })}
                   className="cursor-pointer px-6 py-5 transition-colors hover:bg-[#F8F9FF] sm:px-8"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="truncate text-sm font-semibold text-[#111827]">
-                          <span
-                            onClick={() => navigate({ to: "/admin/dossiers" })}
-                            style={{ cursor: "pointer", color: "#5B50F0" }}
-                          >
+                          <span style={{ cursor: "pointer", color: "#5B50F0" }}>
                             {d.type_sinistre ?? d.titre ?? "Dossier"}
                           </span>
                         </p>
@@ -236,7 +233,10 @@ function AdminIndexPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                    <div
+                      className="flex flex-wrap items-center gap-2 lg:justify-end"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <StatusSelect
                         value={toAdminStatus(d.statut)}
                         disabled={updatingStatusId === d.id}
