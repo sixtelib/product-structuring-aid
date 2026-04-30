@@ -19,6 +19,9 @@ export default defineConfig({
       spa: {
         enabled: true,
       },
+      prerender: {
+        concurrency: 1,
+      },
     }),
     react(),
   ],
