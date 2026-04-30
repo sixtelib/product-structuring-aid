@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronDown, Shield, UserPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -37,6 +37,7 @@ function eur(amount: number | string | null | undefined) {
 }
 
 function AdminIndexPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dossiers, setDossiers] = useState<DossierForList[]>([]);
@@ -53,8 +54,10 @@ function AdminIndexPage() {
     try {
       const { data: dossierRows, error: dErr } = await supabase
         .from("dossiers")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select(
+          "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert",
+        )
+        .order("date_ouverture", { ascending: false });
       if (dErr) throw dErr;
       const base = (dossierRows as DossierRow[]) ?? [];
 
@@ -180,16 +183,30 @@ function AdminIndexPage() {
           <ul className="divide-y divide-[#E5E7EB]">
             {dossiers.map((d) => {
               const meta = dossierStatusMeta(d.statut);
-              const assuredLabel = (d.assured?.full_name && d.assured.full_name.trim()) || d.assured?.email || d.user_id;
+              const assuredName = `${String(d.prenom_assure ?? "").trim()} ${String(d.nom_assure ?? "").trim()}`.trim();
+              const assuredLabel =
+                assuredName || (d.assured?.full_name && d.assured.full_name.trim()) || d.assured?.email || "Inconnu";
+              const expertName = `${String(d.prenom_expert ?? "").trim()} ${String(d.nom_expert ?? "").trim()}`.trim();
               const expertLabel =
-                (d.expert?.full_name && d.expert.full_name.trim()) || d.expert?.email || (d.expert_id ?? "");
+                expertName || (d.expert?.full_name && d.expert.full_name.trim()) || d.expert?.email || "Inconnu";
 
               return (
-                <li key={d.id} className="px-6 py-5 sm:px-8">
+                <li
+                  key={d.id}
+                  onClick={() => navigate({ to: "/admin/dossiers" })}
+                  className="cursor-pointer px-6 py-5 transition-colors hover:bg-[#F8F9FF] sm:px-8"
+                >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-semibold text-[#111827]">{d.titre || ", "}</p>
+                        <p className="truncate text-sm font-semibold text-[#111827]">
+                          <span
+                            onClick={() => navigate({ to: "/admin/dossiers" })}
+                            style={{ cursor: "pointer", color: "#5B50F0" }}
+                          >
+                            {d.type_sinistre ?? d.titre ?? "Dossier"}
+                          </span>
+                        </p>
                         <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-medium ${meta.toneClass}`}>
                           {meta.label}
                         </span>
@@ -220,12 +237,19 @@ function AdminIndexPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                      <StatusSelect value={toAdminStatus(d.statut)} disabled={updatingStatusId === d.id} onChange={(v) => void updateStatus(d.id, v)} />
+                      <StatusSelect
+                        value={toAdminStatus(d.statut)}
+                        disabled={updatingStatusId === d.id}
+                        onChange={(v) => void updateStatus(d.id, v)}
+                      />
 
                       {!d.expert_id && (
                         <button
                           type="button"
-                          onClick={() => openAssign(d)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openAssign(d);
+                          }}
                           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
                         >
                           <UserPlus className="h-4 w-4" aria-hidden />
@@ -360,7 +384,10 @@ function StatusSelect({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setOpen((v) => !v)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
         className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-secondary disabled:opacity-60"
       >
         <span>{current.label}</span>
@@ -374,7 +401,8 @@ function StatusSelect({
               <li key={opt.value}>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setOpen(false);
                     onChange(opt.value);
                   }}

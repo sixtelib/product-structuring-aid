@@ -25,7 +25,18 @@ function AdminExpertsPage() {
   const [error, setError] = useState<string | null>(null);
   const [dossiers, setDossiers] = useState<
     Array<
-      Pick<DossierRow, "id" | "user_id" | "statut" | "type_sinistre" | "date_ouverture" | "montant_estime" | "expert_id">
+      Pick<
+        DossierRow,
+        | "id"
+        | "user_id"
+        | "statut"
+        | "type_sinistre"
+        | "date_ouverture"
+        | "montant_estime"
+        | "expert_id"
+        | "nom_expert"
+        | "prenom_expert"
+      >
     >
   >([]);
 
@@ -39,13 +50,16 @@ function AdminExpertsPage() {
       try {
         const { data, error: err } = await supabase
           .from("dossiers")
-          .select("id, user_id, statut, type_sinistre, date_ouverture, montant_estime, expert_id")
+          .select(
+            "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur",
+          )
           .not("expert_id", "is", null);
 
         if (err) throw err;
         if (!cancelled) setDossiers((data ?? []) as any);
       } catch (e) {
         if (!cancelled) {
+          console.error(e);
           setError(e instanceof Error ? e.message : "Erreur de chargement.");
           setDossiers([]);
         }
@@ -152,6 +166,22 @@ function AdminExpertsPage() {
     return rows;
   }, [dossiers]);
 
+  const expertNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    dossiers.forEach((d) => {
+      if (!d.expert_id) return;
+      const id = String(d.expert_id);
+      if (map.has(id)) return;
+      const label = `${String(d.nom_expert ?? "").trim()} ${String(d.prenom_expert ?? "").trim()}`.trim();
+      if (label) map.set(id, label);
+    });
+    return map;
+  }, [dossiers]);
+
+  function expertLabel(expertId: string) {
+    return expertNameById.get(expertId) ?? "Non assigné";
+  }
+
   const pipelineByExpert = useMemo(() => {
     const byExpert = new Map<
       string,
@@ -213,7 +243,7 @@ function AdminExpertsPage() {
             <div className="h-9 w-9 animate-spin rounded-full border-2 border-border border-t-primary" />
           </div>
         ) : error ? (
-          <div className="p-6 text-sm text-destructive">{error}</div>
+          <div className="p-6 text-sm text-destructive">Erreur de chargement : {error}</div>
         ) : dossiers.length === 0 ? (
           <div className="p-6 text-sm text-[#6B7280]">Aucun expert assigné pour le moment</div>
         ) : (
@@ -239,7 +269,7 @@ function AdminExpertsPage() {
                   return (
                     <tr key={ex.expertId} className="border-b border-[#F3F4F6] hover:bg-[#F8F9FF]">
                       <td className="px-5 py-4">
-                        <p className="text-sm font-semibold text-[#111827]">{shortId(ex.expertId)}</p>
+                        <p className="text-sm font-semibold text-[#111827]">{expertLabel(ex.expertId)}</p>
                       </td>
                       <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{ex.inProgress}</td>
                       <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{ex.total}</td>
@@ -258,7 +288,7 @@ function AdminExpertsPage() {
                         <div className="flex flex-wrap gap-2">
                           <button
                             type="button"
-                            onClick={() => window.alert(`Détail expert : ${ex.expertId}`)}
+                            onClick={() => window.alert(`Détail expert : ${expertLabel(ex.expertId)}`)}
                             className="rounded-lg bg-[#F3F4F6] px-3 py-2 text-sm font-medium text-[#111827] hover:bg-[#E5E7EB]"
                           >
                             Voir détail
@@ -291,7 +321,7 @@ function AdminExpertsPage() {
             <div className="mt-4 space-y-6">
               {Array.from(pipelineByExpert.entries()).map(([expertId, list]) => (
                 <div key={expertId}>
-                  <p className="text-sm font-semibold text-[#111827]">{shortId(expertId)}</p>
+                  <p className="text-sm font-semibold text-[#111827]">{expertLabel(expertId)}</p>
                   <div className="mt-3 space-y-3">
                     {list.map((d) => {
                       const st = d.statut ?? "—";
@@ -321,7 +351,7 @@ function AdminExpertsPage() {
 
                           <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                             <span className="text-sm font-semibold text-[#111827]">{eur(feeBase)}</span>
-                            <span className="text-xs text-[#6B7280]">Expert {shortId(expertId)}</span>
+                            <span className="text-xs text-[#6B7280]">Expert {expertLabel(expertId)}</span>
                           </div>
                         </div>
                       );
@@ -336,4 +366,6 @@ function AdminExpertsPage() {
     </div>
   );
 }
+
+export default AdminExpertsPage;
 

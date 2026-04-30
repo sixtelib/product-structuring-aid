@@ -50,12 +50,20 @@ function AdminUtilisateursPage() {
           if (profErr) throw profErr;
 
           const ids = new Set(((profRows as Pick<ProfileRow, "id">[]) ?? []).map((p) => p.id));
-          const { data: dossierRows, error: dossiersErr } = await supabase.from("dossiers").select("user_id");
+          const { data: dossierRows, error: dossiersErr } = await supabase
+            .from("dossiers")
+            .select("user_id, nom_assure, prenom_assure");
           if (dossiersErr) throw dossiersErr;
           const dossierCounts = new Map<string, number>();
+          const nameByUser = new Map<string, string>();
           ((dossierRows as Pick<DossierRow, "user_id">[]) ?? []).forEach((d) => {
             if (!d.user_id || !ids.has(d.user_id)) return;
             dossierCounts.set(d.user_id, (dossierCounts.get(d.user_id) ?? 0) + 1);
+          });
+          ((dossierRows as Array<Pick<DossierRow, "user_id" | "nom_assure" | "prenom_assure">>) ?? []).forEach((d) => {
+            if (!d.user_id || !ids.has(d.user_id)) return;
+            const label = `${String(d.nom_assure ?? "").trim()} ${String(d.prenom_assure ?? "").trim()}`.trim();
+            if (label) nameByUser.set(d.user_id, label);
           });
 
           const ui = ((profRows as Pick<ProfileRow, "id" | "email" | "full_name" | "role" | "created_at">[]) ?? []).map((p) => {
@@ -63,7 +71,7 @@ function AdminUtilisateursPage() {
             return {
               id: p.id,
               email: p.email,
-              fullName: p.full_name,
+              fullName: p.full_name ?? nameByUser.get(p.id) ?? null,
               createdAt: p.created_at,
               role,
               dossierCount: dossierCounts.get(p.id) ?? 0,
@@ -78,29 +86,31 @@ function AdminUtilisateursPage() {
         // Step 2 — build users from dossiers (since profiles isn't available)
         const { data: dossierRows, error: dossiersErr } = await supabase
           .from("dossiers")
-          .select("user_id, type_sinistre, statut, date_ouverture, montant_estime");
+          .select("user_id, type_sinistre, statut, date_ouverture, montant_estime, nom_assure, prenom_assure");
         if (dossiersErr) throw dossiersErr;
 
-        const byUser = new Map<string, { count: number; firstOpenedAt: string | null }>();
-        ((dossierRows as Pick<DossierRow, "user_id" | "date_ouverture">[]) ?? []).forEach((d) => {
+        const byUser = new Map<string, { count: number; firstOpenedAt: string | null; fullName: string | null }>();
+        ((dossierRows as Array<Pick<DossierRow, "user_id" | "date_ouverture" | "nom_assure" | "prenom_assure">>) ?? []).forEach((d) => {
           if (!d.user_id) return;
           const existing = byUser.get(d.user_id);
           const openedAt = (d.date_ouverture as unknown as string | null) ?? null;
+          const label = `${String(d.nom_assure ?? "").trim()} ${String(d.prenom_assure ?? "").trim()}`.trim() || null;
           if (!existing) {
-            byUser.set(d.user_id, { count: 1, firstOpenedAt: openedAt });
+            byUser.set(d.user_id, { count: 1, firstOpenedAt: openedAt, fullName: label });
             return;
           }
           existing.count += 1;
           if (openedAt && (!existing.firstOpenedAt || new Date(openedAt).getTime() < new Date(existing.firstOpenedAt).getTime())) {
             existing.firstOpenedAt = openedAt;
           }
+          if (!existing.fullName && label) existing.fullName = label;
         });
 
         const ui: UiUser[] = Array.from(byUser.entries())
           .map(([id, meta]) => ({
             id,
             email: null,
-            fullName: null,
+            fullName: meta.fullName,
             createdAt: meta.firstOpenedAt,
             role: "assure",
             dossierCount: meta.count,
@@ -115,6 +125,7 @@ function AdminUtilisateursPage() {
         if (!cancelled) setUsers(ui);
       } catch (e) {
         if (!cancelled) {
+          console.error(e);
           setError(e instanceof Error ? e.message : "Erreur de chargement.");
           setUsers([]);
         }
@@ -204,7 +215,7 @@ function AdminUtilisateursPage() {
             <div className="h-9 w-9 animate-spin rounded-full border-2 border-border border-t-primary" />
           </div>
         ) : error ? (
-          <div className="p-6 text-sm text-destructive">{error}</div>
+          <div className="p-6 text-sm text-destructive">Erreur de chargement : {error}</div>
         ) : filteredUsers.length === 0 ? (
           <div className="p-6 text-sm text-[#6B7280]">Aucun utilisateur trouvé</div>
         ) : (
@@ -290,4 +301,6 @@ function AdminUtilisateursPage() {
     </div>
   );
 }
+
+export default AdminUtilisateursPage;
 

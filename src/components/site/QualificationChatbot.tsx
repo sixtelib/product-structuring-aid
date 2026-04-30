@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Send, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   migrateLegacyQualificationLocalStorage,
   QUALIFICATION_STORAGE_KEYS,
@@ -15,6 +16,38 @@ type CollectedData = {
   date_sinistre: string;
   description: string;
 };
+
+const EXTRACTION_PROMPT = `Tu es un assistant spécialisé dans 
+l'extraction d'informations depuis des documents d'assurance.
+
+Analyse ce document et extrais TOUTES les informations pertinentes 
+dans ce format JSON exact, sans aucun texte avant ou après :
+{
+  "numero_contrat": "",
+  "nom_assure": "",
+  "prenom_assure": "",
+  "adresse_assure": "",
+  "telephone_assure": "",
+  "email_assure": "",
+  "nom_assureur": "",
+  "adresse_assureur": "",
+  "telephone_assureur": "",
+  "contact_assureur": "",
+  "numero_sinistre": "",
+  "date_sinistre": "",
+  "type_sinistre": "",
+  "montant_expertise": "",
+  "nom_expert_assurance": "",
+  "telephone_expert_assurance": "",
+  "email_expert_assurance": "",
+  "conclusions_expert": "",
+  "reserves_expert": "",
+  "autres_informations": []
+}
+
+Si une information n'est pas trouvée, laisse le champ vide "".
+Pour autres_informations, liste toute info pertinente non couverte 
+par les champs ci-dessus.`;
 
 const EMPTY_DATA: CollectedData = {
   type_sinistre: "",
@@ -180,6 +213,8 @@ export function QualificationChatbot() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dismissedUploadForClaudeMsgId, setDismissedUploadForClaudeMsgId] = useState<string | null>(null);
+  const [sendingDocs, setSendingDocs] = useState(false);
+  const [extractedData, setExtractedData] = useState<Record<string, any>>({});
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -249,6 +284,143 @@ export function QualificationChatbot() {
     const text = data.content?.find((c) => c.type === "text")?.text?.trim() ?? "";
     if (!text) throw new Error("Réponse Claude vide.");
     return text;
+  }
+
+  async function callAnthropicExtraction(payload: any) {
+    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
+    if (!apiKey) throw new Error("Clé API Anthropic manquante (VITE_ANTHROPIC_API_KEY).");
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(txt || `Erreur Anthropic (${res.status})`);
+    }
+
+    const data = (await res.json()) as { content?: Array<{ type?: string; text?: string }> };
+    const text = data.content?.find((c) => c.type === "text")?.text?.trim() ?? "";
+    if (!text) throw new Error("Réponse extraction vide.");
+    return text;
+  }
+
+  function sanitizeJsonText(text: string) {
+    const t = text.trim();
+    const match = t.match(/\{[\s\S]*\}/);
+    return (match?.[0] ?? t).trim();
+  }
+
+  function nonEmptyExtracted(obj: Record<string, any>) {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (v == null) continue;
+      if (Array.isArray(v) && v.length === 0) continue;
+      if (typeof v === "string" && !v.trim()) continue;
+      out[k] = v;
+    }
+    return out;
+  }
+
+  async function blobToBase64(blob: Blob): Promise<string> {
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Lecture du fichier impossible."));
+      reader.onload = () => {
+        const s = String(reader.result ?? "");
+        const idx = s.indexOf("base64,");
+        resolve(idx >= 0 ? s.slice(idx + "base64,".length) : s);
+      };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function extractFromUploaded(path: string, originalFile: File) {
+    try {
+      const { data: urlData, error: urlErr } = await supabase.storage.from("documents").createSignedUrl(path, 3600);
+      if (urlErr || !urlData?.signedUrl) throw urlErr ?? new Error("Signed URL indisponible");
+
+      const lower = originalFile.name.toLowerCase();
+      const isPdf = lower.endsWith(".pdf");
+      const isImage = /\.(png|jpg|jpeg)$/i.test(lower) || originalFile.type.startsWith("image/");
+
+      let userContent: any;
+      if (isImage) {
+        const b = await fetch(urlData.signedUrl).then((r) => r.blob());
+        const base64 = await blobToBase64(b);
+        const mediaType =
+          originalFile.type && originalFile.type.startsWith("image/")
+            ? originalFile.type
+            : lower.endsWith(".png")
+              ? "image/png"
+              : "image/jpeg";
+
+        userContent = [
+          { type: "text", text: "Analyse cette image (document d'assurance) et extrais les informations demandées." },
+          { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+        ];
+      } else if (isPdf) {
+        userContent = `Ce document est un PDF : ${originalFile.name}. Extrais les informations disponibles depuis le nom et contexte.`;
+      } else {
+        userContent = `Document : ${originalFile.name}. Extrais les informations disponibles depuis le nom et contexte.`;
+      }
+
+      const payload = {
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: EXTRACTION_PROMPT,
+        messages: [{ role: "user", content: userContent }],
+      };
+
+      const txt = await callAnthropicExtraction(payload);
+      const parsed = JSON.parse(sanitizeJsonText(txt)) as Record<string, any>;
+      setExtractedData((prev) => ({ ...prev, ...parsed }));
+      return parsed;
+    } catch (e) {
+      console.error("Extraction failed:", e);
+      return null;
+    }
+  }
+
+  function getDossierIdFromLocalStorage(): string | null {
+    if (typeof window === "undefined") return null;
+    const candidates = ["dossierId", "vertual_dossier_id", "vertual_dossierId", "currentDossierId"];
+    for (const k of candidates) {
+      const v = window.localStorage.getItem(k);
+      if (v && v.trim()) return v.trim();
+    }
+    return null;
+  }
+
+  async function saveExtractionToDossier(dossierId: string, data: Record<string, any>) {
+    const update: Record<string, any> = {
+      nom_assure: data.nom_assure || undefined,
+      prenom_assure: data.prenom_assure || undefined,
+      assureur: data.nom_assureur || undefined,
+      nom_expert: data.nom_expert_assurance || undefined,
+      montant_estime: data.montant_expertise
+        ? parseFloat(String(data.montant_expertise).replace(/[^0-9.]/g, ""))
+        : undefined,
+    };
+    const cleaned: Record<string, any> = {};
+    for (const [k, v] of Object.entries(update)) {
+      if (v !== undefined && v !== null && !(typeof v === "number" && Number.isNaN(v))) cleaned[k] = v;
+    }
+    if (Object.keys(cleaned).length === 0) return;
+    try {
+      const { error: upErr } = await supabase.from("dossiers").update(cleaned).eq("id", dossierId);
+      if (upErr) throw upErr;
+    } catch (e) {
+      console.error("Save extraction to dossier failed:", e);
+    }
   }
 
   async function sendUserText(text: string) {
@@ -343,12 +515,79 @@ export function QualificationChatbot() {
   async function sendDocuments() {
     if (!lastClaude) return;
     if (selectedFiles.length === 0) return;
-    const names = selectedFiles.map((f) => f.name).join(", ");
-    const msg = `📎 ${selectedFiles.length} document(s) envoyé(s) : ${names}`;
+    if (sendingDocs || isLoading) return;
+
+    const filesSnapshot = [...selectedFiles];
+    const names = filesSnapshot.map((f) => f.name).join(", ");
+    const msg = `📎 ${filesSnapshot.length} document(s) envoyé(s) : ${names}`;
+
+    const userMsg: Msg = { id: uid(), role: "user", text: msg };
+    const next = [...messages, userMsg];
+    setMessages(next);
     setDismissedUploadForClaudeMsgId(lastClaude.id);
     setSelectedFiles([]);
     setUploadError(null);
-    await sendUserText(msg);
+
+    setSendingDocs(true);
+    setIsLoading(true);
+
+    const uploadedItems: Array<{ path: string; file: File }> = [];
+    for (const file of filesSnapshot) {
+      const fileName = `chatbot/${Date.now()}_${file.name}`;
+      try {
+        const { error } = await supabase.storage.from("documents").upload(fileName, file, { upsert: true });
+        if (error) throw error;
+        uploadedItems.push({ path: fileName, file });
+
+        try {
+          const existingFiles = JSON.parse(window.localStorage.getItem("vertual_uploaded_files") ?? "[]");
+          const list = Array.isArray(existingFiles) ? existingFiles : [];
+          list.push(fileName);
+          window.localStorage.setItem("vertual_uploaded_files", JSON.stringify(list));
+        } catch {
+          // best-effort localStorage, do not block upload
+        }
+      } catch (e) {
+        console.error("Upload failed:", e);
+        setUploadError("Erreur lors de l'envoi d'un fichier");
+      }
+    }
+
+    let merged: Record<string, any> = {};
+    for (const item of uploadedItems) {
+      const parsed = await extractFromUploaded(item.path, item.file);
+      if (parsed) merged = { ...merged, ...parsed };
+    }
+
+    const cleanedForChat = nonEmptyExtracted(merged);
+    const dossierId = getDossierIdFromLocalStorage();
+    if (dossierId) {
+      await saveExtractionToDossier(dossierId, merged);
+    }
+
+    try {
+      const hidden = `L'utilisateur a envoyé ces documents : ${names}. \nInformations extraites : ${JSON.stringify(
+        cleanedForChat,
+      )}. \nContinue la conversation en confirmant la réception et en mentionnant les informations clés que tu as pu identifier.`;
+      const reply = await askClaude([...next, { id: uid(), role: "user", text: hidden }]);
+      const { cleanText, parsedData, evaluation } = parseClaudeResponse(reply);
+      mergeData(parsedData);
+      if (evaluation) setEvaluationPreview(evaluation);
+      setMessages((prev) => [...prev, { id: uid(), role: "claude", text: cleanText }]);
+    } catch (e) {
+      console.error(e);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uid(),
+          role: "claude",
+          text: "Je rencontre un problème temporaire. Réessayez dans quelques secondes.",
+        },
+      ]);
+    } finally {
+      setSendingDocs(false);
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -431,9 +670,17 @@ export function QualificationChatbot() {
                         <button
                           type="button"
                           onClick={() => void sendDocuments()}
-                          className="inline-flex items-center justify-center rounded-lg bg-[#5B50F0] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5]"
+                          disabled={sendingDocs}
+                          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#5B50F0] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5] disabled:opacity-60"
                         >
-                          Envoyer les documents →
+                          {sendingDocs ? (
+                            <>
+                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                              Envoi en cours...
+                            </>
+                          ) : (
+                            "Envoyer les documents →"
+                          )}
                         </button>
                       </div>
                     </div>
@@ -470,6 +717,71 @@ export function QualificationChatbot() {
                 Révéler mon évaluation →
               </Link>
             </div>
+          </div>
+        )}
+
+        {Object.keys(nonEmptyExtracted(extractedData)).length > 0 && (
+          <div
+            style={{
+              background: "linear-gradient(135deg, #F0EFFE, #E8F5E9)",
+              border: "1px solid #5B50F0",
+              borderRadius: "12px",
+              padding: "16px",
+              marginTop: "8px",
+            }}
+          >
+            <p style={{ fontWeight: 600, color: "#5B50F0", marginBottom: "8px" }}>✨ Informations extraites automatiquement</p>
+            {(() => {
+              const data = nonEmptyExtracted(extractedData);
+              const lines: string[] = [];
+              const add = (label: string, value: any) => {
+                if (value == null) return;
+                if (Array.isArray(value)) {
+                  if (value.length === 0) return;
+                  lines.push(`${label} : ${value.join(", ")}`);
+                  return;
+                }
+                const s = String(value).trim();
+                if (!s) return;
+                lines.push(`${label} : ${s}`);
+              };
+
+              add("Numéro de contrat", data.numero_contrat);
+              const assure = `${String(data.prenom_assure ?? "").trim()} ${String(data.nom_assure ?? "").trim()}`.trim();
+              if (assure) lines.push(`Assuré : ${assure}`);
+              add("Adresse assuré", data.adresse_assure);
+              add("Téléphone assuré", data.telephone_assure);
+              add("Email assuré", data.email_assure);
+              add("Assureur", data.nom_assureur);
+              add("Contact assureur", data.contact_assureur);
+              add("Numéro de sinistre", data.numero_sinistre);
+              add("Date du sinistre", data.date_sinistre);
+              add("Type de sinistre", data.type_sinistre);
+              add("Montant expertise", data.montant_expertise);
+              add("Expert assurance", data.nom_expert_assurance);
+              add("Téléphone expert", data.telephone_expert_assurance);
+              add("Email expert", data.email_expert_assurance);
+              add("Conclusions expert", data.conclusions_expert);
+              add("Réserves expert", data.reserves_expert);
+              add("Autres informations", data.autres_informations);
+
+              if (lines.length === 0) {
+                return <p className="text-sm text-foreground">—</p>;
+              }
+
+              return (
+                <ul className="space-y-1">
+                  {lines.map((line) => (
+                    <li key={line} className="text-sm text-foreground">
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
+            <p style={{ fontSize: "0.75rem", color: "#6B7280", marginTop: "8px" }}>
+              Ces informations enrichiront votre dossier automatiquement.
+            </p>
           </div>
         )}
 

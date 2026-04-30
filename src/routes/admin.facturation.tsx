@@ -16,7 +16,23 @@ function AdminFacturationPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterMode>("all");
   const [dossiers, setDossiers] = useState<
-    Array<Pick<DossierRow, "id" | "user_id" | "expert_id" | "statut" | "type_sinistre" | "date_ouverture" | "montant_estime">>
+    Array<
+      Pick<
+        DossierRow,
+        | "id"
+        | "user_id"
+        | "expert_id"
+        | "statut"
+        | "type_sinistre"
+        | "date_ouverture"
+        | "montant_estime"
+        | "nom_assure"
+        | "prenom_assure"
+        | "nom_expert"
+        | "prenom_expert"
+        | "assureur"
+      >
+    >
   >([]);
 
   useEffect(() => {
@@ -28,12 +44,15 @@ function AdminFacturationPage() {
       try {
         const { data, error: err } = await supabase
           .from("dossiers")
-          .select("id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime")
+          .select(
+            "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur",
+          )
           .order("date_ouverture", { ascending: false });
         if (err) throw err;
         if (!cancelled) setDossiers((data ?? []) as any);
       } catch (e) {
         if (!cancelled) {
+          console.error(e);
           setError(e instanceof Error ? e.message : "Erreur de chargement.");
           setDossiers([]);
         }
@@ -307,7 +326,7 @@ function AdminFacturationPage() {
             <div className="h-9 w-9 animate-spin rounded-full border-2 border-border border-t-primary" />
           </div>
         ) : error ? (
-          <div className="p-6 text-sm text-destructive">{error}</div>
+          <div className="p-6 text-sm text-destructive">Erreur de chargement : {error}</div>
         ) : filtered.length === 0 ? (
           <div className="p-6 text-sm text-[#6B7280]">Aucune donnée</div>
         ) : (
@@ -351,7 +370,11 @@ function AdminFacturationPage() {
                           {stLabel}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{shortId(d.expert_id)}</td>
+                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
+                        {d.nom_expert || d.prenom_expert
+                          ? `${d.nom_expert ?? ""} ${d.prenom_expert ?? ""}`.trim()
+                          : "Non assigné"}
+                      </td>
                     </tr>
                   );
                 })}
@@ -363,4 +386,6 @@ function AdminFacturationPage() {
     </div>
   );
 }
+
+export default AdminFacturationPage;
 

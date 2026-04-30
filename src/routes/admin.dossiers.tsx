@@ -218,6 +218,7 @@ function AdminDossiersPage() {
       if (err) throw err;
       setDossiers((data ?? []) as any);
     } catch (e) {
+      console.error(e);
       setError(e instanceof Error ? e.message : "Erreur de chargement.");
       setDossiers([]);
     } finally {
@@ -327,13 +328,19 @@ function AdminDossiersPage() {
       if (uErr) throw uErr;
       setDossiers((prev) => prev.map((d) => (d.id === dossierId ? ({ ...d, statut: newStatut } as any) : d)));
     } catch (e) {
+      console.error(e);
       window.alert(e instanceof Error ? e.message : "Impossible de changer le statut.");
     } finally {
       setUpdatingStatusId(null);
     }
   }
 
-  function openAssign(d: Pick<DossierRow, "id" | "type_sinistre" | "user_id" | "expert_id">) {
+  function openAssign(
+    d: Pick<
+      DossierRow,
+      "id" | "type_sinistre" | "user_id" | "expert_id" | "nom_assure" | "prenom_assure" | "nom_expert" | "prenom_expert"
+    >,
+  ) {
     setAssigning(d);
     setExpertInput("");
     setAssignOpen(true);
@@ -353,6 +360,7 @@ function AdminDossiersPage() {
       setExpertInput("");
       await load();
     } catch (e) {
+      console.error(e);
       window.alert(e instanceof Error ? e.message : "Impossible d'assigner l'expert.");
     } finally {
       setSavingAssign(false);
@@ -529,7 +537,7 @@ function AdminDossiersPage() {
             <div className="h-9 w-9 animate-spin rounded-full border-2 border-border border-t-primary" />
           </div>
         ) : error ? (
-          <div className="p-6 text-sm text-destructive">{error}</div>
+          <div className="p-6 text-sm text-destructive">Erreur de chargement : {error}</div>
         ) : filtered.length === 0 ? (
           <div className="p-6 text-sm text-[#6B7280]">Aucun dossier ne correspond à vos filtres</div>
         ) : (
@@ -593,14 +601,12 @@ function AdminDossiersPage() {
                         <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
                           {d.nom_assure || d.prenom_assure
                             ? `${d.nom_assure ?? ""} ${d.prenom_assure ?? ""}`.trim()
-                            : shortId(d.user_id)}
+                            : "Assuré inconnu"}
                         </td>
 
                         <td className="px-5 py-4">
                           {d.nom_expert || d.prenom_expert ? (
                             <span className="text-sm font-semibold text-[#111827]">{`${d.nom_expert ?? ""} ${d.prenom_expert ?? ""}`.trim()}</span>
-                          ) : d.expert_id ? (
-                            <span className="text-sm font-semibold text-[#111827]">{shortId(d.expert_id)}</span>
                           ) : (
                             <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
                               Non assigné
@@ -613,7 +619,18 @@ function AdminDossiersPage() {
                             {!d.expert_id && (
                               <button
                                 type="button"
-                                onClick={() => openAssign({ id: d.id, type_sinistre: d.type_sinistre, user_id: d.user_id, expert_id: d.expert_id })}
+                                onClick={() =>
+                                  openAssign({
+                                    id: d.id,
+                                    type_sinistre: d.type_sinistre,
+                                    user_id: d.user_id,
+                                    expert_id: d.expert_id,
+                                    nom_assure: d.nom_assure,
+                                    prenom_assure: d.prenom_assure,
+                                    nom_expert: d.nom_expert,
+                                    prenom_expert: d.prenom_expert,
+                                  })
+                                }
                                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
                               >
                                 <UserPlus className="h-4 w-4" aria-hidden />
@@ -693,7 +710,10 @@ function AdminDossiersPage() {
               <div>
                 <p className="text-lg font-semibold text-[#111827]">Assigner un expert</p>
                 <p className="mt-1 text-sm text-[#6B7280]">
-                  Dossier {shortId(assigning.id)} · {assigning.type_sinistre ?? "—"} · Assuré {shortId(assigning.user_id)}
+                  Dossier {shortId(assigning.id)} · {assigning.type_sinistre ?? "—"} · Assuré{" "}
+                  {assigning.nom_assure || assigning.prenom_assure
+                    ? `${assigning.nom_assure ?? ""} ${assigning.prenom_assure ?? ""}`.trim()
+                    : "Assuré inconnu"}
                 </p>
               </div>
               <button
@@ -747,4 +767,6 @@ function AdminDossiersPage() {
     </div>
   );
 }
+
+export default AdminDossiersPage;
 

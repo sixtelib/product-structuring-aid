@@ -201,6 +201,34 @@ function DashboardNouveauContent() {
       if (error) throw error;
       if (!data?.id) throw new Error("ID dossier manquant.");
 
+      if (typeof window !== "undefined") {
+        let chatbotFiles: string[] = [];
+        try {
+          chatbotFiles = JSON.parse(window.localStorage.getItem("vertual_uploaded_files") ?? "[]") as string[];
+        } catch {
+          chatbotFiles = [];
+        }
+
+        if (Array.isArray(chatbotFiles) && chatbotFiles.length > 0) {
+          for (const path of chatbotFiles) {
+            if (!path || typeof path !== "string") continue;
+            try {
+              const nom = path.split("/").pop() || "document";
+              const { error: docErr } = await supabase.from("documents").insert({
+                dossier_id: data.id,
+                nom,
+                storage_path: path,
+                statut: "recu",
+              });
+              if (docErr) throw docErr;
+            } catch (err) {
+              console.error("Insert chatbot document failed:", err);
+            }
+          }
+          window.localStorage.removeItem("vertual_uploaded_files");
+        }
+      }
+
       await uploadPendingFilesForDossier(data.id);
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(QUALIFICATION_STORAGE_KEYS.evaluation);

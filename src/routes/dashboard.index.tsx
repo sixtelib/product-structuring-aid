@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { Download, FileText, FolderOpen, LogOut, MessageSquare, Plus, Send } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, Download, FileText, LogOut, MessageSquare, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/site/Logo";
 import { useAuth } from "@/lib/auth";
@@ -32,6 +32,93 @@ function montantToNumber(value: number | string | null | undefined): number {
   if (typeof value === "number") return value;
   const n = Number.parseFloat(String(value));
   return Number.isFinite(n) ? n : 0;
+}
+
+function greetingNameFromEmail(email?: string | null) {
+  const local = (email ?? "").split("@")[0]?.trim();
+  return local || "là";
+}
+
+function formatRelativeDate(date: Date, now = new Date()): string {
+  const diffMs = date.getTime() - now.getTime();
+  const diffSec = Math.round(diffMs / 1000);
+  const absSec = Math.abs(diffSec);
+
+  const rtf = new Intl.RelativeTimeFormat("fr-FR", { numeric: "auto" });
+  if (absSec < 60) return rtf.format(diffSec, "second");
+  const diffMin = Math.round(diffSec / 60);
+  if (Math.abs(diffMin) < 60) return rtf.format(diffMin, "minute");
+  const diffHour = Math.round(diffMin / 60);
+  if (Math.abs(diffHour) < 24) return rtf.format(diffHour, "hour");
+  const diffDay = Math.round(diffHour / 24);
+  if (Math.abs(diffDay) < 30) return rtf.format(diffDay, "day");
+  const diffMonth = Math.round(diffDay / 30);
+  if (Math.abs(diffMonth) < 12) return rtf.format(diffMonth, "month");
+  const diffYear = Math.round(diffMonth / 12);
+  return rtf.format(diffYear, "year");
+}
+
+const PROCESS_STEPS = ["Qualification", "Analyse", "Négociation", "Indemnisation"] as const;
+
+function statusToActiveStepIndex(statut?: string | null): number {
+  switch (statut) {
+    case "qualification":
+      return 0;
+    case "en_analyse":
+    case "attente_documents":
+    case "en_attente":
+      return 1;
+    case "negociation":
+    case "en_cours":
+      return 2;
+    case "gagne":
+    case "perdu":
+      return 3;
+    default:
+      return 0;
+  }
+}
+
+function DossierProgressTimeline({ activeIndex }: { activeIndex: number }) {
+  return (
+    <section className="rounded-[12px] bg-white px-6 py-6 shadow-[var(--shadow-soft)] sm:px-8">
+      <div className="flex items-center">
+        {PROCESS_STEPS.map((label, idx) => {
+          const isActive = idx === activeIndex;
+          const isPast = idx < activeIndex;
+          const isFuture = idx > activeIndex;
+          return (
+            <div key={label} className="flex flex-1 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <div
+                  className={[
+                    "flex h-8 w-8 items-center justify-center rounded-full",
+                    isPast ? "bg-emerald-500 text-white" : "",
+                    isActive ? "bg-[#5B50F0] text-white" : "",
+                    isFuture ? "border border-[#E5E7EB] bg-white text-transparent" : "",
+                  ].join(" ")}
+                  aria-hidden
+                >
+                  {isPast ? <Check className="h-4 w-4" /> : <span className="h-2 w-2 rounded-full bg-current" />}
+                </div>
+                <p
+                  className={[
+                    "text-[0.85rem] leading-tight",
+                    isPast ? "font-medium text-emerald-700" : "",
+                    isActive ? "font-semibold text-[#5B50F0]" : "",
+                    isFuture ? "font-medium text-[#9CA3AF]" : "",
+                  ].join(" ")}
+                >
+                  {label}
+                </p>
+              </div>
+              {idx !== PROCESS_STEPS.length - 1 && <div className="mx-3 h-px flex-1 bg-[#E5E7EB]" aria-hidden />}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 function eur(amount: number | string | null | undefined) {
@@ -155,6 +242,10 @@ function DashboardContent() {
     }).format(montantToNumber(dossier.montant_estime));
   }, [dossier]);
 
+  const activeStepIndex = useMemo(() => statusToActiveStepIndex(dossier?.statut ?? null), [dossier?.statut]);
+  const latestDocs = useMemo(() => documents.slice(0, 3), [documents]);
+  const latestMessages = useMemo(() => (messages.length <= 2 ? messages : messages.slice(-2)), [messages]);
+
   async function handleSignOut() {
     await signOut();
     navigate({ to: "/login", replace: true });
@@ -258,13 +349,15 @@ function DashboardContent() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl space-y-10 px-5 py-10 sm:px-8 sm:py-14">
-        <div className="max-w-2xl">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-[1.65rem]">Mon espace client</h1>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Suivez l'avancement de votre dossier et échangez avec votre expert.
-          </p>
+      <main className="mx-auto max-w-[900px] space-y-6 px-5 py-5 sm:px-10 sm:py-10">
+        <div className="space-y-2">
+          <h1 className="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-tight text-foreground">
+            Bonjour, {greetingNameFromEmail(user?.email)} 👋
+          </h1>
+          <p className="text-sm leading-relaxed text-[#6B7280]">Voici l'avancement de votre dossier.</p>
         </div>
+
+        <DossierProgressTimeline activeIndex={activeStepIndex} />
 
         {loading && (
           <div className="flex justify-center py-24">
@@ -279,272 +372,247 @@ function DashboardContent() {
         )}
 
         {!loading && !error && !dossier && (
-          <div className="rounded-xl border border-border bg-white p-12 text-center shadow-[var(--shadow-soft)] sm:p-14">
-            <FolderOpen className="mx-auto h-9 w-9 text-muted-foreground" aria-hidden />
-            <p className="mt-5 text-sm font-medium text-foreground">Aucun dossier trouvé</p>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-              Votre espace sera affiché ici dès qu'un dossier aura été créé pour votre compte.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/dashboard/nouveau" })}
-              className="mt-7 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-              Créer un dossier
-            </button>
-          </div>
-        )}
+          <section className="space-y-6">
+            <div className="rounded-[16px] bg-white p-8 shadow-[var(--shadow-soft)] sm:p-10">
+              <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+                <div>
+                  <h2 className="text-[1.5rem] font-bold tracking-tight text-foreground">Votre dossier en quelques minutes</h2>
+                  <p className="mt-3 text-[0.95rem] leading-relaxed text-[#6B7280]">
+                    Décrivez votre sinistre, uploadez vos documents. Notre IA analyse votre dossier sous 48h.
+                  </p>
+                  <ul className="mt-6 space-y-3">
+                    {[
+                      "Analyse IA de votre contrat",
+                      "Identification de la marge de négociation",
+                      "Expert dédié assigné sous 48h",
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-3">
+                        <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#EEE9FF] text-[#5B50F0]">
+                          <Check className="h-3.5 w-3.5" aria-hidden />
+                        </span>
+                        <span className="text-sm text-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => navigate({ to: "/dashboard/nouveau" })}
+                    className="mt-8 inline-flex items-center justify-center rounded-[10px] bg-[#5B50F0] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5]"
+                  >
+                    Démarrer mon dossier →
+                  </button>
+                </div>
 
-        {!loading && !error && dossiersList.length > 0 && (
-          <section className="rounded-xl border border-border bg-white p-7 shadow-[var(--shadow-soft)] sm:p-8">
-            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-6">
-              <div className="flex items-center gap-2.5">
-                <FolderOpen className="h-5 w-5 shrink-0 text-primary" aria-hidden />
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">Mes dossiers</h2>
+                <div className="space-y-3">
+                  {[
+                    { value: "+27%", label: "Indemnisation moyenne récupérée" },
+                    { value: "48h", label: "Pour analyser votre dossier" },
+                    { value: "0€", label: "Si nous n'obtenons rien" },
+                  ].map((s) => (
+                    <div key={s.value} className="rounded-[12px] bg-[#F8F7FF] px-5 py-4">
+                      <p className="text-[1.5rem] font-bold leading-none text-[#5B50F0]">{s.value}</p>
+                      <p className="mt-1 text-sm text-[#6B7280]">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">{dossiersList.length} dossier(s)</p>
             </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {dossiersList.map((d) => {
-                const meta = dossierStatusMeta(d.statut);
-                return (
-                  <Link
-                    key={d.id}
-                    to="/dashboard/dossiers/$id"
-                    params={{ id: d.id }}
-                    className="rounded-xl border border-border bg-white p-5 transition-shadow hover:shadow-[var(--shadow-elegant)]"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground">{d.type_sinistre}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Ouvert le{" "}
-                          {new Date(d.date_ouverture).toLocaleDateString("fr-FR", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </p>
-                      </div>
-                      <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-medium ${meta.toneClass}`}>
-                        {meta.label}
-                      </span>
-                    </div>
-                    <p className="mt-4 text-sm font-semibold text-foreground">{eur(d.montant_estime)}</p>
-                    <p className="mt-1 text-xs font-medium text-primary">Voir le dossier</p>
-                  </Link>
-                );
-              })}
+            <div className="grid gap-3">
+              {[
+                { n: "01", title: "Décrivez votre sinistre", text: "Via notre chatbot en 2 minutes" },
+                { n: "02", title: "On analyse tout", text: "IA + expert humain sous 48h" },
+                { n: "03", title: "Vous récupérez plus", text: "On négocie, vous encaissez la différence" },
+              ].map((c) => (
+                <div
+                  key={c.n}
+                  className="flex items-center gap-5 rounded-[12px] border border-[#F3F4F6] bg-white px-6 py-5"
+                >
+                  <div className="text-[2.5rem] font-black leading-none text-[#EEE9FF]">{c.n}</div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{c.title}</p>
+                    <p className="mt-1 text-sm text-[#6B7280]">{c.text}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}
 
         {!loading && dossier && statusMeta && (
-          <>
-            <section className="rounded-xl border border-border bg-white p-7 shadow-[var(--shadow-soft)] sm:p-8">
-              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
-                <div className="flex items-center gap-2.5">
-                  <FolderOpen className="h-5 w-5 shrink-0 text-primary" aria-hidden />
-                  <h2 className="text-lg font-semibold tracking-tight text-foreground">Mon dossier</h2>
+          <section className="space-y-6">
+            <div className="rounded-[16px] bg-white p-7 shadow-[var(--shadow-soft)] sm:p-8">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-[#6B7280]">Mon dossier</p>
+                  <h2 className="mt-2 truncate text-[1.5rem] font-bold tracking-tight text-foreground">
+                    {dossier.type_sinistre}
+                  </h2>
                 </div>
-                <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-medium ${statusMeta.toneClass}`}>
+                <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold ${statusMeta.toneClass}`}>
                   {statusMeta.label}
                 </span>
               </div>
-              <dl className="mt-8 grid gap-8 sm:grid-cols-2">
-                <div>
-                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date d'ouverture</dt>
-                  <dd className="mt-2 text-sm font-medium text-foreground">{openedLabel}</dd>
-                </div>
-                <div>
-                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Type de sinistre</dt>
-                  <dd className="mt-2 text-sm font-medium text-foreground">{dossier.type_sinistre}</dd>
-                </div>
-                <div className="sm:col-span-2">
-                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Montant estimé d'indemnisation
-                  </dt>
-                  <dd className="mt-2 text-xl font-semibold tabular-nums tracking-tight text-foreground">{indemnityLabel}</dd>
-                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                    Estimation indicative basée sur les éléments connus à ce jour.
-                  </p>
-                </div>
-              </dl>
-            </section>
 
-            <section className="rounded-xl border border-border bg-white p-7 shadow-[var(--shadow-soft)] sm:p-8">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
-                <div className="flex items-center gap-2.5">
-                  <FileText className="h-5 w-5 shrink-0 text-primary" aria-hidden />
-                  <h2 className="text-lg font-semibold tracking-tight text-foreground">Mes documents</h2>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-[12px] border border-[#F3F4F6] bg-white px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Assureur</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">{dossier.assureur_nom || "—"}</p>
                 </div>
+                <div className="rounded-[12px] border border-[#F3F4F6] bg-white px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Montant estimé</p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">{indemnityLabel || "—"}</p>
+                </div>
+                <div className="rounded-[12px] border border-[#F3F4F6] bg-white px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Date d'ouverture</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">{openedLabel || "—"}</p>
+                </div>
+                <div className="rounded-[12px] border border-[#F3F4F6] bg-white px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Expert assigné</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">{(dossier as any).expert_nom || "—"}</p>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <DossierProgressTimeline activeIndex={activeStepIndex} />
+              </div>
+
+              <div className="mt-6">
+                <Link
+                  to="/dashboard/dossiers/$id"
+                  params={{ id: dossier.id }}
+                  className="inline-flex items-center justify-center rounded-[10px] bg-[#5B50F0] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5]"
+                >
+                  Voir mon dossier →
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-[16px] bg-white p-7 shadow-[var(--shadow-soft)] sm:p-8">
+              <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
+                  <h3 className="text-lg font-semibold tracking-tight text-foreground">Mes documents</h3>
+                  <p className="mt-1 text-sm text-[#6B7280]">{documents.length} document(s)</p>
+                </div>
+                <div className="flex items-center gap-3">
                   <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => void handleDocumentSelected(e)} />
                   <button
                     type="button"
                     disabled={uploadingDoc}
                     onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-[10px] bg-[#5B50F0] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5] disabled:opacity-60"
                   >
                     <Plus className="h-4 w-4" aria-hidden />
-                    {uploadingDoc ? "Ajout…" : "Ajouter un document"}
+                    {uploadingDoc ? "Ajout…" : "Ajouter"}
                   </button>
                 </div>
               </div>
-              <ul className="mt-2 divide-y divide-border">
-                {documents.length === 0 ? (
-                  <li className="py-10 text-center text-sm text-muted-foreground">Aucun document pour le moment.</li>
+
+              <div className="mt-5">
+                {latestDocs.length === 0 ? (
+                  <p className="rounded-[12px] border border-[#F3F4F6] bg-white px-5 py-5 text-sm text-[#6B7280]">
+                    Aucun document pour le moment.
+                  </p>
                 ) : (
-                  documents.map((doc) => {
-                    const st = formatDocumentStatusDb(doc.statut);
+                  <ul className="divide-y divide-[#F3F4F6] rounded-[12px] border border-[#F3F4F6]">
+                    {latestDocs.map((doc) => {
+                      const st = formatDocumentStatusDb(doc.statut);
+                      return (
+                        <li key={doc.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex min-w-0 items-start gap-3">
+                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F8F7FF] text-[#5B50F0]">
+                              <FileText className="h-4 w-4" aria-hidden />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-foreground">{doc.nom}</p>
+                              <p className="text-xs text-[#6B7280]">
+                                {new Date(doc.created_at).toLocaleDateString("fr-FR", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`rounded-lg px-2 py-0.5 text-xs font-medium ${st.className}`}>{st.label}</span>
+                            <button
+                              type="button"
+                              onClick={() => void downloadDocument(doc)}
+                              disabled={!doc.storage_path || downloadingPath === doc.storage_path}
+                              className="inline-flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-[#F8F9FF] disabled:opacity-50"
+                            >
+                              <Download className="h-4 w-4" />
+                              Télécharger
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              <div className="mt-5">
+                <Link
+                  to="/dashboard/dossiers/$id"
+                  params={{ id: dossier.id }}
+                  className="text-sm font-semibold text-[#5B50F0] hover:underline"
+                >
+                  Voir tous mes documents →
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-[16px] bg-white p-7 shadow-[var(--shadow-soft)] sm:p-8">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold tracking-tight text-foreground">Derniers messages</h3>
+                  <p className="mt-1 text-sm text-[#6B7280]">{messages.length} message(s)</p>
+                </div>
+                <Link
+                  to="/dashboard/dossiers/$id"
+                  params={{ id: dossier.id }}
+                  className="text-sm font-semibold text-[#5B50F0] hover:underline"
+                >
+                  Voir tous les messages →
+                </Link>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {latestMessages.length === 0 ? (
+                  <p className="rounded-[12px] border border-[#F3F4F6] bg-white px-5 py-5 text-sm text-[#6B7280]">
+                    Aucun message pour le moment.
+                  </p>
+                ) : (
+                  latestMessages.map((m) => {
+                    const author = m.auteur === "client" ? "Vous" : "Vertual";
+                    const initials =
+                      m.auteur === "client"
+                        ? (greetingNameFromEmail(user?.email).slice(0, 2) || "VO").toUpperCase()
+                        : "V";
+                    const created = new Date(m.created_at);
                     return (
-                      <li key={doc.id} className="flex flex-col gap-3 py-5 first:pt-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex min-w-0 items-start gap-3">
-                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                            <FileText className="h-4 w-4 text-primary" aria-hidden />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-foreground">{doc.nom}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Ajouté le{" "}
-                              {new Date(doc.created_at).toLocaleDateString("fr-FR", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </p>
-                          </div>
+                      <div key={m.id} className="flex items-start gap-3 rounded-[12px] border border-[#F3F4F6] bg-white px-5 py-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F8F7FF] text-sm font-bold text-[#5B50F0]">
+                          {initials}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`rounded-lg px-2 py-0.5 text-xs font-medium ${st.className}`}>{st.label}</span>
-                          <button
-                            type="button"
-                            onClick={() => void downloadDocument(doc)}
-                            disabled={!doc.storage_path || downloadingPath === doc.storage_path}
-                            className="inline-flex items-center gap-2 rounded-lg border-2 border-primary bg-transparent px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 disabled:opacity-50"
-                          >
-                            <Download className="h-4 w-4" />
-                            Télécharger
-                          </button>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-semibold text-foreground">{author}</p>
+                            <p className="text-xs text-[#9CA3AF]">{formatRelativeDate(created)}</p>
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-sm text-[#6B7280]">{m.contenu}</p>
                         </div>
-                      </li>
+                      </div>
                     );
                   })
                 )}
-              </ul>
-            </section>
-
-            <section className="overflow-hidden rounded-xl border border-border bg-white shadow-[var(--shadow-soft)]">
-              <div className="flex items-center gap-2.5 border-b border-border px-7 py-5 sm:px-8">
-                <MessageSquare className="h-5 w-5 shrink-0 text-primary" aria-hidden />
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">Messages</h2>
               </div>
-              <MessagesPanel dossierId={dossier.id} messages={messages} setMessages={setMessages} />
-            </section>
-          </>
+            </div>
+          </section>
         )}
       </main>
     </div>
   );
 }
-
-function MessagesPanel({
-  dossierId,
-  messages,
-  setMessages,
-}: {
-  dossierId: string;
-  messages: MessageRow[];
-  setMessages: Dispatch<SetStateAction<MessageRow[]>>;
-}) {
-  const [draft, setDraft] = useState("");
-  const [sending, setSending] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const text = draft.trim();
-    if (!text) return;
-    setSending(true);
-    try {
-      const { data, error } = await supabase
-        .from("messages")
-        .insert({
-          dossier_id: dossierId,
-          auteur: "client",
-          contenu: text,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      setDraft("");
-      if (data) {
-        setMessages((prev) => [...prev, data]);
-      }
-      toast.success("Message envoyé.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Impossible d'envoyer le message.");
-    } finally {
-      setSending(false);
-    }
-  }
-
-  return (
-    <>
-      <div className="max-h-[480px] space-y-4 overflow-y-auto px-7 py-6 sm:px-8">
-        {messages.length === 0 ? (
-          <p className="py-6 text-center text-sm leading-relaxed text-muted-foreground">
-            Aucun message. Notre équipe vous répondra ici dès la prise en charge.
-          </p>
-        ) : (
-          messages.map((m) => {
-            const mine = m.auteur === "client";
-            return (
-              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[85%] rounded-lg px-3.5 py-2.5 sm:max-w-[72%] ${
-                    mine ? "bg-primary text-primary-foreground" : "border border-border bg-secondary text-foreground"
-                  }`}
-                >
-                  {!mine && <p className="mb-1 text-[11px] font-medium text-muted-foreground">Expert</p>}
-                  <p className="whitespace-pre-line text-sm leading-relaxed">{m.contenu}</p>
-                  <p className={`mt-2 text-[10px] tabular-nums ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                    {new Date(m.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                  </p>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-      <form
-        onSubmit={(e) => void handleSubmit(e)}
-        className="flex flex-col gap-3 border-t border-border bg-white px-5 py-4 sm:flex-row sm:items-center sm:px-8 sm:py-5"
-      >
-        <label htmlFor="dashboard-message" className="sr-only">
-          Nouveau message à l'expert
-        </label>
-        <input
-          id="dashboard-message"
-          type="text"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Écrire un message à l'expert..."
-          className="min-h-10 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/25"
-        />
-        <button
-          type="submit"
-          disabled={sending || !draft.trim()}
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow disabled:opacity-45 sm:shrink-0"
-        >
-          <Send className="h-4 w-4" aria-hidden />
-          Envoyer
-        </button>
-      </form>
-    </>
-  );
-}
-

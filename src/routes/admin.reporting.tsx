@@ -14,7 +14,18 @@ type PeriodKey = "7d" | "30d" | "90d" | "all";
 
 type DossierListRow = Pick<
   DossierRow,
-  "id" | "user_id" | "expert_id" | "statut" | "type_sinistre" | "date_ouverture" | "montant_estime"
+  | "id"
+  | "user_id"
+  | "expert_id"
+  | "statut"
+  | "type_sinistre"
+  | "date_ouverture"
+  | "montant_estime"
+  | "nom_assure"
+  | "prenom_assure"
+  | "nom_expert"
+  | "prenom_expert"
+  | "assureur"
 >;
 
 function AdminReportingPage() {
@@ -33,13 +44,16 @@ function AdminReportingPage() {
       try {
         const { data, error: err } = await supabase
           .from("dossiers")
-          .select("id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime")
+          .select(
+            "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur",
+          )
           .order("date_ouverture", { ascending: false });
 
         if (err) throw err;
         if (!cancelled) setDossiers(((data ?? []) as unknown as DossierListRow[]) ?? []);
       } catch (e) {
         if (!cancelled) {
+          console.error(e);
           setError(e instanceof Error ? e.message : "Erreur de chargement.");
           setDossiers([]);
         }
@@ -65,6 +79,12 @@ function AdminReportingPage() {
 
   function shortId(id: string) {
     return `${id.slice(0, 8)}...`;
+  }
+
+  function expertLabel(d: { nom_expert: string | null; prenom_expert: string | null; expert_id: string | null }) {
+    const label = `${String(d.nom_expert ?? "").trim()} ${String(d.prenom_expert ?? "").trim()}`.trim();
+    if (label) return label;
+    return "Non assigné";
   }
 
   function amount(n: unknown) {
@@ -328,7 +348,7 @@ function AdminReportingPage() {
         </div>
       ) : error ? (
         <div className="mt-6 rounded-xl bg-white p-6 text-sm text-destructive shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
-          {error}
+          Erreur de chargement : {error}
         </div>
       ) : (
         <>
@@ -424,7 +444,7 @@ function AdminReportingPage() {
                                 {relativeDaysLabel(d.date_ouverture)}
                               </span>
                               <span className="text-[#D1D5DB]">•</span>
-                              <span>Expert {d.expert_id ? shortId(String(d.expert_id)) : "Non assigné"}</span>
+                              <span>Expert {expertLabel(d as any)}</span>
                             </div>
                           </div>
 
@@ -489,7 +509,15 @@ function AdminReportingPage() {
                   <tbody>
                     {computed.expertRows.map((r) => (
                       <tr key={r.expertId} className="border-b border-[#F3F4F6] hover:bg-[#F8F9FF]">
-                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{shortId(r.expertId)}</td>
+                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
+                          {(() => {
+                            const row = computed.recent.find((d) => String(d.expert_id ?? "") === String(r.expertId));
+                            if (row) return expertLabel(row as any);
+                            const anyRow = dossiers.find((d) => String(d.expert_id ?? "") === String(r.expertId));
+                            if (anyRow) return expertLabel(anyRow as any);
+                            return "Non assigné";
+                          })()}
+                        </td>
                         <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{r.total}</td>
                         <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{r.inProgress}</td>
                         <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{r.won}</td>
@@ -515,4 +543,6 @@ function AdminReportingPage() {
     </div>
   );
 }
+
+export default AdminReportingPage;
 
