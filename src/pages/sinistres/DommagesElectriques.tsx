@@ -42,7 +42,7 @@ const faqPageJsonLd = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "Mon assureur dit que mes appareils sont trop vieux pour être indemnisés — est-ce légal ?",
+      name: "Mon assureur dit que mes appareils sont trop vieux pour être indemnisés : est-ce légal ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "L'ancienneté peut justifier un coefficient de vétusté, mais pas un refus total si la cause du dommage est couverte. Un appareil ancien vaut moins qu'un neuf, mais il a une valeur. L'assureur ne peut pas indemniser zéro pour un appareil fonctionnel détruit par une surtension.",
@@ -50,7 +50,7 @@ const faqPageJsonLd = {
     },
     {
       "@type": "Question",
-      name: "Mon installation électrique n'est pas aux normes — puis-je quand même être indemnisé ?",
+      name: "Mon installation électrique n'est pas aux normes : puis-je quand même être indemnisé ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Cela dépend du contrat. L'assureur doit prouver que la non-conformité est la cause directe du sinistre, pas simplement qu'elle existait. Un expert d'assuré peut contester l'exclusion si le lien de causalité n'est pas établi.",
@@ -66,7 +66,7 @@ const faqPageJsonLd = {
     },
     {
       "@type": "Question",
-      name: "Enedis est responsable de la surtension — puis-je me retourner contre eux ?",
+      name: "Enedis est responsable de la surtension : puis-je me retourner contre eux ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Oui. Si la surtension est due à une défaillance du réseau public, vous pouvez déposer une réclamation auprès d'Enedis en parallèle de votre déclaration à l'assureur. Un expert d'assuré peut vous accompagner dans cette démarche.",
@@ -138,7 +138,7 @@ export function DommagesElectriquesPage() {
                 Ce que couvre votre assurance pour les dommages électriques
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
-                La garantie dommages électriques n'est pas toujours incluse de base dans les contrats MRH : elle est
+                La garantie dommages électriques n'est pas toujours incluse de base dans les contrats MRH ; elle est
                 souvent optionnelle ou via une extension.
               </p>
               <p className="mt-6 text-base font-semibold leading-relaxed text-foreground">Ce qui est généralement couvert :</p>
@@ -168,11 +168,11 @@ export function DommagesElectriquesPage() {
                 simultanément tous les appareils connectés.
               </p>
               <p className="mt-4 text-base leading-relaxed text-foreground">
-                Les <strong>surtensions du réseau</strong> sont plus fréquentes : elles surviennent lors de coupures,
+                Les <strong>surtensions du réseau</strong> sont plus fréquentes ; elles surviennent lors de coupures,
                 travaux ou incidents sur le réseau public et endommagent particulièrement les appareils sensibles.
               </p>
               <p className="mt-4 text-base leading-relaxed text-foreground">
-                Les <strong>courts-circuits</strong> peuvent endommager tableau, câblage et appareils — et parfois
+                Les <strong>courts-circuits</strong> peuvent endommager tableau, câblage et appareils, et parfois
                 provoquer un incendie (dans ce cas, la garantie incendie prend le relais).
               </p>
               <p className="mt-4 text-base leading-relaxed text-foreground">
@@ -238,38 +238,38 @@ export function DommagesElectriquesPage() {
               </h2>
               <ol className="mt-6 space-y-6 text-base leading-relaxed text-foreground">
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 1 — Ne jetez aucun appareil</h3>
+                  <h3 className="font-semibold text-foreground">Étape 1 : Ne jetez aucun appareil</h3>
                   <p className="mt-1 text-muted-foreground">
                     Les appareils endommagés sont vos preuves. Ne jetez rien avant l'expertise.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 2 — Documentez immédiatement</h3>
+                  <h3 className="font-semibold text-foreground">Étape 2 : Documentez immédiatement</h3>
                   <p className="mt-1 text-muted-foreground">
                     Photos des appareils, prises brûlées, tableau électrique. Notez date et heure approximative.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 3 — Signalez à Enedis si surtension réseau</h3>
+                  <h3 className="font-semibold text-foreground">Étape 3 : Signalez à Enedis si surtension réseau</h3>
                   <p className="mt-1 text-muted-foreground">
                     En cas de suspicion réseau, signalez l'incident : un rapport Enedis est une preuve précieuse.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 4 — Déclarez dans les 5 jours ouvrés</h3>
+                  <h3 className="font-semibold text-foreground">Étape 4 : Déclarez dans les 5 jours ouvrés</h3>
                   <p className="mt-1 text-muted-foreground">
                     Déclarez à l'assureur et confirmez par écrit. Listez tous les appareils touchés.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 5 — Rassemblez les preuves de possession</h3>
+                  <h3 className="font-semibold text-foreground">Étape 5 : Rassemblez les preuves de possession</h3>
                   <p className="mt-1 text-muted-foreground">
                     Factures, garanties, relevés bancaires, photos. Pour les appareils anciens, une déclaration sur
                     l'honneur peut parfois suffire.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 6 — Mandatez un expert si le montant est significatif</h3>
+                  <h3 className="font-semibold text-foreground">Étape 6 : Mandatez un expert si le montant est significatif</h3>
                   <p className="mt-1 text-muted-foreground">
                     Au-delà de 2 000 €, c'est souvent rentable : la vétusté seule peut représenter plusieurs centaines
                     d'euros récupérables.
@@ -299,7 +299,7 @@ export function DommagesElectriquesPage() {
               <dl className="mt-6 space-y-6">
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Mon assureur dit que mes appareils sont trop vieux pour être indemnisés — est-ce légal ?
+                    Mon assureur dit que mes appareils sont trop vieux pour être indemnisés : est-ce légal ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     La vétusté peut réduire l'indemnisation mais ne justifie pas un refus total si la cause est couverte.
@@ -307,7 +307,7 @@ export function DommagesElectriquesPage() {
                 </div>
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Mon installation électrique n'est pas aux normes — puis-je quand même être indemnisé ?
+                    Mon installation électrique n'est pas aux normes : puis-je quand même être indemnisé ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     L'assureur doit prouver un lien direct entre la non-conformité et le sinistre. C'est souvent contestable.
@@ -321,7 +321,7 @@ export function DommagesElectriquesPage() {
                 </div>
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Enedis est responsable de la surtension — puis-je me retourner contre eux ?
+                    Enedis est responsable de la surtension : puis-je me retourner contre eux ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Oui, via une réclamation Enedis en parallèle de la déclaration à l'assureur.
@@ -408,7 +408,7 @@ export function DommagesElectriquesPage() {
           </div>
 
           <p className="mt-12 text-center text-xs text-muted-foreground">
-            Article rédigé par l'équipe Vertual — avril 2026 · Dernière mise à jour : avril 2026
+            Article rédigé par l'équipe Vertual, avril 2026 · Dernière mise à jour : avril 2026
           </p>
 
           <footer className="mt-10 border-t border-border pt-10 text-center">

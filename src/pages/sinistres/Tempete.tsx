@@ -41,7 +41,7 @@ const faqPageJsonLd = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "Mon assureur dit que les vents n'ont pas atteint le seuil requis — que faire ?",
+      name: "Mon assureur dit que les vents n'ont pas atteint le seuil requis : que faire ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Demandez à votre assureur de vous communiquer par écrit les relevés météorologiques sur lesquels il s'appuie, et la station de mesure utilisée. Les données sont relevées en des points précis qui ne correspondent pas toujours à votre localisation exacte. Un expert d'assuré peut contester cette interprétation (stations voisines, témoignages, dommages constatés).",
@@ -49,7 +49,7 @@ const faqPageJsonLd = {
     },
     {
       "@type": "Question",
-      name: "Ma toiture avait déjà des tuiles abîmées avant la tempête — l'assureur peut-il réduire l'indemnisation ?",
+      name: "Ma toiture avait déjà des tuiles abîmées avant la tempête : l'assureur peut-il réduire l'indemnisation ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "L'assureur peut invoquer un défaut d'entretien pour réduire l'indemnisation sur les parties déjà dégradées, mais il doit prouver que l'état préexistant a directement aggravé les dommages. La réduction ne peut s'appliquer qu'aux parties concernées, pas à l'ensemble du sinistre.",
@@ -65,7 +65,7 @@ const faqPageJsonLd = {
     },
     {
       "@type": "Question",
-      name: "J'ai des panneaux solaires endommagés — sont-ils couverts ?",
+      name: "J'ai des panneaux solaires endommagés : sont-ils couverts ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Les panneaux solaires sont souvent couverts par la garantie tempête si votre contrat inclut une garantie « équipements extérieurs » ou si vous avez souscrit une extension. C'est un poste fréquemment oublié dans les indemnisations.",
@@ -102,13 +102,13 @@ export function TempetePage() {
               Expert d'assuré sinistre tempête : obtenez la juste indemnisation
             </h1>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              Les sinistres tempête sont en forte hausse en France — +100% sur 20 ans sous l'effet du changement
+              Les sinistres tempête sont en forte hausse en France : +100% sur 20 ans sous l'effet du changement
               climatique. Grêle, vents violents, neige exceptionnelle : ces événements causent des dommages
               considérables, souvent mal indemnisés par les assureurs.
             </p>
             <p className="mt-4 text-base leading-relaxed text-foreground">
               Les sinistres climatiques sont complexes à évaluer, les contrats contiennent des définitions
-              restrictives, et les assureurs traitent ces dossiers en masse — ce qui favorise des évaluations rapides
+              restrictives, et les assureurs traitent ces dossiers en masse, ce qui favorise des évaluations rapides
               et insuffisantes.
             </p>
           </header>
@@ -171,7 +171,7 @@ export function TempetePage() {
                 Tempête vs catastrophe naturelle : quelle différence ?
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
-                C'est une distinction cruciale — et qui peut changer radicalement la procédure d'indemnisation.
+                C'est une distinction cruciale, et elle peut changer radicalement la procédure d'indemnisation.
               </p>
               <div className="mt-6 overflow-x-auto rounded-xl border border-border shadow-[var(--shadow-soft)]">
                 <table className="w-full min-w-[640px] border-collapse text-left text-sm">
@@ -307,28 +307,28 @@ export function TempetePage() {
               </h2>
               <ol className="mt-6 space-y-6 text-base leading-relaxed text-foreground">
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 1 — Sécurisez les lieux</h3>
+                  <h3 className="font-semibold text-foreground">Étape 1 : Sécurisez les lieux</h3>
                   <p className="mt-1 text-muted-foreground">
                     Bâchez la toiture endommagée pour éviter d'aggraver les infiltrations. Conservez les matériaux
                     arrachés (tuiles, ardoises) comme preuves.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 2 — Documentez immédiatement</h3>
+                  <h3 className="font-semibold text-foreground">Étape 2 : Documentez immédiatement</h3>
                   <p className="mt-1 text-muted-foreground">
                     Photographiez tous les dommages visibles (toiture, façades, fenêtres, jardin, véhicules) et filmez
                     le tour complet du bâtiment si possible.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 3 — Déclarez dans les 5 jours ouvrés</h3>
+                  <h3 className="font-semibold text-foreground">Étape 3 : Déclarez dans les 5 jours ouvrés</h3>
                   <p className="mt-1 text-muted-foreground">
                     Contactez votre assureur et confirmez par écrit. Précisez la date et l'heure approximative de
                     l'événement climatique.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 4 — Vérifiez un arrêté Cat Nat</h3>
+                  <h3 className="font-semibold text-foreground">Étape 4 : Vérifiez un arrêté Cat Nat</h3>
                   <p className="mt-1 text-muted-foreground">
                     Consultez votre mairie / préfecture. En cas d'arrêté publié, vous disposez de 10 jours après sa
                     publication pour déclarer ce volet.
@@ -336,7 +336,7 @@ export function TempetePage() {
                 </li>
                 <li>
                   <h3 className="font-semibold text-foreground">
-                    Étape 5 — Mandatez un expert d'assuré avant l'expertise contradictoire
+                    Étape 5 : Mandatez un expert d'assuré avant l'expertise contradictoire
                   </h3>
                   <p className="mt-1 text-muted-foreground">
                     Intervenez avant la réunion contradictoire. Une fois le procès-verbal signé, la marge de
@@ -344,7 +344,7 @@ export function TempetePage() {
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 6 — Obtenez des devis locaux</h3>
+                  <h3 className="font-semibold text-foreground">Étape 6 : Obtenez des devis locaux</h3>
                   <p className="mt-1 text-muted-foreground">
                     Devis de couvreurs, charpentiers et artisans locaux : ils documentent le coût réel des réparations.
                   </p>
@@ -359,7 +359,7 @@ export function TempetePage() {
               <dl className="mt-6 space-y-6">
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Mon assureur dit que les vents n'ont pas atteint le seuil requis — que faire ?
+                    Mon assureur dit que les vents n'ont pas atteint le seuil requis : que faire ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Demandez les relevés météorologiques (station utilisée) et la clause invoquée. Les relevés sont
@@ -369,11 +369,11 @@ export function TempetePage() {
                 </div>
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Ma toiture avait déjà des tuiles abîmées avant la tempête — l'assureur peut-il réduire
+                    Ma toiture avait déjà des tuiles abîmées avant la tempête : l'assureur peut-il réduire
                     l'indemnisation ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
-                    Oui, sur les parties déjà dégradées — mais seulement s'il prouve que l'état préexistant a aggravé
+                    Oui, sur les parties déjà dégradées, mais seulement s'il prouve que l'état préexistant a aggravé
                     les dommages. La réduction ne doit pas s'appliquer à l'ensemble du sinistre.
                   </dd>
                 </div>
@@ -388,7 +388,7 @@ export function TempetePage() {
                 </div>
                 <div>
                   <dt className="font-semibold text-foreground">
-                    J'ai des panneaux solaires endommagés — sont-ils couverts ?
+                    J'ai des panneaux solaires endommagés : sont-ils couverts ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Souvent oui si la garantie « équipements extérieurs » (ou extension) est prévue. C'est un poste
@@ -409,7 +409,7 @@ export function TempetePage() {
 
             <section className="scroll-mt-24 rounded-xl border border-border bg-[#F8F9FF] p-6 sm:p-8">
               <h2 className="font-sans text-2xl font-semibold tracking-tight text-[#5B50F0]">
-                La tempête est passée — ne laissez pas l'assureur décider seul de ce que ça vaut
+                La tempête est passée. Ne laissez pas l'assureur décider seul de ce que ça vaut
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
                 Les sinistres tempête sont complexes, les dommages évolutifs, et les assureurs sous pression après
@@ -479,7 +479,7 @@ export function TempetePage() {
           </div>
 
           <p className="mt-12 text-center text-xs text-muted-foreground">
-            Article rédigé par l'équipe Vertual — avril 2026 · Dernière mise à jour : avril 2026
+            Article rédigé par l'équipe Vertual, avril 2026 · Dernière mise à jour : avril 2026
           </p>
 
           <footer className="mt-10 border-t border-border pt-10 text-center">

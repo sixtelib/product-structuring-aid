@@ -70,14 +70,14 @@ function eur(n: unknown) {
 }
 
 function dateLabel(d: string | null | undefined) {
-  if (!d) return "—";
+  if (!d) return "Non renseigné";
   const t = new Date(d);
-  if (Number.isNaN(t.getTime())) return "—";
+  if (Number.isNaN(t.getTime())) return "Non renseigné";
   return t.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 function shortId(id: string | null | undefined) {
-  if (!id) return "—";
+  if (!id) return "Non renseigné";
   const s = String(id);
   return s.length <= 8 ? s : s.slice(0, 8);
 }
@@ -560,7 +560,7 @@ function AdminDossiersIndexPage() {
                 <tbody>
                   {pagination.items.map((d) => {
                     const t = typeKey(d.type_sinistre);
-                    const typeLabel = TYPE_OPTIONS.find((o) => o.value === t)?.label ?? (d.type_sinistre ?? "—");
+                    const typeLabel = TYPE_OPTIONS.find((o) => o.value === t)?.label ?? (d.type_sinistre ?? "Non renseigné");
                     const amt = d.montant_estime == null ? null : amountValue(d.montant_estime);
                     const commission = amt == null ? null : amt * 0.1;
                     return (
@@ -601,16 +601,16 @@ function AdminDossiersIndexPage() {
                           </span>
                         </td>
 
-                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{d.assureur ? d.assureur : "—"}</td>
+                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{d.assureur ? d.assureur : "Non renseigné"}</td>
 
                         <td className="px-5 py-4">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(d.statut)}`}>
-                            {d.statut ?? "—"}
+                            {d.statut ?? "Non renseigné"}
                           </span>
                         </td>
 
-                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{amt == null ? "—" : eur(amt)}</td>
-                        <td className="px-5 py-4 text-sm font-semibold text-[#5B50F0]">{commission == null ? "—" : eur(commission)}</td>
+                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{amt == null ? "Non renseigné" : eur(amt)}</td>
+                        <td className="px-5 py-4 text-sm font-semibold text-[#5B50F0]">{commission == null ? "Non renseigné" : eur(commission)}</td>
                         <td className="px-5 py-4 text-sm text-[#111827]">{dateLabel(d.date_ouverture)}</td>
                         <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
                           {d.nom_assure || d.prenom_assure
@@ -673,7 +673,7 @@ function AdminDossiersIndexPage() {
                                 value={String(d.statut ?? "")}
                                 onChange={(v) => void updateStatus(d.id, v)}
                                 options={[
-                                  { value: "", label: "—" },
+                                  { value: "", label: "Sélectionner…" },
                                   { value: "en_cours", label: "En cours" },
                                   { value: "en_analyse", label: "En analyse" },
                                   { value: "cloture", label: "Clôturé" },
@@ -729,7 +729,7 @@ function AdminDossiersIndexPage() {
               <div>
                 <p className="text-lg font-semibold text-[#111827]">Assigner un expert</p>
                 <p className="mt-1 text-sm text-[#6B7280]">
-                  Dossier {shortId(assigning.id)} · {assigning.type_sinistre ?? "—"} · Assuré{" "}
+                  Dossier {shortId(assigning.id)} · {assigning.type_sinistre ?? "Non renseigné"} · Assuré{" "}
                   {assigning.nom_assure || assigning.prenom_assure
                     ? `${assigning.nom_assure ?? ""} ${assigning.prenom_assure ?? ""}`.trim()
                     : "Assuré inconnu"}

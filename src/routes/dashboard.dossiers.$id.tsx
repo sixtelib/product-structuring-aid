@@ -129,7 +129,9 @@ function ClientDossierDetailContent() {
     };
   }, [dossier, documents]);
 
-  const { summary, loading: summaryLoading, error: summaryError, generate } = useDossierSummary(summaryInput);
+  const { summary, loading: summaryLoading, error: summaryError, generate } = useDossierSummary(summaryInput, {
+    audience: "assure",
+  });
 
   useEffect(() => {
     if (!user?.id) return;

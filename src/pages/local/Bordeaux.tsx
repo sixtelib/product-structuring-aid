@@ -20,7 +20,7 @@ export function BordeauxLocalPage() {
           <header className="border-b border-border pb-8">
             <p className="text-sm font-semibold uppercase tracking-wider text-[#5B50F0]">Local</p>
             <h1 className="mt-3 font-sans text-3xl font-semibold tracking-tight text-[#5B50F0] sm:text-4xl">
-              Expert d'assuré à Bordeaux — Vertual défend votre indemnisation
+              Expert d'assuré à Bordeaux : Vertual défend votre indemnisation
             </h1>
             <p className="mt-4 text-base leading-relaxed text-foreground">
               La métropole bordelaise est particulièrement exposée à deux risques majeurs : la sécheresse et le
@@ -45,7 +45,7 @@ export function BordeauxLocalPage() {
                 <li>
                   <strong>Tempêtes atlantiques</strong> : la région bordelaise est régulièrement frappée par des tempêtes
                   (comme les tempêtes Klaus et Xynthia l'ont montré). Toitures arrachées, arbres tombés, structures
-                  endommagées — les dégâts sont importants et les indemnisations souvent insuffisantes.
+                  endommagées : les dégâts sont importants et les indemnisations souvent insuffisantes.
                 </li>
                 <li>
                   <strong>Inondations</strong> : les zones basses de la métropole (rives de la Garonne, zones inondables

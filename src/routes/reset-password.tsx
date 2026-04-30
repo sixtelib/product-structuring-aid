@@ -6,7 +6,7 @@ import { Logo } from "@/components/site/Logo";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Nouveau mot de passe — Vertual" },
+      { title: "Nouveau mot de passe | Vertual" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),

@@ -42,7 +42,7 @@ const faqPageJsonLd = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "J'ai déjà signé la quittance — est-il trop tard ?",
+      name: "J'ai déjà signé la quittance : est-il trop tard ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Dans la grande majorité des cas, oui : la quittance pour solde de tout compte clôt le dossier. Il existe des exceptions rares (vice du consentement, erreur manifeste) mais elles sont difficiles à faire valoir. Ne signez jamais sous pression.",
@@ -156,7 +156,7 @@ export function SousIndemnisationPage() {
               </h2>
               <ol className="mt-6 space-y-6 text-base leading-relaxed text-foreground">
                 <li>
-                  <h3 className="font-semibold text-foreground">Signe 1 — L'expert est passé moins d'une heure</h3>
+                  <h3 className="font-semibold text-foreground">Signe 1 : L'expert est passé moins d'une heure</h3>
                   <p className="mt-1 text-muted-foreground">
                     Une expertise sérieuse prend du temps. Une visite expresse sur un sinistre significatif est souvent
                     synonyme de postes oubliés.
@@ -164,7 +164,7 @@ export function SousIndemnisationPage() {
                 </li>
                 <li>
                   <h3 className="font-semibold text-foreground">
-                    Signe 2 — Certains postes de dommages ont été ignorés
+                    Signe 2 : Certains postes de dommages ont été ignorés
                   </h3>
                   <p className="mt-1 text-muted-foreground">
                     Comparez le rapport à vos dommages réels : des biens ou des travaux manquent ? C'est un signal
@@ -173,7 +173,7 @@ export function SousIndemnisationPage() {
                 </li>
                 <li>
                   <h3 className="font-semibold text-foreground">
-                    Signe 3 — L'indemnisation ne couvre pas les devis d'artisans
+                    Signe 3 : L'indemnisation ne couvre pas les devis d'artisans
                   </h3>
                   <p className="mt-1 text-muted-foreground">
                     Si vos devis locaux dépassent largement l'offre, l'assureur utilise probablement des barèmes
@@ -182,7 +182,7 @@ export function SousIndemnisationPage() {
                 </li>
                 <li>
                   <h3 className="font-semibold text-foreground">
-                    Signe 4 — Une vétusté élevée a été appliquée sur tout
+                    Signe 4 : Une vétusté élevée a été appliquée sur tout
                   </h3>
                   <p className="mt-1 text-muted-foreground">
                     La vétusté est normale, mais pas uniforme et pas à des taux excessifs sur des biens récents.
@@ -190,7 +190,7 @@ export function SousIndemnisationPage() {
                 </li>
                 <li>
                   <h3 className="font-semibold text-foreground">
-                    Signe 5 — Votre contrat mentionne des garanties non activées
+                    Signe 5 : Votre contrat mentionne des garanties non activées
                   </h3>
                   <p className="mt-1 text-muted-foreground">
                     Relogement, frais annexes, valeur à neuf, honoraires : si c'est prévu mais absent, c'est souvent
@@ -198,7 +198,7 @@ export function SousIndemnisationPage() {
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Signe 6 — L'assureur vous a poussé à signer vite</h3>
+                  <h3 className="font-semibold text-foreground">Signe 6 : L'assureur vous a poussé à signer vite</h3>
                   <p className="mt-1 text-muted-foreground">
                     Une pression pour accepter rapidement est un signal d'alarme : gardez du temps pour vérifier.
                   </p>
@@ -245,19 +245,19 @@ export function SousIndemnisationPage() {
               </h2>
               <ol className="mt-6 space-y-5 text-base leading-relaxed text-foreground">
                 <li>
-                  <strong>Étape 1</strong> — Listez tous vos dommages (bâti, mobilier, frais annexes).
+                  <strong>Étape 1</strong> : listez tous vos dommages (bâti, mobilier, frais annexes).
                 </li>
                 <li>
-                  <strong>Étape 2</strong> — Valorisez chaque poste au prix du marché (devis, remplacement équivalent).
+                  <strong>Étape 2</strong> : valorisez chaque poste au prix du marché (devis, remplacement équivalent).
                 </li>
                 <li>
-                  <strong>Étape 3</strong> — Comparez au rapport de l'expert (postes manquants, valorisations faibles).
+                  <strong>Étape 3</strong> : comparez au rapport de l'expert (postes manquants, valorisations faibles).
                 </li>
                 <li>
-                  <strong>Étape 4</strong> — Vérifiez les garanties activées.
+                  <strong>Étape 4</strong> : vérifiez les garanties activées.
                 </li>
                 <li>
-                  <strong>Étape 5</strong> — Calculez l'écart : au-delà de 20%, un recours est souvent justifié.
+                  <strong>Étape 5</strong> : calculez l'écart : au-delà de 20%, un recours est souvent justifié.
                 </li>
               </ol>
             </section>
@@ -295,19 +295,19 @@ export function SousIndemnisationPage() {
               </p>
               <ul className="mt-4 list-disc space-y-3 pl-5 text-base leading-relaxed text-foreground">
                 <li>
-                  <strong>Dégât des eaux</strong> — dommages cachés souvent omis.
+                  <strong>Dégât des eaux</strong> : dommages cachés souvent omis.
                 </li>
                 <li>
-                  <strong>Incendie</strong> — destruction des preuves et complexité technique.
+                  <strong>Incendie</strong> : destruction des preuves et complexité technique.
                 </li>
                 <li>
-                  <strong>Catastrophe naturelle (sécheresse)</strong> — dommages structurels difficiles à chiffrer.
+                  <strong>Catastrophe naturelle (sécheresse)</strong> : dommages structurels difficiles à chiffrer.
                 </li>
                 <li>
-                  <strong>Sinistres professionnels</strong> — pertes d'exploitation, stocks, matériel.
+                  <strong>Sinistres professionnels</strong> : pertes d'exploitation, stocks, matériel.
                 </li>
                 <li>
-                  <strong>Règle proportionnelle</strong> — sous-assurance.
+                  <strong>Règle proportionnelle</strong> : sous-assurance.
                 </li>
               </ul>
             </section>
@@ -316,7 +316,7 @@ export function SousIndemnisationPage() {
               <h2 className="font-sans text-2xl font-semibold tracking-tight text-[#5B50F0]">Questions fréquentes</h2>
               <dl className="mt-6 space-y-6">
                 <div>
-                  <dt className="font-semibold text-foreground">J'ai déjà signé la quittance — est-il trop tard ?</dt>
+                  <dt className="font-semibold text-foreground">J'ai déjà signé la quittance : est-il trop tard ?</dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Dans la grande majorité des cas, oui. Ne signez jamais sous pression.
                   </dd>
@@ -359,7 +359,7 @@ export function SousIndemnisationPage() {
                 récupérerez jamais si vous ne contestez pas.
               </p>
               <p className="mt-4 text-base leading-relaxed text-foreground">
-                Un expert d'assuré analyse votre dossier gratuitement et vous dit si un recours est justifié — et ce
+                Un expert d'assuré analyse votre dossier gratuitement et vous dit si un recours est justifié, et ce
                 qu'il pourrait rapporter.
               </p>
               <p className="mt-4 text-base font-semibold leading-relaxed text-foreground">
@@ -396,7 +396,7 @@ export function SousIndemnisationPage() {
           </section>
 
           <p className="mt-12 text-center text-xs text-muted-foreground">
-            Article rédigé par l'équipe Vertual — avril 2026 · Dernière mise à jour : avril 2026
+            Article rédigé par l'équipe Vertual, avril 2026 · Dernière mise à jour : avril 2026
           </p>
 
           <footer className="mt-10 border-t border-border pt-10 text-center">

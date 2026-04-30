@@ -81,7 +81,7 @@ function AdminFacturationPage() {
   }
 
   function shortId(id: string | null | undefined) {
-    if (!id) return "—";
+    if (!id) return "Non renseigné";
     return `${String(id).slice(0, 8)}...`;
   }
 
@@ -110,7 +110,7 @@ function AdminFacturationPage() {
   }
 
   function sinistreLabel(type: string | null | undefined) {
-    if (!type) return "—";
+    if (!type) return "Non renseigné";
     const map: Record<string, string> = {
       degat_des_eaux: "Dégât des eaux",
       incendie: "Incendie",
@@ -259,7 +259,7 @@ function AdminFacturationPage() {
         />
         <StatCard
           label="Taux de conversion"
-          value={stats.conversion == null ? "—" : `${Math.round(stats.conversion)}%`}
+          value={stats.conversion == null ? "Non renseigné" : `${Math.round(stats.conversion)}%`}
           valueClassName="text-[#10B981]"
           icon={Target}
           iconBg="bg-green-50"
@@ -352,9 +352,9 @@ function AdminFacturationPage() {
                   const commission = base * 0.1;
                   const dateLabel = d.date_ouverture
                     ? new Date(d.date_ouverture).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
-                    : "—";
+                    : "Non renseigné";
                   const kind = statusKind(d.statut);
-                  const stLabel = d.statut ?? "—";
+                  const stLabel = d.statut ?? "Non renseigné";
 
                   return (
                     <tr key={d.id} className="border-b border-[#F3F4F6] hover:bg-[#F8F9FF]">

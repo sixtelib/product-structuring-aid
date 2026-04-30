@@ -23,13 +23,13 @@ import { QualificationChatbot } from "@/components/site/QualificationChatbot";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Vertual — Expert d'assuré en ligne | Défendez votre indemnisation" },
+      { title: "Vertual : expert d'assuré en ligne | Défendez votre indemnisation" },
       {
         name: "description",
         content:
           "Vertual est la première plateforme française d'expert d'assuré en ligne. Notre IA analyse votre contrat, nos experts négocient face à votre assureur. Succès fee 10%, zéro risque.",
       },
-      { property: "og:title", content: "Vertual — Expert d'assuré en ligne | Défendez votre indemnisation" },
+      { property: "og:title", content: "Vertual : expert d'assuré en ligne | Défendez votre indemnisation" },
       {
         property: "og:description",
         content:
@@ -169,7 +169,7 @@ function HomePage() {
               <FadeInUp delay={0.3}>
                 <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
                   Vertual est la première plateforme française d'expert d'assuré en ligne. Notre IA analyse votre contrat,
-                  identifie la marge de négociation sur votre sinistre, nos experts négocient face à votre assureur — vous
+                  identifie la marge de négociation sur votre sinistre, nos experts négocient face à votre assureur. Vous
                   encaissez la différence.
                 </p>
               </FadeInUp>

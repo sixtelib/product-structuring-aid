@@ -147,7 +147,7 @@ function normalizeAnalyse(parsed: unknown): AnalyseSinistreResult | null {
     return {
       titre: asStr(x.titre, "Point"),
       description: asStr(x.description, ""),
-      impact_estime: asStr(x.impact_estime, "—"),
+      impact_estime: asStr(x.impact_estime, "Non renseigné"),
       priorite: asStr(x.priorite, "moyenne").toLowerCase(),
     };
   });
@@ -166,7 +166,7 @@ function normalizeAnalyse(parsed: unknown): AnalyseSinistreResult | null {
   const arguments_juridiques: ArgumentJuridique[] = argRaw.map((p) => {
     const x = (p && typeof p === "object" ? p : {}) as Record<string, unknown>;
     return {
-      article: asStr(x.article, "—"),
+      article: asStr(x.article, "Non renseigné"),
       description: asStr(x.description, ""),
     };
   });
@@ -624,7 +624,7 @@ nouvelle estimation chiffrée, délai de réponse demandé.`,
               <span className="text-sm font-semibold">Marge de négociation</span>
             </div>
             <p className="mt-3 text-[#10B981]" style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-              Marge estimée : {eur(analyseResult.marge_negociation_estimee.min)} — {eur(analyseResult.marge_negociation_estimee.max)}
+              Marge estimée : entre {eur(analyseResult.marge_negociation_estimee.min)} et {eur(analyseResult.marge_negociation_estimee.max)}
             </p>
             {analyseResult.marge_negociation_estimee.commentaire ? (
               <p className="mt-2 text-sm leading-relaxed text-[#047857]">{analyseResult.marge_negociation_estimee.commentaire}</p>

@@ -20,7 +20,7 @@ export function ToulouseLocalPage() {
           <header className="border-b border-border pb-8">
             <p className="text-sm font-semibold uppercase tracking-wider text-[#5B50F0]">Local</p>
             <h1 className="mt-3 font-sans text-3xl font-semibold tracking-tight text-[#5B50F0] sm:text-4xl">
-              Expert d'assuré à Toulouse — Vertual défend votre indemnisation
+              Expert d'assuré à Toulouse : Vertual défend votre indemnisation
             </h1>
             <p className="mt-4 text-base leading-relaxed text-foreground">
               Toulouse et la Haute-Garonne sont exposées à plusieurs risques naturels importants : inondations de la
@@ -39,7 +39,7 @@ export function ToulouseLocalPage() {
               <ul className="mt-4 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground">
                 <li>
                   <strong>Grêle</strong> : la région toulousaine est l'une des zones de France les plus fréquemment
-                  touchées par des épisodes de grêle violents. Toitures, véhicules, panneaux solaires, vérandas — les
+                  touchées par des épisodes de grêle violents. Toitures, véhicules, panneaux solaires, vérandas : les
                   dégâts sont importants et répétés.
                 </li>
                 <li>
@@ -64,8 +64,8 @@ export function ToulouseLocalPage() {
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
                 La fréquence des épisodes de grêle et la sinistralité sécheresse font de la région toulousaine l'une des
-                plus actives en termes de litiges d'indemnisation. Les assureurs y traitent un volume élevé de dossiers
-                — ce qui favorise les évaluations rapides et insuffisantes.
+                plus actives en termes de litiges d'indemnisation. Les assureurs y traitent un volume élevé de dossiers,
+                ce qui favorise les évaluations rapides et insuffisantes.
               </p>
             </section>
 

@@ -20,12 +20,12 @@ export function ParisLocalPage() {
           <header className="border-b border-border pb-8">
             <p className="text-sm font-semibold uppercase tracking-wider text-[#5B50F0]">Local</p>
             <h1 className="mt-3 font-sans text-3xl font-semibold tracking-tight text-[#5B50F0] sm:text-4xl">
-              Expert d'assuré à Paris — Vertual défend votre indemnisation
+              Expert d'assuré à Paris : Vertual défend votre indemnisation
             </h1>
             <p className="mt-4 text-base leading-relaxed text-foreground">
               Paris concentre chaque année des centaines de milliers de sinistres : dégâts des eaux dans les immeubles
               haussmanniens, incendies en copropriété, sinistres liés aux travaux du Grand Paris, inondations en zones
-              inondables (Seine, Marne). La densité du bâti parisien rend les sinistres particulièrement complexes — et
+              inondables (Seine, Marne). La densité du bâti parisien rend les sinistres particulièrement complexes, et
               les litiges avec les assureurs plus fréquents.
             </p>
           </header>

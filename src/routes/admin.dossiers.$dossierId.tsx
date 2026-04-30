@@ -70,9 +70,9 @@ function eur(n: number | null | undefined) {
 }
 
 function dateFr(d: string | null | undefined) {
-  if (!d) return "—";
+  if (!d) return "Non renseigné";
   const t = new Date(d);
-  if (Number.isNaN(t.getTime())) return "—";
+  if (Number.isNaN(t.getTime())) return "Non renseigné";
   return t.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
@@ -188,7 +188,7 @@ function AdminDossierDetailPage() {
     return base;
   }, [dossier?.statut]);
 
-  const assureurLabel = dossier?.assureur_nom ?? dossier?.assureur ?? "—";
+  const assureurLabel = dossier?.assureur_nom ?? dossier?.assureur ?? "Non renseigné";
 
   const assureNom = useMemo(() => {
     const fromDossier =
@@ -391,7 +391,7 @@ function AdminDossierDetailPage() {
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Commission Vertual</dt>
-                <dd className="mt-1 text-sm font-semibold text-[#5B50F0]">{commission == null ? "—" : eur(commission)}</dd>
+                <dd className="mt-1 text-sm font-semibold text-[#5B50F0]">{commission == null ? "Non renseigné" : eur(commission)}</dd>
               </div>
               <div className="sm:col-span-2">
                 <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Assureur</dt>
@@ -432,7 +432,7 @@ function AdminDossierDetailPage() {
                 <h3 className="text-sm font-semibold text-[#111827]">Expert</h3>
                 {dossier.expert_id ? (
                   <>
-                    <p className="mt-2 text-sm text-[#374151]">{expertNom || "—"}</p>
+                    <p className="mt-2 text-sm text-[#374151]">{expertNom || "Non renseigné"}</p>
                     {expertProfile?.email ? <p className="mt-1 text-sm text-[#6B7280]">{expertProfile.email}</p> : null}
                     <Link
                       to="/admin/utilisateurs/$userId"

@@ -41,7 +41,7 @@ const faqPageJsonLd = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "Mon assureur invoque un défaut d'entretien pour réduire l'indemnisation — est-ce légal ?",
+      name: "Mon assureur invoque un défaut d'entretien pour réduire l'indemnisation : est-ce légal ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Oui, mais sous conditions strictes. L'assureur doit prouver que le défaut d'entretien est la cause directe du sinistre, et que cette exclusion est clairement mentionnée dans votre contrat. Une exclusion ambiguë s'interprète en faveur de l'assuré. Un expert d'assuré peut contester cette invocation si elle n'est pas solidement fondée.",
@@ -49,7 +49,7 @@ const faqPageJsonLd = {
     },
     {
       "@type": "Question",
-      name: "Je suis locataire — suis-je couvert en cas d'incendie ?",
+      name: "Je suis locataire : suis-je couvert en cas d'incendie ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Oui, si vous avez une assurance habitation (obligatoire pour les locataires). Votre assurance couvre vos biens mobiliers et votre responsabilité locative (dommages causés à l'immeuble). Le propriétaire est couvert par sa propre assurance pour le bâti.",
@@ -57,7 +57,7 @@ const faqPageJsonLd = {
     },
     {
       "@type": "Question",
-      name: "Mon installation électrique était ancienne — l'assureur peut-il refuser ?",
+      name: "Mon installation électrique était ancienne : l'assureur peut-il refuser ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Une installation électrique ancienne ne justifie pas automatiquement un refus. L'assureur doit prouver un lien direct entre l'état de l'installation et le sinistre, et que cette situation constituait une exclusion contractuelle explicite. C'est souvent contestable avec l'aide d'un expert.",
@@ -76,7 +76,7 @@ const faqPageJsonLd = {
       name: "Puis-je contester une indemnisation que j'ai déjà acceptée ?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Si vous avez signé une quittance pour solde de tout compte, c'est très difficile — sauf en cas de vice du consentement (erreur, dol, violence) prouvable. C'est pourquoi il est crucial de ne signer aucun accord sans avoir vérifié qu'il est juste. Si vous n'avez pas encore signé, il est encore temps d'agir.",
+        text: "Si vous avez signé une quittance pour solde de tout compte, c'est très difficile, sauf en cas de vice du consentement (erreur, dol, violence) prouvable. C'est pourquoi il est crucial de ne signer aucun accord sans avoir vérifié qu'il est juste. Si vous n'avez pas encore signé, il est encore temps d'agir.",
       },
     },
   ],
@@ -103,7 +103,7 @@ export function IncendiePage() {
             </h1>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground">
               Un sinistre incendie est l'un des événements les plus dévastateurs qu'un particulier ou une entreprise
-              puisse traverser. C'est aussi l'un des sinistres où les enjeux financiers sont les plus élevés — et où
+              puisse traverser. C'est aussi l'un des sinistres où les enjeux financiers sont les plus élevés, et où
               les assureurs ont le plus d'intérêt à minimiser l'indemnisation.
             </p>
             <p className="mt-4 text-base leading-relaxed text-foreground">
@@ -178,7 +178,7 @@ export function IncendiePage() {
                 Pourquoi les indemnisations incendie sont souvent contestables
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
-                Un sinistre incendie est complexe à évaluer — et cette complexité joue systématiquement en faveur de
+                Un sinistre incendie est complexe à évaluer, et cette complexité joue systématiquement en faveur de
                 l'assureur si vous n'êtes pas accompagné.
               </p>
               <ul className="mt-4 list-disc space-y-3 pl-5 text-base leading-relaxed text-foreground">
@@ -200,11 +200,11 @@ export function IncendiePage() {
                 <li>
                   <strong>Les exclusions mal appliquées.</strong> Certains assureurs invoquent des exclusions (défaut
                   d'entretien, installation électrique non conforme) pour réduire ou refuser l'indemnisation. Ces
-                  exclusions doivent être prouvées par l'assureur — elles ne peuvent pas être présumées.
+                  exclusions doivent être prouvées par l'assureur. Elles ne peuvent pas être présumées.
                 </li>
                 <li>
-                  <strong>La pression temporelle.</strong> Après un incendie, l'assuré est en situation de vulnérabilité
-                  — sans logement, sous stress. Les assureurs le savent et peuvent pousser à une acceptation rapide
+                  <strong>La pression temporelle.</strong> Après un incendie, l'assuré est en situation de vulnérabilité,
+                  souvent sans logement et sous stress. Les assureurs le savent et peuvent pousser à une acceptation rapide
                   d'une offre insuffisante.
                 </li>
               </ul>
@@ -253,28 +253,28 @@ export function IncendiePage() {
               </h2>
               <ol className="mt-6 space-y-6 text-base leading-relaxed text-foreground">
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 1 — Sécurité avant tout</h3>
+                  <h3 className="font-semibold text-foreground">Étape 1 : Sécurité avant tout</h3>
                   <p className="mt-1 text-muted-foreground">
                     Ne rentrez pas dans les locaux sinistrés sans l'accord des pompiers et des autorités. Un bâtiment
                     touché par un incendie peut être structurellement instable.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 2 — Déclarez immédiatement</h3>
+                  <h3 className="font-semibold text-foreground">Étape 2 : Déclarez immédiatement</h3>
                   <p className="mt-1 text-muted-foreground">
                     Appelez votre assureur dans les 5 jours ouvrés. Pour un sinistre incendie, la déclaration est
-                    souvent faite dans les 24h — mais confirmez par écrit (lettre recommandée ou email avec accusé).
+                    souvent faite dans les 24h, mais confirmez par écrit (lettre recommandée ou email avec accusé).
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 3 — Documentez avant tout nettoyage</h3>
+                  <h3 className="font-semibold text-foreground">Étape 3 : Documentez avant tout nettoyage</h3>
                   <p className="mt-1 text-muted-foreground">
                     Si vous pouvez accéder aux lieux en sécurité : photographiez et filmez tout. Chaque pièce, chaque
                     bien visible, les dommages structurels. Ces images sont votre seule preuve avant le nettoyage.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 4 — Reconstituez l'inventaire</h3>
+                  <h3 className="font-semibold text-foreground">Étape 4 : Reconstituez l'inventaire</h3>
                   <p className="mt-1 text-muted-foreground">
                     Listez tous les biens détruits ou endommagés : électroménager, meubles, vêtements, matériel
                     informatique, objets de valeur. Retrouvez les factures, relevés bancaires, photos, etc.
@@ -282,7 +282,7 @@ export function IncendiePage() {
                 </li>
                 <li>
                   <h3 className="font-semibold text-foreground">
-                    Étape 5 — Mandatez un expert d'assuré AVANT la réunion contradictoire
+                    Étape 5 : Mandatez un expert d'assuré AVANT la réunion contradictoire
                   </h3>
                   <p className="mt-1 text-muted-foreground">
                     La réunion contradictoire fixe les bases de l'indemnisation. Une fois le procès-verbal signé,
@@ -290,10 +290,10 @@ export function IncendiePage() {
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 6 — Ne signez rien sans avoir compris</h3>
+                  <h3 className="font-semibold text-foreground">Étape 6 : Ne signez rien sans avoir compris</h3>
                   <p className="mt-1 text-muted-foreground">
                     Ne signez aucun document (quittance, procès-verbal, accord d'indemnisation) sans l'avoir relu
-                    attentivement — idéalement avec votre expert d'assuré.
+                    attentivement, idéalement avec votre expert d'assuré.
                   </p>
                 </li>
               </ol>
@@ -377,7 +377,7 @@ export function IncendiePage() {
               <dl className="mt-6 space-y-6">
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Mon assureur invoque un défaut d'entretien pour réduire l'indemnisation — est-ce légal ?
+                    Mon assureur invoque un défaut d'entretien pour réduire l'indemnisation : est-ce légal ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Oui, mais sous conditions strictes. L'assureur doit prouver que le défaut d'entretien est la cause
@@ -387,7 +387,7 @@ export function IncendiePage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-foreground">Je suis locataire — suis-je couvert en cas d'incendie ?</dt>
+                  <dt className="font-semibold text-foreground">Je suis locataire : suis-je couvert en cas d'incendie ?</dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Oui, si vous avez une assurance habitation (obligatoire pour les locataires). Votre assurance
                     couvre vos biens mobiliers et votre responsabilité locative (dommages causés à l'immeuble). Le
@@ -396,7 +396,7 @@ export function IncendiePage() {
                 </div>
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Mon installation électrique était ancienne — l'assureur peut-il refuser ?
+                    Mon installation électrique était ancienne : l'assureur peut-il refuser ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Une installation électrique ancienne ne justifie pas automatiquement un refus. L'assureur doit
@@ -420,7 +420,7 @@ export function IncendiePage() {
                     Puis-je contester une indemnisation que j'ai déjà acceptée ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
-                    Si vous avez signé une quittance pour solde de tout compte, c'est très difficile — sauf en cas de
+                    Si vous avez signé une quittance pour solde de tout compte, c'est très difficile, sauf en cas de
                     vice du consentement prouvable. C'est pourquoi il est crucial de ne signer aucun accord sans avoir
                     vérifié qu'il est juste. Si vous n'avez pas encore signé, il est encore temps d'agir.
                   </dd>
@@ -434,7 +434,7 @@ export function IncendiePage() {
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
                 Après un incendie, vous êtes en position de faiblesse. Votre assureur le sait. Un expert d'assuré
-                rééquilibre ce rapport de force — sans avance de frais, sans risque pour vous.
+                rééquilibre ce rapport de force, sans avance de frais et sans risque pour vous.
               </p>
               <p className="mt-4 text-base font-semibold leading-relaxed text-foreground">
                 Analysez votre dossier gratuitement en 5 minutes.
@@ -499,7 +499,7 @@ export function IncendiePage() {
           </div>
 
           <p className="mt-12 text-center text-xs text-muted-foreground">
-            Article rédigé par l'équipe Vertual — avril 2026 · Dernière mise à jour : avril 2026
+            Article rédigé par l'équipe Vertual, avril 2026 · Dernière mise à jour : avril 2026
           </p>
 
           <footer className="mt-10 border-t border-border pt-10 text-center">

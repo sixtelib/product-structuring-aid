@@ -266,7 +266,7 @@ function AdminExpertsPage() {
               <tbody>
                 {expertsTable.map((ex) => {
                   const rateLabel =
-                    ex.successRate == null ? "—" : `${Math.round(ex.successRate * 100)}%`;
+                    ex.successRate == null ? "Non renseigné" : `${Math.round(ex.successRate * 100)}%`;
 
                   return (
                     <tr key={ex.expertId} className="border-b border-[#F3F4F6] hover:bg-[#F8F9FF]">
@@ -277,7 +277,7 @@ function AdminExpertsPage() {
                       <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{ex.total}</td>
                       <td className="px-5 py-4">
                         {ex.successRate == null ? (
-                          <span className="text-sm text-[#6B7280]">—</span>
+                          <span className="text-sm text-[#6B7280]">Non renseigné</span>
                         ) : (
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${successTone(ex.successRate)}`}>
                             {rateLabel}
@@ -326,14 +326,14 @@ function AdminExpertsPage() {
                   <p className="text-sm font-semibold text-[#111827]">{expertLabel(expertId)}</p>
                   <div className="mt-3 space-y-3">
                     {list.map((d) => {
-                      const st = d.statut ?? "—";
+                      const st = d.statut ?? "Non renseigné";
                       const opened = d.date_ouverture
                         ? new Date(d.date_ouverture).toLocaleDateString("fr-FR", {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
                           })
-                        : "—";
+                        : "Non renseigné";
                       const feeBase = amount(d.montant_estime);
 
                       return (

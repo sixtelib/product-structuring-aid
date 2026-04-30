@@ -16,8 +16,52 @@ export type DossierSummaryInput = {
   }>;
 };
 
-const SYSTEM_PROMPT =
+const EXPERT_SYSTEM_PROMPT =
   "Tu es un expert d'assuré français. Analyse ce dossier de sinistre et fournis un résumé structuré en 4 points : 1) Situation actuelle, 2) Points forts du dossier, 3) Points de vigilance, 4) Prochaine étape recommandée. Sois concis et professionnel.";
+
+const ASSURE_SYSTEM_PROMPT = `Tu es un assistant bienveillant qui aide des particuliers 
+à comprendre leur situation face à leur assureur.
+
+Tu t'adresses DIRECTEMENT à l'assuré, en "vous", 
+avec un ton chaleureux, rassurant et simple.
+Pas de jargon juridique, pas de termes techniques.
+Ton objectif : que l'assuré se sente compris et confiant.
+
+Réponds avec cette structure EXACTE, courte et impactante :
+
+**Votre situation en un coup d'œil**
+[1-2 phrases maximum qui résument simplement ce qui s'est passé 
+et ce que l'assureur a proposé. Ton humain et direct.]
+
+**Ce que nous avons identifié pour vous** ✨
+[2-3 points positifs TRÈS courts sur le dossier, 
+formulés comme des bonnes nouvelles pour l'assuré.
+Ex: "Votre dossier est bien documenté"
+    "Le montant proposé semble contestable"
+    "Nous avons les éléments pour négocier"]
+
+**Pour renforcer votre dossier** 📎
+[1-3 suggestions de documents complémentaires utiles, 
+formulées comme des conseils amicaux.
+Ex: "Avez-vous des photos des dégâts ? Elles pourraient 
+    nous aider à appuyer votre demande."
+    "Un devis de réparation renforcerait votre position."]
+
+**La suite** 🚀
+[1 phrase d'action claire et rassurante.
+Ex: "Notre expert analyse votre dossier et vous 
+    contactera sous 48h."]
+
+IMPORTANT : 
+- Maximum 150 mots au total
+- Zéro mention de délais légaux, d'articles de loi, 
+  d'incohérences techniques
+- Ne pas alarmer l'assuré avec des "points de vigilance"
+- Toujours terminer sur une note positive et rassurante`;
+
+export type UseDossierSummaryOptions = {
+  audience?: "assure" | "expert";
+};
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-6";
 
@@ -63,10 +107,16 @@ function buildUserPrompt(input: DossierSummaryInput) {
   ].join("\n");
 }
 
-export function useDossierSummary(input: DossierSummaryInput | null) {
+export function useDossierSummary(
+  input: DossierSummaryInput | null,
+  options?: UseDossierSummaryOptions,
+) {
   const [summary, setSummary] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const audience = options?.audience ?? "expert";
+  const systemPrompt = audience === "assure" ? ASSURE_SYSTEM_PROMPT : EXPERT_SYSTEM_PROMPT;
 
   const dossier = useMemo(() => (input ? { ...input, documents: undefined } : null), [input]);
   const documents = useMemo(() => input?.documents ?? [], [input]);
@@ -99,7 +149,7 @@ export function useDossierSummary(input: DossierSummaryInput | null) {
         body: JSON.stringify({
           model: ANTHROPIC_MODEL,
           max_tokens: 450,
-          system: SYSTEM_PROMPT,
+          system: systemPrompt,
           messages: [{ role: "user", content: prompt }],
         }),
       });
@@ -123,7 +173,7 @@ export function useDossierSummary(input: DossierSummaryInput | null) {
     } finally {
       setLoading(false);
     }
-  }, [input, prompt]);
+  }, [input, prompt, systemPrompt]);
 
-  return { summary, loading, error, generate, dossier, documents, systemPrompt: SYSTEM_PROMPT };
+  return { summary, loading, error, generate, dossier, documents, systemPrompt };
 }

@@ -20,7 +20,7 @@ export function MarseilleLocalPage() {
           <header className="border-b border-border pb-8">
             <p className="text-sm font-semibold uppercase tracking-wider text-[#5B50F0]">Local</p>
             <h1 className="mt-3 font-sans text-3xl font-semibold tracking-tight text-[#5B50F0] sm:text-4xl">
-              Expert d'assuré à Marseille — Vertual défend votre indemnisation
+              Expert d'assuré à Marseille : Vertual défend votre indemnisation
             </h1>
             <p className="mt-4 text-base leading-relaxed text-foreground">
               Marseille présente une sinistralité spécifique liée à son climat méditerranéen, à la vétusté d'une partie

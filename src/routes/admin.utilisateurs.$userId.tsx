@@ -135,7 +135,7 @@ function AdminUtilisateurDetailPage() {
   }
 
   function shortId(id: string | null | undefined) {
-    if (!id) return "—";
+    if (!id) return "Non renseigné";
     const s = String(id);
     return s.length <= 10 ? s : `${s.slice(0, 8)}...`;
   }
@@ -227,7 +227,7 @@ function AdminUtilisateurDetailPage() {
 
           <button
             type="button"
-            onClick={() => window.alert("Suspendre le compte — bientôt disponible")}
+            onClick={() => window.alert("Suspendre le compte (bientôt disponible)")}
             className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
           >
             Suspendre le compte
@@ -265,7 +265,7 @@ function AdminUtilisateurDetailPage() {
 
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">Email</p>
-                  <p className="mt-2 text-sm font-medium text-[#111827]">{profile?.email ?? "—"}</p>
+                  <p className="mt-2 text-sm font-medium text-[#111827]">{profile?.email ?? "Non renseigné"}</p>
                 </div>
 
                 <div>
@@ -280,7 +280,7 @@ function AdminUtilisateurDetailPage() {
                   <p className="mt-2 text-sm font-medium text-[#111827]">
                     {computed.firstOpened
                       ? computed.firstOpened.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
-                      : "—"}
+                      : "Non renseigné"}
                   </p>
                 </div>
 
@@ -321,12 +321,12 @@ function AdminUtilisateurDetailPage() {
                       {dossiers.map((d) => {
                         const opened = d.date_ouverture
                           ? new Date(d.date_ouverture).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
-                          : "—";
-                        const stLabel = d.statut ?? "—";
+                          : "Non renseigné";
+                        const stLabel = d.statut ?? "Non renseigné";
                         const kind = statusKind(d.statut);
                         return (
                           <tr key={d.id} className="border-b border-[#F3F4F6] hover:bg-[#F8F9FF]">
-                            <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{d.type_sinistre ?? "—"}</td>
+                            <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{d.type_sinistre ?? "Non renseigné"}</td>
                             <td className="px-5 py-4">
                               <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadge(kind)}`}>
                                 {stLabel}
@@ -340,7 +340,7 @@ function AdminUtilisateurDetailPage() {
                             <td className="px-5 py-4">
                               <button
                                 type="button"
-                                onClick={() => window.alert("Voir dossier — bientôt disponible")}
+                                onClick={() => window.alert("Voir dossier (bientôt disponible)")}
                                 className="rounded-lg bg-[#F3F4F6] px-3 py-2 text-sm font-medium text-[#111827] hover:bg-[#E5E7EB]"
                               >
                                 Voir
@@ -370,9 +370,9 @@ function AdminUtilisateurDetailPage() {
                 <div className="mt-5 space-y-3">
                   {documents.map((doc) => {
                     const dossier = dossierById.get(doc.dossier_id ?? "");
-                    const dossierLabel = dossier?.type_sinistre ?? "—";
+                    const dossierLabel = dossier?.type_sinistre ?? "Non renseigné";
                     const kind = statusKind(doc.statut);
-                    const stLabel = doc.statut ?? "—";
+                    const stLabel = doc.statut ?? "Non renseigné";
                     return (
                       <div
                         key={doc.id}
@@ -384,7 +384,7 @@ function AdminUtilisateurDetailPage() {
                               {docEmoji(doc.nom)}
                             </span>
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-[#111827]">{doc.nom ?? "—"}</p>
+                              <p className="truncate text-sm font-semibold text-[#111827]">{doc.nom ?? "Non renseigné"}</p>
                               <p className="mt-1 text-xs text-[#6B7280]">Dossier : {dossierLabel}</p>
                             </div>
                           </div>

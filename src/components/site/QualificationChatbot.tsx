@@ -766,7 +766,7 @@ export function QualificationChatbot() {
               add("Autres informations", data.autres_informations);
 
               if (lines.length === 0) {
-                return <p className="text-sm text-foreground">—</p>;
+                return <p className="text-sm text-foreground">Non renseigné</p>;
               }
 
               return (

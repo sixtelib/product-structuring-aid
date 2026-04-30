@@ -149,7 +149,7 @@ function PricingPage() {
                 Simulez votre gain potentiel
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Illustration du modèle sur des cas types. Chaque dossier est unique — le gain réel dépend de votre contrat
+                Illustration du modèle sur des cas types. Chaque dossier est unique, et le gain réel dépend de votre contrat
                 et de vos dommages.
               </p>
               <div className="mt-6 space-y-4">

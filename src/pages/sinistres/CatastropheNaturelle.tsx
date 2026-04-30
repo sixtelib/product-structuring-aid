@@ -42,7 +42,7 @@ const faqPageJsonLd = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "Ma commune n'a pas été reconnue en état de catastrophe naturelle — que faire ?",
+      name: "Ma commune n'a pas été reconnue en état de catastrophe naturelle : que faire ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "La demande de reconnaissance Cat Nat est faite par la commune. Si elle n'a pas déposé de demande ou si elle a été refusée, contactez votre mairie pour les encourager à déposer ou renouveler la demande. En attendant, vos garanties ordinaires (tempête, dégât des eaux) peuvent couvrir une partie des dommages.",
@@ -58,7 +58,7 @@ const faqPageJsonLd = {
     },
     {
       "@type": "Question",
-      name: "Mon assureur tarde à m'indemniser après l'arrêté Cat Nat — est-ce légal ?",
+      name: "Mon assureur tarde à m'indemniser après l'arrêté Cat Nat : est-ce légal ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Non. La loi impose un délai maximum de 3 mois pour indemniser après la déclaration de sinistre ou la publication de l'arrêté. En cas de dépassement, vous pouvez saisir le médiateur de l'assurance.",
@@ -182,11 +182,11 @@ export function CatastropheNaturellePage() {
               </p>
               <ul className="mt-4 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground">
                 <li>
-                  <strong>Inondations et coulées de boue</strong> — débordement de cours d'eau, ruissellement, remontée
+                  <strong>Inondations et coulées de boue</strong> : débordement de cours d'eau, ruissellement, remontée
                   de nappe phréatique
                 </li>
                 <li>
-                  <strong>Sécheresse et réhydratation des sols</strong> — mouvements de terrain différentiels liés à la
+                  <strong>Sécheresse et réhydratation des sols</strong> : mouvements de terrain différentiels liés à la
                   sécheresse (fissures)
                 </li>
                 <li>
@@ -279,28 +279,28 @@ export function CatastropheNaturellePage() {
               </h2>
               <ol className="mt-6 space-y-6 text-base leading-relaxed text-foreground">
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 1 — Sécurisez et documentez immédiatement</h3>
+                  <h3 className="font-semibold text-foreground">Étape 1 : Sécurisez et documentez immédiatement</h3>
                   <p className="mt-1 text-muted-foreground">
                     Photographiez et filmez tous les dommages dès que c'est sécurisé. Pour une inondation : notez le
                     niveau de l'eau sur les murs et documentez avant tout nettoyage.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 2 — Déclarez à votre assureur dans les 5 jours</h3>
+                  <h3 className="font-semibold text-foreground">Étape 2 : Déclarez à votre assureur dans les 5 jours</h3>
                   <p className="mt-1 text-muted-foreground">
                     Déclarez le sinistre au titre des garanties ordinaires, même avant l'arrêté. Vous compléterez la
                     déclaration Cat Nat une fois l'arrêté publié.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 3 — Suivez la publication de l'arrêté</h3>
+                  <h3 className="font-semibold text-foreground">Étape 3 : Suivez la publication de l'arrêté</h3>
                   <p className="mt-1 text-muted-foreground">
                     Les arrêtés peuvent être publiés plusieurs semaines après l'événement. Dès publication : vous avez
                     10 jours pour déclarer.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 4 — Ne jetez rien et conservez les preuves</h3>
+                  <h3 className="font-semibold text-foreground">Étape 4 : Ne jetez rien et conservez les preuves</h3>
                   <p className="mt-1 text-muted-foreground">
                     Conservez les biens jusqu'à l'expertise. Si vous devez jeter pour raisons sanitaires, photographiez
                     et listez tout en détail avant.
@@ -308,7 +308,7 @@ export function CatastropheNaturellePage() {
                 </li>
                 <li>
                   <h3 className="font-semibold text-foreground">
-                    Étape 5 — Mandatez un expert d'assuré avant l'expertise contradictoire
+                    Étape 5 : Mandatez un expert d'assuré avant l'expertise contradictoire
                   </h3>
                   <p className="mt-1 text-muted-foreground">
                     Comme pour tout sinistre : intervenez avant la réunion contradictoire. C'est là que se joue
@@ -316,7 +316,7 @@ export function CatastropheNaturellePage() {
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 6 — Suivez les dommages évolutifs</h3>
+                  <h3 className="font-semibold text-foreground">Étape 6 : Suivez les dommages évolutifs</h3>
                   <p className="mt-1 text-muted-foreground">
                     Certains dommages apparaissent progressivement. Signalez-les dès qu'ils se manifestent.
                   </p>
@@ -359,7 +359,7 @@ export function CatastropheNaturellePage() {
               <dl className="mt-6 space-y-6">
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Ma commune n'a pas été reconnue en état de catastrophe naturelle — que faire ?
+                    Ma commune n'a pas été reconnue en état de catastrophe naturelle : que faire ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Si votre commune n'a pas déposé de demande ou si elle a été refusée, contactez votre mairie. En
@@ -377,7 +377,7 @@ export function CatastropheNaturellePage() {
                 </div>
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Mon assureur tarde à m'indemniser après l'arrêté Cat Nat — est-ce légal ?
+                    Mon assureur tarde à m'indemniser après l'arrêté Cat Nat : est-ce légal ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Non : la loi impose un délai maximum de 3 mois. En cas de dépassement, vous pouvez saisir le
@@ -473,7 +473,7 @@ export function CatastropheNaturellePage() {
           </div>
 
           <p className="mt-12 text-center text-xs text-muted-foreground">
-            Article rédigé par l'équipe Vertual — avril 2026 · Dernière mise à jour : avril 2026
+            Article rédigé par l'équipe Vertual, avril 2026 · Dernière mise à jour : avril 2026
           </p>
 
           <footer className="mt-10 border-t border-border pt-10 text-center">

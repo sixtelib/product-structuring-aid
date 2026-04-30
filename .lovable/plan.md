@@ -1,4 +1,4 @@
-# Plateforme d'expertise pour assurés sinistrés — MVP B2C
+# Plateforme d'expertise pour assurés sinistrés : MVP B2C
 
 Plateforme qui défend l'assuré particulier face à son assureur, de la qualification du sinistre à l'indemnisation finale, combinant IA et expert humain. Rémunération au succès uniquement.
 
@@ -21,12 +21,12 @@ Plateforme qui défend l'assuré particulier face à son assureur, de la qualifi
 ## 1. Site public
 
 Pages séparées (routes TanStack distinctes pour le SEO) :
-- **Accueil** — hero "Vous êtes mal indemnisé ? On se bat pour vous", proposition de valeur, social proof, CTA chatbot
-- **Comment ça marche** — 4 étapes (qualifier · uploader · on négocie · vous êtes payé)
-- **Sinistres traités** — habitation, auto, dégât des eaux, incendie, climatique, santé/prévoyance
-- **Tarifs** — succès fee ~10 %, gratuit si échec, exemples chiffrés
-- **FAQ** — qui est l'expert d'assuré, légalité, délais, fiscalité
-- **À propos** — mission, équipe, partenaires
+- **Accueil** : hero "Vous êtes mal indemnisé ? On se bat pour vous", proposition de valeur, social proof, CTA chatbot
+- **Comment ça marche** : 4 étapes (qualifier · uploader · on négocie · vous êtes payé)
+- **Sinistres traités** : habitation, auto, dégât des eaux, incendie, climatique, santé/prévoyance
+- **Tarifs** : succès fee ~10 %, gratuit si échec, exemples chiffrés
+- **FAQ** : qui est l'expert d'assuré, légalité, délais, fiscalité
+- **À propos** : mission, équipe, partenaires
 - **Contact**
 
 Design : palette confiance (bleu nuit + accent corail / sable), typographie sérieuse mais chaleureuse, ton "défenseur de l'assuré".
@@ -70,21 +70,21 @@ Espace réservé aux experts internes (rôle séparé) :
 - **Changement de statut** + déclenchement notification client
 - **Clôture** : saisie de l'indemnisation finale → calcul automatique du success fee → facturation
 
-## 5. Module IA — détails fonctionnels
+## 5. Module IA : détails fonctionnels
 
 Edge functions branchées sur Lovable AI Gateway (Gemini par défaut) :
-- `analyze-policy` — extrait garanties / exclusions / plafonds depuis la police PDF
-- `analyze-claim` — croise rapport d'expert + police pour identifier les leviers
-- `draft-letter` — produit un courrier contradictoire prêt à éditer
-- `qualify-chat` — alimente le chatbot public avec extraction structurée
+- `analyze-policy` : extrait garanties / exclusions / plafonds depuis la police PDF
+- `analyze-claim` : croise rapport d'expert + police pour identifier les leviers
+- `draft-letter` : produit un courrier contradictoire prêt à éditer
+- `qualify-chat` : alimente le chatbot public avec extraction structurée
 
 Toutes les analyses sont **stockées par dossier** : la base de connaissance s'enrichit à chaque traitement (avantage compétitif "effet cumulatif").
 
 ## 6. Rôles & sécurité
 
-- `assuré` (par défaut à l'inscription) — accès uniquement à ses dossiers
-- `expert` — accès à la file et aux dossiers attribués
-- `admin` — gestion utilisateurs, attribution dossiers, paramètres
+- `assuré` (par défaut à l'inscription) : accès uniquement à ses dossiers
+- `expert` : accès à la file et aux dossiers attribués
+- `admin` : gestion utilisateurs, attribution dossiers, paramètres
 
 Table `user_roles` séparée + RLS strict (jamais de rôle stocké sur le profil). Storage privé pour les pièces uploadées.
 

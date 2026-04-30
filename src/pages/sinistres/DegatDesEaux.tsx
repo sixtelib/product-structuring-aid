@@ -41,7 +41,7 @@ const faqPageJsonLd = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "La fuite vient de chez mon voisin — qui paie ?",
+      name: "La fuite vient de chez mon voisin : qui paie ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Si la fuite est d'origine privative (chez votre voisin), c'est l'assurance de votre voisin qui prend en charge les dommages chez vous. Votre propre assurance intervient en cas de carence ou de litige. Un expert d'assuré peut vous aider à identifier les responsabilités et à activer les bonnes garanties.",
@@ -49,7 +49,7 @@ const faqPageJsonLd = {
     },
     {
       "@type": "Question",
-      name: "Mon assureur veut déduire la vétusté — est-ce normal ?",
+      name: "Mon assureur veut déduire la vétusté : est-ce normal ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Oui, la déduction de vétusté est légale et prévue dans la plupart des contrats. Mais elle est souvent appliquée de façon excessive. Un expert d'assuré vérifie que les taux appliqués sont conformes aux barèmes contractuels et conteste les abus.",
@@ -65,7 +65,7 @@ const faqPageJsonLd = {
     },
     {
       "@type": "Question",
-      name: "Mon assureur tarde à envoyer son expert — que faire ?",
+      name: "Mon assureur tarde à envoyer son expert : que faire ?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Si l'assureur ne mandate pas son expert dans un délai raisonnable (2 à 3 semaines), relancez par écrit. Si la situation se prolonge, mandatez un expert d'assuré qui peut initier la procédure contradictoire indépendamment.",
@@ -76,7 +76,7 @@ const faqPageJsonLd = {
       name: "Est-ce que ça vaut le coup pour un petit dégât des eaux ?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Pour un sinistre inférieur à 1 500 €, l'intervention d'un expert d'assuré est rarement rentable. En revanche, dès que les dommages dépassent 3 000 € — ce qui est fréquent dès qu'un plancher ou une cloison est touché — l'expertise est presque toujours justifiée.",
+        text: "Pour un sinistre inférieur à 1 500 €, l'intervention d'un expert d'assuré est rarement rentable. En revanche, dès que les dommages dépassent 3 000 € (ce qui est fréquent dès qu'un plancher ou une cloison est touché), l'expertise est presque toujours justifiée.",
       },
     },
   ],
@@ -102,7 +102,7 @@ export function DegatDesEauxPage() {
               Expert d'assuré dégât des eaux : obtenez l'indemnisation que vous méritez
             </h1>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              Le dégât des eaux est le sinistre le plus fréquent en France — plus de 3 millions de déclarations par an.
+              Le dégât des eaux est le sinistre le plus fréquent en France : plus de 3 millions de déclarations par an.
               C'est aussi l'un des sinistres où les assurés sont le plus souvent sous-indemnisés.
             </p>
             <p className="mt-4 text-base leading-relaxed text-foreground">
@@ -166,7 +166,7 @@ export function DegatDesEauxPage() {
                 Pourquoi les indemnisations sont souvent insuffisantes
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
-                Un dégât des eaux semble parfois anodin en surface — mais les dommages réels sont souvent bien plus
+                Un dégât des eaux semble parfois anodin en surface, mais les dommages réels sont souvent bien plus
                 étendus que ce que l'œil voit immédiatement.
               </p>
               <p className="mt-4 text-base font-semibold leading-relaxed text-foreground">
@@ -205,7 +205,7 @@ export function DegatDesEauxPage() {
               </p>
               <ul className="mt-4 list-disc space-y-3 pl-5 text-base leading-relaxed text-foreground">
                 <li>
-                  <strong>Analyse complète du contrat.</strong> Il identifie toutes les garanties mobilisables — y
+                  <strong>Analyse complète du contrat.</strong> Il identifie toutes les garanties mobilisables, y
                   compris celles que vous n'avez pas pensé à activer (garantie recherche de fuite, garantie
                   embellissement, garantie relogement).
                 </li>
@@ -238,28 +238,28 @@ export function DegatDesEauxPage() {
               </h2>
               <ol className="mt-6 space-y-6 text-base leading-relaxed text-foreground">
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 1 — Déclarez dans les 5 jours ouvrés</h3>
+                  <h3 className="font-semibold text-foreground">Étape 1 : Déclarez dans les 5 jours ouvrés</h3>
                   <p className="mt-1 text-muted-foreground">
                     C'est le délai légal pour déclarer un sinistre à votre assureur. Passé ce délai, votre assureur
                     peut réduire ou refuser l'indemnisation (sauf cas de force majeure).
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 2 — Documentez les dommages</h3>
+                  <h3 className="font-semibold text-foreground">Étape 2 : Documentez les dommages</h3>
                   <p className="mt-1 text-muted-foreground">
                     Avant tout nettoyage ou réparation d'urgence : <strong>photographiez tout</strong>. Chaque pièce
                     endommagée, chaque bien abîmé, l'origine visible de la fuite. Ces photos sont votre preuve.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 3 — Conservez les biens endommagés</h3>
+                  <h3 className="font-semibold text-foreground">Étape 3 : Conservez les biens endommagés</h3>
                   <p className="mt-1 text-muted-foreground">
-                    Ne jetez rien avant l'expertise — même ce qui semble irrécupérable. L'expert de l'assureur doit
+                    Ne jetez rien avant l'expertise, même ce qui semble irrécupérable. L'expert de l'assureur doit
                     pouvoir constater les dommages en personne.
                   </p>
                 </li>
                 <li>
-                  <h3 className="font-semibold text-foreground">Étape 4 — Demandez des devis de réparation</h3>
+                  <h3 className="font-semibold text-foreground">Étape 4 : Demandez des devis de réparation</h3>
                   <p className="mt-1 text-muted-foreground">
                     Faites établir des devis par des artisans locaux. Ces devis serviront de base de négociation face
                     à l'expert de l'assureur.
@@ -267,7 +267,7 @@ export function DegatDesEauxPage() {
                 </li>
                 <li>
                   <h3 className="font-semibold text-foreground">
-                    Étape 5 — Mandatez un expert d'assuré avant la réunion contradictoire
+                    Étape 5 : Mandatez un expert d'assuré avant la réunion contradictoire
                   </h3>
                   <p className="mt-1 text-muted-foreground">
                     C'est le moment clé. Une fois la réunion contradictoire tenue et le procès-verbal signé, il est
@@ -331,7 +331,7 @@ export function DegatDesEauxPage() {
               </h2>
               <dl className="mt-6 space-y-6">
                 <div>
-                  <dt className="font-semibold text-foreground">La fuite vient de chez mon voisin — qui paie ?</dt>
+                  <dt className="font-semibold text-foreground">La fuite vient de chez mon voisin : qui paie ?</dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Si la fuite est d'origine privative (chez votre voisin), c'est l'assurance de votre voisin qui
                     prend en charge les dommages chez vous. Votre propre assurance intervient en cas de carence ou de
@@ -341,7 +341,7 @@ export function DegatDesEauxPage() {
                 </div>
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Mon assureur veut déduire la vétusté — est-ce normal ?
+                    Mon assureur veut déduire la vétusté : est-ce normal ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Oui, la déduction de vétusté est légale et prévue dans la plupart des contrats. Mais elle est
@@ -361,7 +361,7 @@ export function DegatDesEauxPage() {
                 </div>
                 <div>
                   <dt className="font-semibold text-foreground">
-                    Mon assureur tarde à envoyer son expert — que faire ?
+                    Mon assureur tarde à envoyer son expert : que faire ?
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Si l'assureur ne mandate pas son expert dans un délai raisonnable (2 à 3 semaines), relancez par
@@ -375,8 +375,8 @@ export function DegatDesEauxPage() {
                   </dt>
                   <dd className="mt-2 text-base leading-relaxed text-muted-foreground">
                     Pour un sinistre inférieur à 1 500 €, l'intervention d'un expert d'assuré est rarement rentable. En
-                    revanche, dès que les dommages dépassent 3 000 € — ce qui est fréquent dès qu'un plancher ou une
-                    cloison est touché — l'expertise est presque toujours justifiée.
+                    revanche, dès que les dommages dépassent 3 000 € (ce qui est fréquent dès qu'un plancher ou une
+                    cloison est touché), l'expertise est presque toujours justifiée.
                   </dd>
                 </div>
               </dl>
@@ -388,7 +388,7 @@ export function DegatDesEauxPage() {
               </h2>
               <p className="mt-4 text-base leading-relaxed text-foreground">
                 Votre assureur vous a proposé une indemnisation ? Avant d'accepter, faites analyser votre dossier
-                gratuitement. En quelques minutes, nous évaluons si votre dossier mérite un recours — et vous dites
+                gratuitement. En quelques minutes, nous évaluons si votre dossier mérite un recours et vous disons
                 clairement si ça vaut le coup.
               </p>
               <p className="mt-4 text-base font-semibold leading-relaxed text-foreground">
@@ -454,7 +454,7 @@ export function DegatDesEauxPage() {
           </div>
 
           <p className="mt-12 text-center text-xs text-muted-foreground">
-            Article rédigé par l'équipe Vertual — avril 2026 · Dernière mise à jour : avril 2026
+            Article rédigé par l'équipe Vertual, avril 2026 · Dernière mise à jour : avril 2026
           </p>
 
           <footer className="mt-10 border-t border-border pt-10 text-center">

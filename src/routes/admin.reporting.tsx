@@ -136,7 +136,7 @@ function AdminReportingPage() {
 
   function relativeDaysLabel(dateIso: string) {
     const t = new Date(dateIso).getTime();
-    if (!Number.isFinite(t)) return "—";
+    if (!Number.isFinite(t)) return "Non renseigné";
     const now = Date.now();
     const diffDays = Math.max(0, Math.floor((now - t) / (1000 * 60 * 60 * 24)));
     if (diffDays === 0) return "aujourd'hui";
@@ -185,25 +185,25 @@ function AdminReportingPage() {
     });
 
     const avgAmount = inCurrent.length > 0 ? totalAmount / inCurrent.length : 0;
-    const successRateLabel = closedCount === 0 ? "—" : `${Math.round((wonCount / closedCount) * 100)}%`;
+    const successRateLabel = closedCount === 0 ? "Non renseigné" : `${Math.round((wonCount / closedCount) * 100)}%`;
 
     const byType = new Map<
       string,
       { type: string; count: number; total: number; byStatut: Map<string, number> }
     >();
     inCurrent.forEach((d) => {
-      const type = (d.type_sinistre ?? "—").toString();
+      const type = (d.type_sinistre ?? "Non renseigné").toString();
       const row = byType.get(type) ?? { type, count: 0, total: 0, byStatut: new Map<string, number>() };
       row.count += 1;
       row.total += amount(d.montant_estime);
-      const st = (d.statut ?? "—").toString();
+      const st = (d.statut ?? "Non renseigné").toString();
       row.byStatut.set(st, (row.byStatut.get(st) ?? 0) + 1);
       byType.set(type, row);
     });
 
     const typeRows = Array.from(byType.values())
       .map((r) => {
-        let dominantStatut = "—";
+        let dominantStatut = "Non renseigné";
         let max = 0;
         for (const [k, v] of r.byStatut.entries()) {
           if (v > max) {
@@ -219,7 +219,7 @@ function AdminReportingPage() {
 
     const statusMap = new Map<string, { statut: string; count: number }>();
     inCurrent.forEach((d) => {
-      const st = (d.statut ?? "—").toString();
+      const st = (d.statut ?? "Non renseigné").toString();
       statusMap.set(st, { statut: st, count: (statusMap.get(st)?.count ?? 0) + 1 });
     });
     const statusRows = Array.from(statusMap.values()).sort((a, b) => b.count - a.count);
@@ -361,7 +361,7 @@ function AdminReportingPage() {
               icon={<FolderOpen className="h-5 w-5" />}
               helper={
                 computed.trendPct == null
-                  ? "—"
+                  ? "Non renseigné"
                   : `${computed.trendPct > 0 ? "+" : ""}${computed.trendPct}% vs période précédente`
               }
             />
@@ -370,7 +370,7 @@ function AdminReportingPage() {
               label="Taux de succès"
               value={computed.successRateLabel}
               icon={<TrendingUp className="h-5 w-5 text-green-700" />}
-              valueTone={computed.successRateLabel === "—" ? "text-[#111827]" : "text-green-700"}
+              valueTone={computed.successRateLabel === "Non renseigné" ? "text-[#111827]" : "text-green-700"}
             />
             <KpiCard
               label="Montant moyen"
@@ -437,7 +437,7 @@ function AdminReportingPage() {
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="truncate text-sm font-semibold text-[#111827]">{d.type_sinistre}</p>
                               <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statutBadgeClass(d.statut)}`}>
-                                {d.statut ?? "—"}
+                                {d.statut ?? "Non renseigné"}
                               </span>
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#6B7280]">
@@ -525,7 +525,7 @@ function AdminReportingPage() {
                         <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{r.won}</td>
                         <td className="px-5 py-4">
                           {r.successPct == null ? (
-                            <span className="text-sm text-[#6B7280]">—</span>
+                            <span className="text-sm text-[#6B7280]">Non renseigné</span>
                           ) : (
                             <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
                               {r.successPct}%

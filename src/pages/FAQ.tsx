@@ -23,7 +23,7 @@ const sections: Array<FaqSection> = [
     items: [
       {
         q: "Qu'est-ce qu'un expert d'assuré ?",
-        a: "Un expert d'assuré est un professionnel indépendant mandaté par l'assuré — et non par l'assureur — pour défendre ses intérêts lors du règlement d'un sinistre. Il évalue les dommages, analyse le contrat, et négocie avec l'expert de l'assureur pour obtenir une indemnisation juste.",
+        a: "Un expert d'assuré est un professionnel indépendant mandaté par l'assuré, et non par l'assureur, pour défendre ses intérêts lors du règlement d'un sinistre. Il évalue les dommages, analyse le contrat, et négocie avec l'expert de l'assureur pour obtenir une indemnisation juste.",
       },
       {
         q: "Quelle est la différence entre l'expert de l'assureur et l'expert d'assuré ?",
@@ -61,7 +61,7 @@ const sections: Array<FaqSection> = [
       },
       {
         q: "Est-ce que ça vaut le coup financièrement ?",
-        a: "Dans la grande majorité des dossiers traités avec un expert d'assuré, l'indemnisation finale est significativement supérieure à l'offre initiale de l'assureur — souvent le double ou plus. Sur un sinistre de 15 000 €, un expert qui obtient 5 000 € supplémentaires vous laisse 4 500 € nets après ses honoraires.",
+        a: "Dans la grande majorité des dossiers traités avec un expert d'assuré, l'indemnisation finale est significativement supérieure à l'offre initiale de l'assureur, souvent le double ou plus. Sur un sinistre de 15 000 €, un expert qui obtient 5 000 € supplémentaires vous laisse 4 500 € nets après ses honoraires.",
       },
     ],
   },
@@ -79,7 +79,7 @@ const sections: Array<FaqSection> = [
       },
       {
         q: "Dois-je être présent lors de l'expertise ?",
-        a: "Votre présence n'est pas obligatoire — c'est précisément l'intérêt de mandater un expert d'assuré. Il vous représente lors de toutes les étapes techniques, y compris la réunion contradictoire avec l'expert de l'assureur.",
+        a: "Votre présence n'est pas obligatoire. C'est précisément l'intérêt de mandater un expert d'assuré. Il vous représente lors de toutes les étapes techniques, y compris la réunion contradictoire avec l'expert de l'assureur.",
       },
       {
         q: "Puis-je faire appel à un expert d'assuré après avoir signé le procès-verbal ?",
@@ -97,7 +97,7 @@ const sections: Array<FaqSection> = [
     items: [
       {
         q: "Dans quel délai dois-je déclarer mon sinistre ?",
-        a: "Le délai légal est de 5 jours ouvrés après constatation du sinistre. Pour les catastrophes naturelles (après publication de l'arrêté), ce délai est de 10 jours. Respecter ces délais est crucial — un retard peut réduire ou annuler votre indemnisation.",
+        a: "Le délai légal est de 5 jours ouvrés après constatation du sinistre. Pour les catastrophes naturelles (après publication de l'arrêté), ce délai est de 10 jours. Respecter ces délais est crucial, car un retard peut réduire ou annuler votre indemnisation.",
       },
       {
         q: "Mon assureur peut-il refuser de m'indemniser ?",
@@ -109,7 +109,7 @@ const sections: Array<FaqSection> = [
       },
       {
         q: "Puis-je contester une indemnisation que j'ai déjà acceptée ?",
-        a: "Si vous avez signé une quittance pour solde de tout compte, c'est très difficile — sauf en cas de vice du consentement prouvable. Si vous n'avez pas encore signé, vous pouvez encore contester. Ne signez jamais sous pression.",
+        a: "Si vous avez signé une quittance pour solde de tout compte, c'est très difficile, sauf en cas de vice du consentement prouvable. Si vous n'avez pas encore signé, vous pouvez encore contester. Ne signez jamais sous pression.",
       },
       {
         q: "Mon assureur peut-il résilier mon contrat si je conteste ?",
@@ -134,7 +134,7 @@ const sections: Array<FaqSection> = [
         a: "La vétusté est une déduction appliquée sur la valeur des biens pour tenir compte de leur ancienneté et de leur usure. Elle est calculée selon des barèmes définis dans votre contrat. Si votre contrat inclut une garantie « valeur à neuf », la vétusté peut être partiellement ou totalement compensée.",
       },
       {
-        q: "Mon assureur a appliqué une vétusté de 50% sur mes meubles — est-ce normal ?",
+        q: "Mon assureur a appliqué une vétusté de 50% sur mes meubles : est-ce normal ?",
         a: "Ça dépend de l'âge des meubles et des barèmes de votre contrat. Une vétusté de 50% peut être légitime sur des meubles très anciens, mais abusive sur des meubles de 5 ans. Un expert d'assuré vérifie poste par poste que les taux appliqués sont conformes au contrat.",
       },
       {
@@ -230,7 +230,7 @@ export function FaqSeoPage() {
         <div className="mx-auto max-w-4xl px-4 py-16 text-foreground sm:px-6 sm:py-20 lg:px-8">
           <p className="text-sm font-semibold uppercase tracking-wider text-primary">FAQ</p>
           <h1 className="mt-3 font-sans tracking-tight text-4xl font-semibold sm:text-5xl">
-            FAQ — toutes vos questions
+            FAQ : toutes vos questions
           </h1>
           <p className="mt-5 max-w-3xl text-lg text-muted-foreground">
             Tout ce que vous devez savoir sur l'expert d'assuré, vos droits face à votre assureur, et les recours en
