@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { QualificationChatbot } from "@/components/site/QualificationChatbot";
+import appMockup from "../assets/app-mockup.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -168,6 +169,59 @@ function HomePage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ESPACE CLIENT */}
+      <section className="bg-[#F8F7FF] py-16 sm:py-[100px]">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div className="order-1 flex justify-center lg:order-2">
+              <img
+                src={appMockup}
+                alt="Aperçu de l'espace client Vertual"
+                className="w-full max-w-[300px] rotate-0 lg:max-w-[480px] lg:rotate-[2deg]"
+                style={{ filter: "drop-shadow(0 24px 48px rgba(91, 80, 240, 0.2))" }}
+              />
+            </div>
+
+            <div className="order-2 lg:order-1">
+              <p className="text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-[#5B50F0]">
+                Votre espace client
+              </p>
+              <h2 className="mt-3 text-[clamp(2rem,3.5vw,3rem)] font-extrabold leading-[1.1] text-[#111827]">
+                Suivez votre dossier en temps réel.
+              </h2>
+              <p className="mt-4 text-[1.1rem] leading-[1.7] text-[#6B7280]">
+                Chaque étape, chaque document, chaque échange avec votre assureur, tout est centralisé dans votre espace
+                personnel. Vous n'avez rien à gérer.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {[
+                  "Avancement en temps réel de votre dossier",
+                  "Tous vos documents sécurisés au même endroit",
+                  "Messagerie directe avec votre expert dédié",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <span className="mt-0.5 font-bold text-[#5B50F0]" aria-hidden>
+                      ✓
+                    </span>
+                    <span className="text-[1rem] text-[#374151]">{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-8">
+                <button
+                  type="button"
+                  onClick={scrollToChatbot}
+                  className="inline-flex items-center justify-center rounded-[10px] bg-[#5B50F0] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5]"
+                >
+                  Évaluer mon dossier →
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
