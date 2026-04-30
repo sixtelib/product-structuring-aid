@@ -35,7 +35,7 @@ function AdminReportingPage() {
   const [dossiers, setDossiers] = useState<DossierListRow[]>([]);
 
   useEffect(() => {
-    let cancelled = false;
+    let isMounted = true;
 
     async function load() {
       setLoading(true);
@@ -49,22 +49,24 @@ function AdminReportingPage() {
           )
           .order("date_ouverture", { ascending: false });
 
+        if (!isMounted) return;
         if (err) throw err;
-        if (!cancelled) setDossiers(((data ?? []) as unknown as DossierListRow[]) ?? []);
+        if (!isMounted) return;
+        setDossiers(((data ?? []) as unknown as DossierListRow[]) ?? []);
       } catch (e) {
-        if (!cancelled) {
-          console.error(e);
-          setError(e instanceof Error ? e.message : "Erreur de chargement.");
-          setDossiers([]);
-        }
+        if (!isMounted) return;
+        console.error(e);
+        setError(e instanceof Error ? e.message : "Erreur de chargement.");
+        setDossiers([]);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!isMounted) return;
+        setLoading(false);
       }
     }
 
-    load();
+    void load();
     return () => {
-      cancelled = true;
+      isMounted = false;
     };
   }, []);
 

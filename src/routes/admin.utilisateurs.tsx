@@ -1,159 +1,76 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/admin/utilisateurs")({
   component: AdminUtilisateursPage,
 });
 
-type ProfileRow = Tables<"profiles">;
-type DossierRow = Tables<"dossiers">;
-
 type UiRole = "assure" | "expert" | "admin";
 type FilterMode = "all" | "assure" | "expert";
 
-type UiUser = {
-  id: string;
-  email: string | null;
-  fullName?: string | null;
-  createdAt?: string | null;
-  role: UiRole;
-  dossierCount: number;
-  status: "active" | "suspended";
-};
-
 function AdminUtilisateursPage() {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<FilterMode>("all");
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [users, setUsers] = useState<UiUser[]>([]);
+  const [filter, setFilter] = useState<FilterMode>("all");
 
   useEffect(() => {
-    let cancelled = false;
+    let isMounted = true;
 
-    async function load() {
-      setLoading(true);
-      setError(null);
-
+    async function fetchUsers() {
       try {
-        // Step 1 — detect whether "profiles" is accessible
-        const { data: profileProbe, error: profileProbeErr } = await supabase.from("profiles").select("*").limit(1);
-
-        if (!profileProbeErr && profileProbe) {
-          // profiles exists and is readable: use it as the source of truth
-          const { data: profRows, error: profErr } = await supabase
-            .from("profiles")
-            .select("id, email, full_name, role, created_at")
-            .order("created_at", { ascending: false });
-          if (profErr) throw profErr;
-
-          const ids = new Set(((profRows as Pick<ProfileRow, "id">[]) ?? []).map((p) => p.id));
-          const { data: dossierRows, error: dossiersErr } = await supabase
-            .from("dossiers")
-            .select("user_id, nom_assure, prenom_assure");
-          if (dossiersErr) throw dossiersErr;
-          const dossierCounts = new Map<string, number>();
-          const nameByUser = new Map<string, string>();
-          ((dossierRows as Pick<DossierRow, "user_id">[]) ?? []).forEach((d) => {
-            if (!d.user_id || !ids.has(d.user_id)) return;
-            dossierCounts.set(d.user_id, (dossierCounts.get(d.user_id) ?? 0) + 1);
-          });
-          ((dossierRows as Array<Pick<DossierRow, "user_id" | "nom_assure" | "prenom_assure">>) ?? []).forEach((d) => {
-            if (!d.user_id || !ids.has(d.user_id)) return;
-            const label = `${String(d.nom_assure ?? "").trim()} ${String(d.prenom_assure ?? "").trim()}`.trim();
-            if (label) nameByUser.set(d.user_id, label);
-          });
-
-          const ui = ((profRows as Pick<ProfileRow, "id" | "email" | "full_name" | "role" | "created_at">[]) ?? []).map((p) => {
-            const role: UiRole = p.role === "admin" || p.role === "expert" || p.role === "assure" ? (p.role as UiRole) : "assure";
-            return {
-              id: p.id,
-              email: p.email,
-              fullName: p.full_name ?? nameByUser.get(p.id) ?? null,
-              createdAt: p.created_at,
-              role,
-              dossierCount: dossierCounts.get(p.id) ?? 0,
-              status: "active" as const,
-            } satisfies UiUser;
-          });
-
-          if (!cancelled) setUsers(ui);
-          return;
-        }
-
-        // Step 2 — build users from dossiers (since profiles isn't available)
-        const { data: dossierRows, error: dossiersErr } = await supabase
+        const { data, error } = await supabase
           .from("dossiers")
-          .select("user_id, type_sinistre, statut, date_ouverture, montant_estime, nom_assure, prenom_assure");
-        if (dossiersErr) throw dossiersErr;
+          .select("user_id, nom_assure, prenom_assure, date_ouverture")
+          .order("date_ouverture", { ascending: false });
 
-        const byUser = new Map<string, { count: number; firstOpenedAt: string | null; fullName: string | null }>();
-        ((dossierRows as Array<Pick<DossierRow, "user_id" | "date_ouverture" | "nom_assure" | "prenom_assure">>) ?? []).forEach((d) => {
+        if (!isMounted) return;
+        if (error) throw new Error(error.message);
+
+        // Grouper par user_id unique
+        const map = new Map();
+        data?.forEach((d) => {
           if (!d.user_id) return;
-          const existing = byUser.get(d.user_id);
-          const openedAt = (d.date_ouverture as unknown as string | null) ?? null;
-          const label = `${String(d.nom_assure ?? "").trim()} ${String(d.prenom_assure ?? "").trim()}`.trim() || null;
-          if (!existing) {
-            byUser.set(d.user_id, { count: 1, firstOpenedAt: openedAt, fullName: label });
-            return;
+          if (!map.has(d.user_id)) {
+            map.set(d.user_id, {
+              id: d.user_id,
+              nom: d.nom_assure || "",
+              prenom: d.prenom_assure || "",
+              nb_dossiers: 1,
+              date_inscription: d.date_ouverture,
+              role: "Assuré",
+              statut: "Actif",
+            });
+          } else {
+            map.get(d.user_id).nb_dossiers++;
           }
-          existing.count += 1;
-          if (openedAt && (!existing.firstOpenedAt || new Date(openedAt).getTime() < new Date(existing.firstOpenedAt).getTime())) {
-            existing.firstOpenedAt = openedAt;
-          }
-          if (!existing.fullName && label) existing.fullName = label;
         });
 
-        const ui: UiUser[] = Array.from(byUser.entries())
-          .map(([id, meta]) => ({
-            id,
-            email: null,
-            fullName: meta.fullName,
-            createdAt: meta.firstOpenedAt,
-            role: "assure",
-            dossierCount: meta.count,
-            status: "active",
-          }))
-          .sort((a, b) => {
-            const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return tb - ta;
-          });
-
-        if (!cancelled) setUsers(ui);
-      } catch (e) {
-        if (!cancelled) {
-          console.error(e);
-          setError(e instanceof Error ? e.message : "Erreur de chargement.");
-          setUsers([]);
-        }
+        if (!isMounted) return;
+        setUsers(Array.from(map.values()));
+      } catch (err: any) {
+        if (!isMounted) return;
+        setError(err.message);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!isMounted) return;
+        setLoading(false);
       }
     }
 
-    load();
+    fetchUsers();
     return () => {
-      cancelled = true;
+      isMounted = false;
     };
   }, []);
 
   const filteredUsers = useMemo(() => {
     if (filter === "all") return users;
-    return users.filter((u) => u.role === filter);
+    if (filter === "expert") return [];
+    if (filter === "assure") return users.filter((u: any) => u.role === "Assuré");
+    return users;
   }, [filter, users]);
-
-  function shortId(id: string) {
-    return `${id.slice(0, 8)}...`;
-  }
-
-  function roleLabel(role: UiRole) {
-    if (role === "admin") return "Admin";
-    if (role === "expert") return "Expert";
-    return "Assuré";
-  }
 
   function roleBadgeClass(role: UiRole) {
     if (role === "admin") return "bg-[#111827] text-white";
@@ -161,13 +78,9 @@ function AdminUtilisateursPage() {
     return "bg-[#DBEAFE] text-[#1D4ED8]";
   }
 
-  function statusBadgeClass(status: UiUser["status"]) {
-    if (status === "suspended") return "bg-red-50 text-red-700";
+  function statusBadgeClass(statut: string) {
+    if (statut === "Suspendu") return "bg-red-50 text-red-700";
     return "bg-green-50 text-green-700";
-  }
-
-  function statusLabel(status: UiUser["status"]) {
-    return status === "suspended" ? "Suspendu" : "Actif";
   }
 
   return (
@@ -215,7 +128,10 @@ function AdminUtilisateursPage() {
             <div className="h-9 w-9 animate-spin rounded-full border-2 border-border border-t-primary" />
           </div>
         ) : error ? (
-          <div className="p-6 text-sm text-destructive">Erreur de chargement : {error}</div>
+          <div className="p-6 text-sm text-red-700">
+            <p className="font-semibold">Erreur Supabase</p>
+            <p className="mt-2 whitespace-pre-wrap break-words">{error}</p>
+          </div>
         ) : filteredUsers.length === 0 ? (
           <div className="p-6 text-sm text-[#6B7280]">Aucun utilisateur trouvé</div>
         ) : (
@@ -233,11 +149,10 @@ function AdminUtilisateursPage() {
               </thead>
 
               <tbody>
-                {filteredUsers.map((u) => {
-                  const nameOrEmail = (u.fullName && u.fullName.trim()) || u.email || shortId(u.id);
-                  const emailLabel = u.email ?? shortId(u.id);
-                  const createdLabel = u.createdAt
-                    ? new Date(u.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
+                {filteredUsers.map((u: any) => {
+                  const nameOrEmail = `${u.prenom} ${u.nom}`.trim() || u.id.slice(0, 8);
+                  const createdLabel = u.date_inscription
+                    ? new Date(u.date_inscription).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
                     : "—";
 
                   return (
@@ -245,26 +160,22 @@ function AdminUtilisateursPage() {
                       <td className="px-5 py-4">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-[#111827]">{nameOrEmail}</p>
-                          <p className="truncate text-xs text-[#6B7280]">{u.email ?? "—"}</p>
+                          <p className="truncate text-xs text-[#6B7280]">—</p>
                         </div>
                       </td>
 
                       <td className="px-5 py-4">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${roleBadgeClass(u.role)}`}>
-                          {roleLabel(u.role)}
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${roleBadgeClass("assure")}`}>
+                          Assuré
                         </span>
                       </td>
 
                       <td className="px-5 py-4 text-sm text-[#111827]">{createdLabel}</td>
-                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{u.dossierCount}</td>
+                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{u.nb_dossiers}</td>
 
                       <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(
-                            u.status,
-                          )}`}
-                        >
-                          {statusLabel(u.status)}
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(u.statut)}`}>
+                          {u.statut}
                         </span>
                       </td>
 
@@ -281,12 +192,12 @@ function AdminUtilisateursPage() {
                             type="button"
                             onClick={() => window.alert("Fonctionnalité bientôt disponible")}
                             className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                              u.status === "suspended"
+                              u.statut === "Suspendu"
                                 ? "bg-green-50 text-green-700 hover:bg-green-100"
                                 : "bg-red-50 text-red-700 hover:bg-red-100"
                             }`}
                           >
-                            {u.status === "suspended" ? "Réactiver" : "Suspendre"}
+                            {u.statut === "Suspendu" ? "Réactiver" : "Suspendre"}
                           </button>
                         </div>
                       </td>

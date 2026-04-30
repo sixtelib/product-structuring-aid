@@ -10,7 +10,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
+const ANTHROPIC_MODEL = "claude-sonnet-4-5";
 
 const ANALYSE_SYSTEM_PROMPT = `Tu es un expert en droit des assurances français, 
 spécialisé dans la défense des assurés sinistrés.

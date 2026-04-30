@@ -41,7 +41,7 @@ function AdminExpertsPage() {
   >([]);
 
   useEffect(() => {
-    let cancelled = false;
+    let isMounted = true;
 
     async function load() {
       setLoading(true);
@@ -55,22 +55,24 @@ function AdminExpertsPage() {
           )
           .not("expert_id", "is", null);
 
+        if (!isMounted) return;
         if (err) throw err;
-        if (!cancelled) setDossiers((data ?? []) as any);
+        if (!isMounted) return;
+        setDossiers((data ?? []) as any);
       } catch (e) {
-        if (!cancelled) {
-          console.error(e);
-          setError(e instanceof Error ? e.message : "Erreur de chargement.");
-          setDossiers([]);
-        }
+        if (!isMounted) return;
+        console.error(e);
+        setError(e instanceof Error ? e.message : "Erreur de chargement.");
+        setDossiers([]);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!isMounted) return;
+        setLoading(false);
       }
     }
 
-    load();
+    void load();
     return () => {
-      cancelled = true;
+      isMounted = false;
     };
   }, []);
 

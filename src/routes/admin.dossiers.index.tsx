@@ -140,6 +140,8 @@ function Select({
         aria-label={ariaLabel}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         className="h-11 w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 pr-9 text-sm font-medium text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
       >
         {options.map((o) => (
@@ -367,7 +369,7 @@ function AdminDossiersIndexPage() {
   }
 
   function goToDossier(dossierId: string) {
-    navigate({ to: "/admin/dossiers/$dossierId", params: { dossierId } });
+    void navigate({ to: "/admin/dossiers/$dossierId", params: { dossierId } });
   }
 
   return (
@@ -644,6 +646,7 @@ function AdminDossiersIndexPage() {
                                     prenom_expert: d.prenom_expert,
                                   });
                                 }}
+                                onMouseDown={(e) => e.stopPropagation()}
                                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
                               >
                                 <UserPlus className="h-4 w-4" aria-hidden />
@@ -657,6 +660,7 @@ function AdminDossiersIndexPage() {
                                 e.stopPropagation();
                                 goToDossier(d.id);
                               }}
+                              onMouseDown={(e) => e.stopPropagation()}
                               className="inline-flex items-center gap-2 rounded-lg bg-[#F3F4F6] px-3 py-2 text-sm font-semibold text-[#111827] hover:bg-[#E5E7EB]"
                             >
                               <Eye className="h-4 w-4 text-[#6B7280]" aria-hidden />

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { Component, type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   BarChart2,
   CreditCard,
@@ -17,6 +17,54 @@ import { useIsMobile } from "@/hooks/use-mobile";
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
+
+class AdminErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: unknown) {
+    const err =
+      error instanceof Error ? error : new Error(typeof error === "string" ? error : "Erreur inconnue");
+    return { hasError: true, error: err };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            padding: "40px",
+            textAlign: "center",
+            background: "#F8F9FF",
+            minHeight: "100vh",
+          }}
+        >
+          <p style={{ color: "#EF4444", marginBottom: "16px" }}>Erreur : {this.state.error?.message}</p>
+          <button
+            type="button"
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{
+              background: "#5B50F0",
+              color: "white",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "8px",
+              cursor: "pointer",
+            }}
+          >
+            Réessayer
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function AdminLayout() {
   const { user, roles, loading, signOut } = useAuth();
@@ -163,7 +211,9 @@ function AdminLayout() {
           </header>
 
           <main className="min-h-[calc(100vh-60px)] flex-1 overflow-y-auto bg-[#F8F9FF] p-8">
-            <Outlet />
+            <AdminErrorBoundary>
+              <Outlet />
+            </AdminErrorBoundary>
           </main>
         </div>
       </div>
