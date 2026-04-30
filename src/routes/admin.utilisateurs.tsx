@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -24,6 +24,7 @@ type UiUser = {
 };
 
 function AdminUtilisateursPage() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<FilterMode>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,80 +38,79 @@ function AdminUtilisateursPage() {
       setError(null);
 
       try {
-        const dossierCounts = new Map<string, number>();
-        const { data: dossierRows, error: dossiersErr } = await supabase.from("dossiers").select("user_id");
-        if (dossiersErr) throw dossiersErr;
-        ((dossierRows as Pick<DossierRow, "user_id">[]) ?? []).forEach((d) => {
-          if (!d.user_id) return;
-          dossierCounts.set(d.user_id, (dossierCounts.get(d.user_id) ?? 0) + 1);
-        });
+        // Step 1 — detect whether "profiles" is accessible
+        const { data: profileProbe, error: profileProbeErr } = await supabase.from("profiles").select("*").limit(1);
 
-        // Try auth.users (may fail from client depending on permissions/RLS)
-        try {
-          const { data: authUsers, error: authErr } = await (supabase as any)
-            .from("auth.users")
-            .select("id, email, created_at, raw_user_meta_data")
+        if (!profileProbeErr && profileProbe) {
+          // profiles exists and is readable: use it as the source of truth
+          const { data: profRows, error: profErr } = await supabase
+            .from("profiles")
+            .select("id, email, full_name, role, created_at")
             .order("created_at", { ascending: false });
+          if (profErr) throw profErr;
 
-          if (authErr) throw authErr;
+          const ids = new Set(((profRows as Pick<ProfileRow, "id">[]) ?? []).map((p) => p.id));
+          const { data: dossierRows, error: dossiersErr } = await supabase.from("dossiers").select("user_id");
+          if (dossiersErr) throw dossiersErr;
+          const dossierCounts = new Map<string, number>();
+          ((dossierRows as Pick<DossierRow, "user_id">[]) ?? []).forEach((d) => {
+            if (!d.user_id || !ids.has(d.user_id)) return;
+            dossierCounts.set(d.user_id, (dossierCounts.get(d.user_id) ?? 0) + 1);
+          });
 
-          const ui = ((authUsers as any[]) ?? []).map((u) => {
-            const raw = (u?.raw_user_meta_data ?? {}) as Record<string, unknown>;
-            const rawRole = String((raw as any).role ?? (raw as any).app_role ?? "");
-            const role: UiRole = rawRole === "admin" || rawRole === "expert" || rawRole === "assure" ? (rawRole as UiRole) : "assure";
+          const ui = ((profRows as Pick<ProfileRow, "id" | "email" | "full_name" | "role" | "created_at">[]) ?? []).map((p) => {
+            const role: UiRole = p.role === "admin" || p.role === "expert" || p.role === "assure" ? (p.role as UiRole) : "assure";
             return {
-              id: String(u.id),
-              email: (u.email ?? null) as string | null,
-              fullName: (raw as any).full_name ?? null,
-              createdAt: (u.created_at ?? null) as string | null,
+              id: p.id,
+              email: p.email,
+              fullName: p.full_name,
+              createdAt: p.created_at,
               role,
-              dossierCount: dossierCounts.get(String(u.id)) ?? 0,
+              dossierCount: dossierCounts.get(p.id) ?? 0,
               status: "active" as const,
             } satisfies UiUser;
           });
 
           if (!cancelled) setUsers(ui);
           return;
-        } catch {
-          // ignore and fallback
         }
 
-        // Fallback 1: profiles table
-        const { data: profRows, error: profErr } = await supabase
-          .from("profiles")
-          .select("id, email, full_name, role, created_at")
-          .order("created_at", { ascending: false });
+        // Step 2 — build users from dossiers (since profiles isn't available)
+        const { data: dossierRows, error: dossiersErr } = await supabase
+          .from("dossiers")
+          .select("user_id, type_sinistre, statut, date_ouverture, montant_estime");
+        if (dossiersErr) throw dossiersErr;
 
-        if (!profErr && profRows) {
-          const ui = ((profRows as Pick<ProfileRow, "id" | "email" | "full_name" | "role" | "created_at">[]) ?? []).map(
-            (p) => {
-              const role: UiRole = p.role === "admin" || p.role === "expert" || p.role === "assure" ? (p.role as UiRole) : "assure";
-              return {
-                id: p.id,
-                email: p.email,
-                fullName: p.full_name,
-                createdAt: p.created_at,
-                role,
-                dossierCount: dossierCounts.get(p.id) ?? 0,
-                status: "active" as const,
-              } satisfies UiUser;
-            },
-          );
-          if (!cancelled) setUsers(ui);
-          return;
-        }
+        const byUser = new Map<string, { count: number; firstOpenedAt: string | null }>();
+        ((dossierRows as Pick<DossierRow, "user_id" | "date_ouverture">[]) ?? []).forEach((d) => {
+          if (!d.user_id) return;
+          const existing = byUser.get(d.user_id);
+          const openedAt = (d.date_ouverture as unknown as string | null) ?? null;
+          if (!existing) {
+            byUser.set(d.user_id, { count: 1, firstOpenedAt: openedAt });
+            return;
+          }
+          existing.count += 1;
+          if (openedAt && (!existing.firstOpenedAt || new Date(openedAt).getTime() < new Date(existing.firstOpenedAt).getTime())) {
+            existing.firstOpenedAt = openedAt;
+          }
+        });
 
-        // Fallback 2: deduce from dossiers user_id
-        const uniqueUserIds = Array.from(dossierCounts.keys());
-        const ui: UiUser[] = uniqueUserIds.map((id) => ({
-          id,
-          email: null,
-          fullName: null,
-          createdAt: null,
-          role: "assure",
-          dossierCount: dossierCounts.get(id) ?? 0,
-          status: "active",
-        }));
+        const ui: UiUser[] = Array.from(byUser.entries())
+          .map(([id, meta]) => ({
+            id,
+            email: null,
+            fullName: null,
+            createdAt: meta.firstOpenedAt,
+            role: "assure",
+            dossierCount: meta.count,
+            status: "active",
+          }))
+          .sort((a, b) => {
+            const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return tb - ta;
+          });
 
         if (!cancelled) setUsers(ui);
       } catch (e) {
@@ -133,6 +133,10 @@ function AdminUtilisateursPage() {
     if (filter === "all") return users;
     return users.filter((u) => u.role === filter);
   }, [filter, users]);
+
+  function shortId(id: string) {
+    return `${id.slice(0, 8)}...`;
+  }
 
   function roleLabel(role: UiRole) {
     if (role === "admin") return "Admin";
@@ -219,8 +223,8 @@ function AdminUtilisateursPage() {
 
               <tbody>
                 {filteredUsers.map((u) => {
-                  const nameOrEmail = (u.fullName && u.fullName.trim()) || u.email || u.id;
-                  const emailLabel = u.email ?? u.id;
+                  const nameOrEmail = (u.fullName && u.fullName.trim()) || u.email || shortId(u.id);
+                  const emailLabel = u.email ?? shortId(u.id);
                   const createdLabel = u.createdAt
                     ? new Date(u.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
                     : "—";
@@ -257,7 +261,7 @@ function AdminUtilisateursPage() {
                         <div className="flex flex-wrap gap-2">
                           <button
                             type="button"
-                            onClick={() => window.alert(`Profil utilisateur : ${emailLabel}`)}
+                            onClick={() => navigate({ to: "/admin/utilisateurs/$userId", params: { userId: u.id } })}
                             className="rounded-lg bg-[#F3F4F6] px-3 py-2 text-sm font-medium text-[#111827] hover:bg-[#E5E7EB]"
                           >
                             Voir profil

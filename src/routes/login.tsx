@@ -34,6 +34,10 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [mode, setMode] = useState<"login" | "reset">("login");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSubmitting, setResetSubmitting] = useState(false);
+  const [resetResult, setResetResult] = useState<{ kind: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     migrateLegacyQualificationLocalStorage();
@@ -93,6 +97,27 @@ function LoginPage() {
     }
   }
 
+  async function sendResetEmail(e: React.FormEvent) {
+    e.preventDefault();
+    const value = resetEmail.trim();
+    if (!value) return;
+
+    setResetSubmitting(true);
+    setResetResult(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(value, {
+        redirectTo: "https://vertual.fr/reset-password",
+      });
+      if (error) throw error;
+      setResetResult({ kind: "success", message: "Email envoyé ! Vérifiez votre boîte mail." });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      setResetResult({ kind: "error", message: msg });
+    } finally {
+      setResetSubmitting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-4 py-8">
@@ -132,48 +157,114 @@ function LoginPage() {
             <div className="h-px flex-1 bg-border" />
           </div>
 
-          <form onSubmit={signInWithEmail} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground">Email</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="vous@exemple.fr"
-                autoComplete="email"
-              />
-            </div>
+          {mode === "login" ? (
+            <form onSubmit={signInWithEmail} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="vous@exemple.fr"
+                  autoComplete="email"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground">Mot de passe</label>
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                autoComplete="current-password"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground">Mot de passe</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  autoComplete="current-password"
+                />
+                <div className="mt-2 text-right">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetEmail(email.trim());
+                      setResetResult(null);
+                      setMode("reset");
+                    }}
+                    className="cursor-pointer text-sm font-medium text-[#5B50F0] hover:underline"
+                  >
+                    Mot de passe oublié ?
+                  </button>
+                </div>
+              </div>
 
-            <button
-              type="submit"
-              disabled={submitting || loading || !!busy}
-              className="w-full rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-60"
-            >
-              {submitting ? "Connexion…" : "Se connecter"}
-            </button>
+              <button
+                type="submit"
+                disabled={submitting || loading || !!busy}
+                className="w-full rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-60"
+              >
+                {submitting ? "Connexion…" : "Se connecter"}
+              </button>
 
-            <div className="text-center text-sm text-muted-foreground">
-              Pas encore de compte ?{" "}
-              <Link to="/auth" search={{ mode: "signup" }} className="font-medium text-primary hover:underline">
-                Créer un compte
-              </Link>
-            </div>
-          </form>
+              <div className="text-center text-sm text-muted-foreground">
+                Pas encore de compte ?{" "}
+                <Link to="/auth" search={{ mode: "signup" }} className="font-medium text-primary hover:underline">
+                  Créer un compte
+                </Link>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={sendResetEmail} className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Réinitialiser votre mot de passe</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Entrez votre email, nous vous enverrons un lien.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="vous@exemple.fr"
+                  autoComplete="email"
+                />
+              </div>
+
+              {resetResult && (
+                <div
+                  className={`rounded-lg border px-3 py-2 text-sm ${
+                    resetResult.kind === "success"
+                      ? "border-green-200 bg-green-50 text-green-800"
+                      : "border-red-200 bg-red-50 text-red-800"
+                  }`}
+                >
+                  {resetResult.message}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={resetSubmitting || loading || !!busy}
+                className="w-full rounded-lg bg-[#5B50F0] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-95 disabled:opacity-60"
+              >
+                {resetSubmitting ? "Envoi…" : "Envoyer le lien →"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setResetResult(null);
+                  setMode("login");
+                }}
+                className="w-full text-center text-sm font-medium text-muted-foreground hover:underline"
+              >
+                Retour à la connexion
+              </button>
+            </form>
+          )}
         </div>
 
         <p className="mt-8 text-center text-xs text-muted-foreground">

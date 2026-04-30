@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VillesRouteImport } from './routes/villes'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as SinistresRouteImport } from './routes/sinistres'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InscriptionExpertRouteImport } from './routes/inscription-expert'
 import { Route as GuidesRouteImport } from './routes/guides'
@@ -55,6 +56,7 @@ import { Route as AdminDossiersRouteImport } from './routes/admin.dossiers'
 import { Route as ExpertDossiersIdRouteImport } from './routes/expert.dossiers.$id'
 import { Route as EspaceDossiersCaseIdRouteImport } from './routes/espace.dossiers.$caseId'
 import { Route as DashboardDossiersIdRouteImport } from './routes/dashboard.dossiers.$id'
+import { Route as AdminUtilisateursUserIdRouteImport } from './routes/admin.utilisateurs.$userId'
 
 const VillesRoute = VillesRouteImport.update({
   id: '/villes',
@@ -69,6 +71,11 @@ const TarifsRoute = TarifsRouteImport.update({
 const SinistresRoute = SinistresRouteImport.update({
   id: '/sinistres',
   path: '/sinistres',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -289,6 +296,11 @@ const DashboardDossiersIdRoute = DashboardDossiersIdRouteImport.update({
   path: '/dossiers/$id',
   getParentRoute: () => DashboardRoute,
 } as any)
+const AdminUtilisateursUserIdRoute = AdminUtilisateursUserIdRouteImport.update({
+  id: '/$userId',
+  path: '/$userId',
+  getParentRoute: () => AdminUtilisateursRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -310,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/guides': typeof GuidesRouteWithChildren
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
   '/villes': typeof VillesRoute
@@ -317,7 +330,7 @@ export interface FileRoutesByFullPath {
   '/admin/experts': typeof AdminExpertsRoute
   '/admin/facturation': typeof AdminFacturationRoute
   '/admin/reporting': typeof AdminReportingRoute
-  '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRouteWithChildren
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
@@ -334,6 +347,7 @@ export interface FileRoutesByFullPath {
   '/expert/': typeof ExpertIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/sinistres/': typeof SinistresIndexRoute
+  '/admin/utilisateurs/$userId': typeof AdminUtilisateursUserIdRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
@@ -354,13 +368,14 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/tarifs': typeof TarifsRoute
   '/villes': typeof VillesRoute
   '/admin/dossiers': typeof AdminDossiersRoute
   '/admin/experts': typeof AdminExpertsRoute
   '/admin/facturation': typeof AdminFacturationRoute
   '/admin/reporting': typeof AdminReportingRoute
-  '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRouteWithChildren
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
@@ -377,6 +392,7 @@ export interface FileRoutesByTo {
   '/expert': typeof ExpertIndexRoute
   '/guides': typeof GuidesIndexRoute
   '/sinistres': typeof SinistresIndexRoute
+  '/admin/utilisateurs/$userId': typeof AdminUtilisateursUserIdRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
@@ -402,6 +418,7 @@ export interface FileRoutesById {
   '/guides': typeof GuidesRouteWithChildren
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
   '/villes': typeof VillesRoute
@@ -409,7 +426,7 @@ export interface FileRoutesById {
   '/admin/experts': typeof AdminExpertsRoute
   '/admin/facturation': typeof AdminFacturationRoute
   '/admin/reporting': typeof AdminReportingRoute
-  '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRouteWithChildren
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
@@ -426,6 +443,7 @@ export interface FileRoutesById {
   '/expert/': typeof ExpertIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/sinistres/': typeof SinistresIndexRoute
+  '/admin/utilisateurs/$userId': typeof AdminUtilisateursUserIdRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
@@ -452,6 +470,7 @@ export interface FileRouteTypes {
     | '/guides'
     | '/inscription-expert'
     | '/login'
+    | '/reset-password'
     | '/sinistres'
     | '/tarifs'
     | '/villes'
@@ -476,6 +495,7 @@ export interface FileRouteTypes {
     | '/expert/'
     | '/guides/'
     | '/sinistres/'
+    | '/admin/utilisateurs/$userId'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
@@ -496,6 +516,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/inscription-expert'
     | '/login'
+    | '/reset-password'
     | '/tarifs'
     | '/villes'
     | '/admin/dossiers'
@@ -519,6 +540,7 @@ export interface FileRouteTypes {
     | '/expert'
     | '/guides'
     | '/sinistres'
+    | '/admin/utilisateurs/$userId'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
@@ -543,6 +565,7 @@ export interface FileRouteTypes {
     | '/guides'
     | '/inscription-expert'
     | '/login'
+    | '/reset-password'
     | '/sinistres'
     | '/tarifs'
     | '/villes'
@@ -567,6 +590,7 @@ export interface FileRouteTypes {
     | '/expert/'
     | '/guides/'
     | '/sinistres/'
+    | '/admin/utilisateurs/$userId'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
@@ -592,6 +616,7 @@ export interface RootRouteChildren {
   GuidesRoute: typeof GuidesRouteWithChildren
   InscriptionExpertRoute: typeof InscriptionExpertRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SinistresRoute: typeof SinistresRouteWithChildren
   TarifsRoute: typeof TarifsRoute
   VillesRoute: typeof VillesRoute
@@ -618,6 +643,13 @@ declare module '@tanstack/react-router' {
       path: '/sinistres'
       fullPath: '/sinistres'
       preLoaderRoute: typeof SinistresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -921,15 +953,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardDossiersIdRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/admin/utilisateurs/$userId': {
+      id: '/admin/utilisateurs/$userId'
+      path: '/$userId'
+      fullPath: '/admin/utilisateurs/$userId'
+      preLoaderRoute: typeof AdminUtilisateursUserIdRouteImport
+      parentRoute: typeof AdminUtilisateursRoute
+    }
   }
 }
+
+interface AdminUtilisateursRouteChildren {
+  AdminUtilisateursUserIdRoute: typeof AdminUtilisateursUserIdRoute
+}
+
+const AdminUtilisateursRouteChildren: AdminUtilisateursRouteChildren = {
+  AdminUtilisateursUserIdRoute: AdminUtilisateursUserIdRoute,
+}
+
+const AdminUtilisateursRouteWithChildren =
+  AdminUtilisateursRoute._addFileChildren(AdminUtilisateursRouteChildren)
 
 interface AdminRouteChildren {
   AdminDossiersRoute: typeof AdminDossiersRoute
   AdminExpertsRoute: typeof AdminExpertsRoute
   AdminFacturationRoute: typeof AdminFacturationRoute
   AdminReportingRoute: typeof AdminReportingRoute
-  AdminUtilisateursRoute: typeof AdminUtilisateursRoute
+  AdminUtilisateursRoute: typeof AdminUtilisateursRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -938,7 +988,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminExpertsRoute: AdminExpertsRoute,
   AdminFacturationRoute: AdminFacturationRoute,
   AdminReportingRoute: AdminReportingRoute,
-  AdminUtilisateursRoute: AdminUtilisateursRoute,
+  AdminUtilisateursRoute: AdminUtilisateursRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -1057,6 +1107,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuidesRoute: GuidesRouteWithChildren,
   InscriptionExpertRoute: InscriptionExpertRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SinistresRoute: SinistresRouteWithChildren,
   TarifsRoute: TarifsRoute,
   VillesRoute: VillesRoute,
