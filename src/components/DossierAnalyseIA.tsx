@@ -9,6 +9,7 @@ import {
   Send,
   TrendingUp,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-5";
 
@@ -64,6 +65,8 @@ export interface DossierAnalyseIAProps {
     description?: string;
     nom_assure?: string;
     prenom_assure?: string;
+    analyse_ia?: string | null;
+    analyse_ia_date?: string | null;
   };
   documents: Array<{
     id: string;
@@ -317,6 +320,7 @@ export function DossierAnalyseIA({ dossier, documents }: DossierAnalyseIAProps) 
   const [analyseResult, setAnalyseResult] = useState<AnalyseSinistreResult | null>(null);
   const [analyseLoading, setAnalyseLoading] = useState(false);
   const [analyseError, setAnalyseError] = useState<string | null>(null);
+  const [analyseDate, setAnalyseDate] = useState<string | null>(dossier.analyse_ia_date ?? null);
 
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -330,9 +334,35 @@ export function DossierAnalyseIA({ dossier, documents }: DossierAnalyseIAProps) 
 
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
-  const runAnalyse = useCallback(async () => {
+  useEffect(() => {
+    setAnalyseLoading(true);
     setAnalyseError(null);
     setAnalyseResult(null);
+    setAnalyseDate(dossier.analyse_ia_date ?? null);
+
+    setChatMessages([]);
+    setChatInput("");
+    setChatError(null);
+    setReportOpen(false);
+    setReportText("");
+    setReportError(null);
+
+    const raw = dossier.analyse_ia;
+    if (raw) {
+      try {
+        const cached = JSON.parse(raw) as unknown;
+        const normalized = normalizeAnalyse(cached);
+        if (normalized) setAnalyseResult(normalized);
+      } catch {
+        // JSON invalide → ne pas lancer automatiquement
+      }
+    }
+
+    setAnalyseLoading(false);
+  }, [dossierId, dossier.analyse_ia, dossier.analyse_ia_date]);
+
+  const handleLancerAnalyse = useCallback(async () => {
+    setAnalyseError(null);
     setAnalyseLoading(true);
     try {
       const { dossier: d, documents: docs } = payloadRef.current;
@@ -343,29 +373,35 @@ export function DossierAnalyseIA({ dossier, documents }: DossierAnalyseIAProps) 
         max_tokens: 4000,
       });
       const jsonStr = extractJsonText(raw);
+
       let parsed: unknown;
       try {
         parsed = JSON.parse(jsonStr);
       } catch {
         throw new Error("Réponse IA : JSON invalide.");
       }
+
       const normalized = normalizeAnalyse(parsed);
       if (!normalized) throw new Error("Structure d'analyse inattendue.");
+
       setAnalyseResult(normalized);
+
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from("dossiers")
+        .update({
+          analyse_ia: JSON.stringify(normalized),
+          analyse_ia_date: now,
+        })
+        .eq("id", d.id);
+      if (error) throw new Error(error.message);
+      setAnalyseDate(now);
     } catch (e) {
       setAnalyseError(e instanceof Error ? e.message : "Analyse impossible.");
-      setAnalyseResult(null);
     } finally {
       setAnalyseLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    setChatMessages([]);
-    setChatInput("");
-    setChatError(null);
-    void runAnalyse();
-  }, [dossierId, runAnalyse]);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -486,7 +522,7 @@ nouvelle estimation chiffrée, délai de réponse demandé.`,
           <p className="mt-1">{analyseError}</p>
           <button
             type="button"
-            onClick={() => void runAnalyse()}
+            onClick={() => void handleLancerAnalyse()}
             className="mt-3 inline-flex rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
           >
             Relancer l&apos;analyse
@@ -508,8 +544,95 @@ nouvelle estimation chiffrée, délai de réponse demandé.`,
         </div>
       ) : null}
 
+      {!analyseLoading && !analyseResult && !analyseError ? (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "40px 20px",
+            background: "#F8F7FF",
+            borderRadius: "12px",
+          }}
+        >
+          <div style={{ fontSize: "2rem", marginBottom: "12px" }}>🔍</div>
+          <p
+            style={{
+              fontWeight: 600,
+              color: "#111827",
+              marginBottom: "8px",
+            }}
+          >
+            Aucune analyse disponible
+          </p>
+          <p
+            style={{
+              color: "#6B7280",
+              fontSize: "0.875rem",
+              marginBottom: "20px",
+            }}
+          >
+            Lancez l&apos;analyse IA pour identifier les points contestables de ce dossier.
+          </p>
+          <button
+            onClick={() => void handleLancerAnalyse()}
+            style={{
+              background: "#5B50F0",
+              color: "white",
+              border: "none",
+              padding: "12px 24px",
+              borderRadius: "10px",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontSize: "0.95rem",
+            }}
+          >
+            Lancer l&apos;analyse IA
+          </button>
+        </div>
+      ) : null}
+
       {analyseResult ? (
         <div className="space-y-8">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px",
+            }}
+          >
+            <div>
+              <span style={{ fontWeight: 600 }}>Analyse IA</span>
+              {analyseDate ? (
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#9CA3AF",
+                    marginLeft: "12px",
+                  }}
+                >
+                  Générée le {new Date(analyseDate).toLocaleDateString("fr-FR")}
+                </span>
+              ) : null}
+            </div>
+            <button
+              onClick={() => void handleLancerAnalyse()}
+              style={{
+                background: "white",
+                border: "1px solid #E5E7EB",
+                padding: "8px 16px",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "0.875rem",
+                color: "#374151",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              🔄 Mettre à jour l&apos;analyse
+            </button>
+          </div>
+
           {analyseResult.urgences.length > 0 ? (
             <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
               <p className="flex items-center gap-2 font-bold">

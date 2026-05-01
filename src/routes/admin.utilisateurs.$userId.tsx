@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
+  Check,
   Download,
   Edit,
   Eye,
@@ -12,7 +13,6 @@ import {
   User,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { formatDocumentStatusDb } from "@/lib/client-dashboard-ui";
@@ -29,6 +29,16 @@ type DossierRow = Tables<"dossiers"> & {
 
 type DocumentRow = Tables<"documents"> & { chemin?: string | null };
 type ProfileRow = Tables<"profiles">;
+
+type ProfileFormState = {
+  prenom: string;
+  nom: string;
+  email_contact: string;
+  telephone: string;
+  adresse: string;
+  numero_contrat: string;
+  assureur_principal: string;
+};
 
 function parseFullName(full: string | null | undefined): { prenom: string; nom: string } {
   const t = (full ?? "").trim();
@@ -108,9 +118,19 @@ function AdminUtilisateurDetailPage() {
   const [mandats, setMandats] = useState<DocumentRow[]>([]);
   const [expertById, setExpertById] = useState<Map<string, string>>(new Map());
 
-  const [editingInfo, setEditingInfo] = useState(false);
-  const [form, setForm] = useState({ prenom: "", nom: "", telephone: "" });
-  const [savingInfo, setSavingInfo] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<ProfileFormState>({
+    prenom: "",
+    nom: "",
+    email_contact: "",
+    telephone: "",
+    adresse: "",
+    numero_contrat: "",
+    assureur_principal: "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<DocumentRow | null>(null);
@@ -209,52 +229,84 @@ function AdminUtilisateurDetailPage() {
   }, [dossiers]);
 
   useEffect(() => {
-    if (editingInfo) return;
-    const d0 = dossiers[0];
-    const p = parseFullName(profile?.full_name);
+    if (!profile) return;
     setForm({
-      prenom: (d0?.prenom_assure ?? p.prenom ?? "").trim(),
-      nom: (d0?.nom_assure ?? p.nom ?? "").trim(),
-      telephone: (profile?.phone ?? "").trim(),
+      prenom: (profile as any).prenom || "",
+      nom: (profile as any).nom || "",
+      email_contact: (profile as any).email_contact || "",
+      telephone: (profile as any).telephone || "",
+      adresse: (profile as any).adresse || "",
+      numero_contrat: (profile as any).numero_contrat || "",
+      assureur_principal: (profile as any).assureur_principal || "",
     });
-  }, [profile, dossiers, editingInfo]);
+  }, [profile]);
 
   const mandatSigne = mandats.length > 0 || Boolean(profile?.mandat_signe);
   const mandatDate = profile?.mandat_signe_le ?? mandats[0]?.created_at ?? null;
   const mandatNomSigne = profile?.mandat_signature?.trim() || null;
   const mandatDocPourTelechargement = mandats[0] ?? null;
 
-  async function saveProfile() {
-    setSavingInfo(true);
+  async function handleSave() {
     try {
-      const full_name =
-        [form.prenom, form.nom]
-          .filter((s) => s.trim())
-          .join(" ")
-          .trim() || null;
-      const { error: upErr } = await supabase.from("profiles").upsert(
-        {
-          id: userId,
-          full_name,
-          phone: form.telephone.trim() || null,
-        } as never,
-        { onConflict: "id" },
-      );
-      if (upErr) throw upErr;
-      toast.success("Profil enregistré.");
-      setEditingInfo(false);
-      await loadAll();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Enregistrement impossible.");
+      setSaving(true);
+      setSaveError(null);
+
+      const { error: upsertError } = await supabase.from("profiles").upsert({
+        id: userId,
+        prenom: form.prenom,
+        nom: form.nom,
+        email_contact: form.email_contact,
+        telephone: form.telephone,
+        adresse: form.adresse,
+        numero_contrat: form.numero_contrat,
+        assureur_principal: form.assureur_principal,
+        updated_at: new Date().toISOString(),
+      } as any);
+
+      if (upsertError) throw upsertError;
+
+      if (form.nom || form.prenom) {
+        await supabase
+          .from("dossiers")
+          .update({
+            nom_assure: form.nom,
+            prenom_assure: form.prenom,
+          })
+          .eq("user_id", userId);
+      }
+
+      setProfile((prev) => (prev ? ({ ...prev, ...(form as any) } as any) : prev));
+      setEditing(false);
+
+      setSuccessMessage("Profil mis à jour avec succès");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (err: any) {
+      setSaveError("Erreur lors de la sauvegarde : " + (err?.message ?? "Erreur inconnue"));
     } finally {
-      setSavingInfo(false);
+      setSaving(false);
     }
+  }
+
+  function handleCancel() {
+    if (profile) {
+      setForm({
+        prenom: (profile as any).prenom || "",
+        nom: (profile as any).nom || "",
+        email_contact: (profile as any).email_contact || "",
+        telephone: (profile as any).telephone || "",
+        adresse: (profile as any).adresse || "",
+        numero_contrat: (profile as any).numero_contrat || "",
+        assureur_principal: (profile as any).assureur_principal || "",
+      });
+    }
+    setSaveError(null);
+    setEditing(false);
   }
 
   async function downloadDoc(doc: DocumentRow) {
     const path = storagePathFor(doc);
     if (!path) {
-      toast.error("Chemin de fichier manquant.");
+      setSaveError("Chemin de fichier manquant.");
       return;
     }
     setDownloadingId(doc.id);
@@ -263,7 +315,7 @@ function AdminUtilisateurDetailPage() {
       if (error || !data?.signedUrl) throw error ?? new Error("Lien indisponible.");
       window.open(data.signedUrl, "_blank", "noopener,noreferrer");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Téléchargement impossible.");
+      setSaveError(e instanceof Error ? e.message : "Téléchargement impossible.");
     } finally {
       setDownloadingId(null);
     }
@@ -279,7 +331,7 @@ function AdminUtilisateurDetailPage() {
   async function openPreview(doc: DocumentRow) {
     const path = storagePathFor(doc);
     if (!path) {
-      toast.error("Chemin de fichier manquant.");
+      setSaveError("Chemin de fichier manquant.");
       return;
     }
     setPreviewDoc(doc);
@@ -309,6 +361,50 @@ function AdminUtilisateurDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FF] pb-12">
+      {successMessage ? (
+        <div
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            zIndex: 100,
+            background: "#D4EDDA",
+            border: "1px solid #C3E6CB",
+            color: "#155724",
+            padding: "10px 14px",
+            borderRadius: "10px",
+            fontSize: "0.95rem",
+            fontWeight: 600,
+            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          ✓ {successMessage}
+        </div>
+      ) : null}
+      {saveError ? (
+        <div
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            zIndex: 100,
+            background: "#F8D7DA",
+            border: "1px solid #F5C6CB",
+            color: "#721C24",
+            padding: "10px 14px",
+            borderRadius: "10px",
+            fontSize: "0.95rem",
+            fontWeight: 600,
+            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+          }}
+          role="alert"
+        >
+          {saveError}
+        </div>
+      ) : null}
+
       {previewDoc ? (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
@@ -424,7 +520,7 @@ function AdminUtilisateurDetailPage() {
           </button>
           <button
             type="button"
-            onClick={() => toast("Fonctionnalité bientôt disponible")}
+            onClick={() => setSaveError("Fonctionnalité bientôt disponible")}
             className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700"
           >
             Suspendre le compte
@@ -443,69 +539,184 @@ function AdminUtilisateurDetailPage() {
               <User className="h-5 w-5 text-[#5B50F0]" aria-hidden />
               <h2 className="text-lg font-semibold text-[#111827]">Informations personnelles</h2>
             </div>
-            {!editingInfo ? (
+            {!editing ? (
               <button
                 type="button"
-                onClick={() => setEditingInfo(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-medium text-[#6B7280] hover:bg-[#F9FAFB]"
+                onClick={() => {
+                  setSaveError(null);
+                  setEditing(true);
+                }}
+                style={{
+                  background: "white",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: "8px",
+                  padding: "8px 16px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  color: "#111827",
+                }}
               >
-                <Edit className="h-3.5 w-3.5" aria-hidden />
+                <Edit className="h-4 w-4" aria-hidden />
                 Modifier
               </button>
             ) : (
-              <button
-                type="button"
-                disabled={savingInfo}
-                onClick={() => void saveProfile()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#5B50F0] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95 disabled:opacity-50"
-              >
-                <Save className="h-3.5 w-3.5" aria-hidden />
-                Sauvegarder
-              </button>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => void handleSave()}
+                  disabled={saving}
+                  style={{
+                    background: "#5B50F0",
+                    color: "white",
+                    border: "1px solid #5B50F0",
+                    borderRadius: "8px",
+                    padding: "8px 16px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                    opacity: saving ? 0.7 : 1,
+                    cursor: saving ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {saving ? (
+                    <>
+                      <span
+                        aria-hidden
+                        className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                      />
+                      Sauvegarde...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" aria-hidden />
+                      Sauvegarder
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={saving}
+                  style={{
+                    background: "white",
+                    border: "1px solid #E5E7EB",
+                    borderRadius: "8px",
+                    padding: "8px 16px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "0.95rem",
+                    fontWeight: 600,
+                    color: "#111827",
+                    opacity: saving ? 0.7 : 1,
+                    cursor: saving ? "not-allowed" : "pointer",
+                  }}
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                  Annuler
+                </button>
+              </div>
             )}
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Prénom</p>
-              {editingInfo ? (
+              {editing ? (
                 <input
                   value={form.prenom}
                   onChange={(e) => setForm((f) => ({ ...f, prenom: e.target.value }))}
-                  className="mt-2 w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+                  type="text"
+                  style={{
+                    marginTop: "8px",
+                    border: "1px solid #5B50F0",
+                    borderRadius: "6px",
+                    padding: "6px 10px",
+                    width: "100%",
+                    fontSize: "0.95rem",
+                    background: "#FAFAFE",
+                  }}
                 />
               ) : (
-                <p className="mt-2 text-sm font-medium text-[#111827]">{displayPrenom || "—"}</p>
+                <p className="mt-2 text-sm font-medium text-[#111827]">
+                  {(profile as any)?.prenom?.trim?.() || displayPrenom || "—"}
+                </p>
               )}
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Nom</p>
-              {editingInfo ? (
+              {editing ? (
                 <input
                   value={form.nom}
                   onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))}
-                  className="mt-2 w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+                  type="text"
+                  style={{
+                    marginTop: "8px",
+                    border: "1px solid #5B50F0",
+                    borderRadius: "6px",
+                    padding: "6px 10px",
+                    width: "100%",
+                    fontSize: "0.95rem",
+                    background: "#FAFAFE",
+                  }}
                 />
               ) : (
-                <p className="mt-2 text-sm font-medium text-[#111827]">{displayNom || "—"}</p>
+                <p className="mt-2 text-sm font-medium text-[#111827]">
+                  {(profile as any)?.nom?.trim?.() || displayNom || "—"}
+                </p>
               )}
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Email</p>
-              <p className="mt-2 text-sm font-medium text-[#111827]">{displayEmail}</p>
+              {editing ? (
+                <input
+                  value={form.email_contact}
+                  onChange={(e) => setForm((f) => ({ ...f, email_contact: e.target.value }))}
+                  type="email"
+                  style={{
+                    marginTop: "8px",
+                    border: "1px solid #5B50F0",
+                    borderRadius: "6px",
+                    padding: "6px 10px",
+                    width: "100%",
+                    fontSize: "0.95rem",
+                    background: "#FAFAFE",
+                  }}
+                />
+              ) : (
+                <p className="mt-2 text-sm font-medium text-[#111827]">
+                  {(profile as any)?.email_contact?.trim?.() || displayEmail || "—"}
+                </p>
+              )}
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
                 Téléphone
               </p>
-              {editingInfo ? (
+              {editing ? (
                 <input
                   value={form.telephone}
                   onChange={(e) => setForm((f) => ({ ...f, telephone: e.target.value }))}
-                  className="mt-2 w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+                  type="text"
+                  style={{
+                    marginTop: "8px",
+                    border: "1px solid #5B50F0",
+                    borderRadius: "6px",
+                    padding: "6px 10px",
+                    width: "100%",
+                    fontSize: "0.95rem",
+                    background: "#FAFAFE",
+                  }}
                 />
               ) : (
-                <p className="mt-2 text-sm font-medium text-[#111827]">{displayTelephone}</p>
+                <p className="mt-2 text-sm font-medium text-[#111827]">
+                  {(profile as any)?.telephone?.trim?.() || displayTelephone}
+                </p>
               )}
             </div>
             <div>
@@ -530,46 +741,87 @@ function AdminUtilisateurDetailPage() {
             </div>
             <div className="sm:col-span-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Adresse</p>
-              <p className="mt-2 text-sm font-medium text-[#111827]">
-                {profile?.adresse?.trim() ? (
-                  profile.adresse.trim()
-                ) : (
-                  <span className="text-[#9CA3AF] italic">Non renseigné</span>
-                )}
-              </p>
+              {editing ? (
+                <textarea
+                  value={form.adresse}
+                  onChange={(e) => setForm((f) => ({ ...f, adresse: e.target.value }))}
+                  rows={2}
+                  style={{
+                    marginTop: "8px",
+                    border: "1px solid #5B50F0",
+                    borderRadius: "6px",
+                    padding: "6px 10px",
+                    width: "100%",
+                    fontSize: "0.95rem",
+                    background: "#FAFAFE",
+                    resize: "vertical",
+                  }}
+                />
+              ) : (
+                <p className="mt-2 text-sm font-medium text-[#111827]">
+                  {(profile as any)?.adresse?.trim?.() ? (
+                    (profile as any).adresse.trim()
+                  ) : (
+                    <span className="text-[#9CA3AF] italic">Non renseigné</span>
+                  )}
+                </p>
+              )}
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Numéro de contrat</p>
-              <p className="mt-2 text-sm font-medium text-[#111827]">
-                {profile?.numero_contrat?.trim() ? (
-                  profile.numero_contrat.trim()
-                ) : (
-                  <span className="text-[#9CA3AF] italic">Non renseigné</span>
-                )}
-              </p>
+              {editing ? (
+                <input
+                  value={form.numero_contrat}
+                  onChange={(e) => setForm((f) => ({ ...f, numero_contrat: e.target.value }))}
+                  type="text"
+                  style={{
+                    marginTop: "8px",
+                    border: "1px solid #5B50F0",
+                    borderRadius: "6px",
+                    padding: "6px 10px",
+                    width: "100%",
+                    fontSize: "0.95rem",
+                    background: "#FAFAFE",
+                  }}
+                />
+              ) : (
+                <p className="mt-2 text-sm font-medium text-[#111827]">
+                  {(profile as any)?.numero_contrat?.trim?.() ? (
+                    (profile as any).numero_contrat.trim()
+                  ) : (
+                    <span className="text-[#9CA3AF] italic">Non renseigné</span>
+                  )}
+                </p>
+              )}
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Assureur principal</p>
-              <p className="mt-2 text-sm font-medium text-[#111827]">
-                {profile?.assureur_principal?.trim() ? (
-                  profile.assureur_principal.trim()
-                ) : (
-                  <span className="text-[#9CA3AF] italic">Non renseigné</span>
-                )}
-              </p>
+              {editing ? (
+                <input
+                  value={form.assureur_principal}
+                  onChange={(e) => setForm((f) => ({ ...f, assureur_principal: e.target.value }))}
+                  type="text"
+                  style={{
+                    marginTop: "8px",
+                    border: "1px solid #5B50F0",
+                    borderRadius: "6px",
+                    padding: "6px 10px",
+                    width: "100%",
+                    fontSize: "0.95rem",
+                    background: "#FAFAFE",
+                  }}
+                />
+              ) : (
+                <p className="mt-2 text-sm font-medium text-[#111827]">
+                  {(profile as any)?.assureur_principal?.trim?.() ? (
+                    (profile as any).assureur_principal.trim()
+                  ) : (
+                    <span className="text-[#9CA3AF] italic">Non renseigné</span>
+                  )}
+                </p>
+              )}
             </div>
           </div>
-          {editingInfo ? (
-            <button
-              type="button"
-              onClick={() => {
-                setEditingInfo(false);
-              }}
-              className="mt-4 text-xs font-medium text-[#6B7280] hover:text-[#111827]"
-            >
-              Annuler
-            </button>
-          ) : null}
         </section>
 
         <section className={infoCardClass()}>

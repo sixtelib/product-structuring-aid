@@ -116,7 +116,7 @@ function ExpertDossierDetailPage() {
 
       const { data: d, error: dErr } = await supabase
         .from("dossiers")
-        .select("*")
+        .select("*, analyse_ia, analyse_ia_date")
         .eq("id", id)
         .maybeSingle();
 
@@ -197,6 +197,8 @@ function ExpertDossierDetailPage() {
         description: dossier.description ?? undefined,
         nom_assure: nom_assure ?? undefined,
         prenom_assure: prenom_assure,
+        analyse_ia: (dossier as any).analyse_ia ?? null,
+        analyse_ia_date: (dossier as any).analyse_ia_date ?? null,
       },
       documents: documents.map((d) => ({
         id: d.id,
@@ -308,6 +310,20 @@ function ExpertDossierDetailPage() {
                 <p className="mt-2 text-sm font-semibold text-foreground">{assure?.full_name || ", "}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{assure?.id ? `Email : ${assure.id}` : "Email : , "}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{assure?.phone ? `Téléphone : ${assure.phone}` : "Téléphone : , "}</p>
+                {dossier.user_id ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate({
+                        to: "/admin/utilisateurs/$userId",
+                        params: { userId: String(dossier.user_id) },
+                      })
+                    }
+                    className="mt-3 inline-flex items-center gap-2 rounded-lg border-2 border-primary bg-white px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
+                  >
+                    Voir profil
+                  </button>
+                ) : null}
               </div>
             </div>
           </section>

@@ -177,7 +177,11 @@ function AdminDossierDetailPage() {
     setShowExpertDropdown(false);
     setExperts([]);
     try {
-      const { data: dRow, error: dErr } = await supabase.from("dossiers").select("*").eq("id", dossierId).maybeSingle();
+      const { data: dRow, error: dErr } = await supabase
+        .from("dossiers")
+        .select("*, analyse_ia, analyse_ia_date")
+        .eq("id", dossierId)
+        .maybeSingle();
       if (dErr) throw dErr;
       if (!dRow) {
         setDossier(null);
@@ -839,6 +843,8 @@ function AdminDossierDetailPage() {
             description: dossier.description ?? undefined,
             nom_assure: dossier.nom_assure ?? undefined,
             prenom_assure: dossier.prenom_assure ?? undefined,
+            analyse_ia: (dossier as any).analyse_ia ?? null,
+            analyse_ia_date: (dossier as any).analyse_ia_date ?? null,
           }}
           documents={documents.map((d) => ({
             id: d.id,

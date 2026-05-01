@@ -281,6 +281,8 @@ export type Database = {
       }
       dossiers: {
         Row: {
+          analyse_ia: string | null
+          analyse_ia_date: string | null
           assureur_nom: string | null
           created_at: string
           date_sinistre: string | null
@@ -301,6 +303,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          analyse_ia?: string | null
+          analyse_ia_date?: string | null
           assureur_nom?: string | null
           created_at?: string
           date_sinistre?: string | null
@@ -321,6 +325,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          analyse_ia?: string | null
+          analyse_ia_date?: string | null
           assureur_nom?: string | null
           created_at?: string
           date_sinistre?: string | null

@@ -43,8 +43,13 @@ import { Route as SinistresIncendieRouteImport } from './routes/sinistres.incend
 import { Route as SinistresDommagesElectriquesRouteImport } from './routes/sinistres.dommages-electriques'
 import { Route as SinistresDegatDesEauxRouteImport } from './routes/sinistres.degat-des-eaux'
 import { Route as SinistresCatastropheNaturelleRouteImport } from './routes/sinistres.catastrophe-naturelle'
+import { Route as GuidesVetusteAssuranceRouteImport } from './routes/guides.vetuste-assurance'
 import { Route as GuidesSousIndemnisationRouteImport } from './routes/guides.sous-indemnisation'
+import { Route as GuidesRegleProportionnelleAssuranceRouteImport } from './routes/guides.regle-proportionnelle-assurance'
+import { Route as GuidesProcesVerbalExpertiseAssuranceRouteImport } from './routes/guides.proces-verbal-expertise-assurance'
 import { Route as GuidesExpertAssureRouteImport } from './routes/guides.expert-assure'
+import { Route as GuidesDelaiPrescriptionAssuranceRouteImport } from './routes/guides.delai-prescription-assurance'
+import { Route as GuidesDeclarerSinistreAssuranceRouteImport } from './routes/guides.declarer-sinistre-assurance'
 import { Route as GuidesAssureurRefusePayerRouteImport } from './routes/guides.assureur-refuse-payer'
 import { Route as EspaceNouveauRouteImport } from './routes/espace.nouveau'
 import { Route as EspaceDossiersRouteImport } from './routes/espace.dossiers'
@@ -233,16 +238,45 @@ const SinistresCatastropheNaturelleRoute =
     path: '/catastrophe-naturelle',
     getParentRoute: () => SinistresRoute,
   } as any)
+const GuidesVetusteAssuranceRoute = GuidesVetusteAssuranceRouteImport.update({
+  id: '/vetuste-assurance',
+  path: '/vetuste-assurance',
+  getParentRoute: () => GuidesRoute,
+} as any)
 const GuidesSousIndemnisationRoute = GuidesSousIndemnisationRouteImport.update({
   id: '/sous-indemnisation',
   path: '/sous-indemnisation',
   getParentRoute: () => GuidesRoute,
 } as any)
+const GuidesRegleProportionnelleAssuranceRoute =
+  GuidesRegleProportionnelleAssuranceRouteImport.update({
+    id: '/regle-proportionnelle-assurance',
+    path: '/regle-proportionnelle-assurance',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesProcesVerbalExpertiseAssuranceRoute =
+  GuidesProcesVerbalExpertiseAssuranceRouteImport.update({
+    id: '/proces-verbal-expertise-assurance',
+    path: '/proces-verbal-expertise-assurance',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesExpertAssureRoute = GuidesExpertAssureRouteImport.update({
   id: '/expert-assure',
   path: '/expert-assure',
   getParentRoute: () => GuidesRoute,
 } as any)
+const GuidesDelaiPrescriptionAssuranceRoute =
+  GuidesDelaiPrescriptionAssuranceRouteImport.update({
+    id: '/delai-prescription-assurance',
+    path: '/delai-prescription-assurance',
+    getParentRoute: () => GuidesRoute,
+  } as any)
+const GuidesDeclarerSinistreAssuranceRoute =
+  GuidesDeclarerSinistreAssuranceRouteImport.update({
+    id: '/declarer-sinistre-assurance',
+    path: '/declarer-sinistre-assurance',
+    getParentRoute: () => GuidesRoute,
+  } as any)
 const GuidesAssureurRefusePayerRoute =
   GuidesAssureurRefusePayerRouteImport.update({
     id: '/assureur-refuse-payer',
@@ -354,8 +388,13 @@ export interface FileRoutesByFullPath {
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
+  '/guides/declarer-sinistre-assurance': typeof GuidesDeclarerSinistreAssuranceRoute
+  '/guides/delai-prescription-assurance': typeof GuidesDelaiPrescriptionAssuranceRoute
   '/guides/expert-assure': typeof GuidesExpertAssureRoute
+  '/guides/proces-verbal-expertise-assurance': typeof GuidesProcesVerbalExpertiseAssuranceRoute
+  '/guides/regle-proportionnelle-assurance': typeof GuidesRegleProportionnelleAssuranceRoute
   '/guides/sous-indemnisation': typeof GuidesSousIndemnisationRoute
+  '/guides/vetuste-assurance': typeof GuidesVetusteAssuranceRoute
   '/sinistres/catastrophe-naturelle': typeof SinistresCatastropheNaturelleRoute
   '/sinistres/degat-des-eaux': typeof SinistresDegatDesEauxRoute
   '/sinistres/dommages-electriques': typeof SinistresDommagesElectriquesRoute
@@ -401,8 +440,13 @@ export interface FileRoutesByTo {
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
+  '/guides/declarer-sinistre-assurance': typeof GuidesDeclarerSinistreAssuranceRoute
+  '/guides/delai-prescription-assurance': typeof GuidesDelaiPrescriptionAssuranceRoute
   '/guides/expert-assure': typeof GuidesExpertAssureRoute
+  '/guides/proces-verbal-expertise-assurance': typeof GuidesProcesVerbalExpertiseAssuranceRoute
+  '/guides/regle-proportionnelle-assurance': typeof GuidesRegleProportionnelleAssuranceRoute
   '/guides/sous-indemnisation': typeof GuidesSousIndemnisationRoute
+  '/guides/vetuste-assurance': typeof GuidesVetusteAssuranceRoute
   '/sinistres/catastrophe-naturelle': typeof SinistresCatastropheNaturelleRoute
   '/sinistres/degat-des-eaux': typeof SinistresDegatDesEauxRoute
   '/sinistres/dommages-electriques': typeof SinistresDommagesElectriquesRoute
@@ -455,8 +499,13 @@ export interface FileRoutesById {
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
+  '/guides/declarer-sinistre-assurance': typeof GuidesDeclarerSinistreAssuranceRoute
+  '/guides/delai-prescription-assurance': typeof GuidesDelaiPrescriptionAssuranceRoute
   '/guides/expert-assure': typeof GuidesExpertAssureRoute
+  '/guides/proces-verbal-expertise-assurance': typeof GuidesProcesVerbalExpertiseAssuranceRoute
+  '/guides/regle-proportionnelle-assurance': typeof GuidesRegleProportionnelleAssuranceRoute
   '/guides/sous-indemnisation': typeof GuidesSousIndemnisationRoute
+  '/guides/vetuste-assurance': typeof GuidesVetusteAssuranceRoute
   '/sinistres/catastrophe-naturelle': typeof SinistresCatastropheNaturelleRoute
   '/sinistres/degat-des-eaux': typeof SinistresDegatDesEauxRoute
   '/sinistres/dommages-electriques': typeof SinistresDommagesElectriquesRoute
@@ -510,8 +559,13 @@ export interface FileRouteTypes {
     | '/espace/dossiers'
     | '/espace/nouveau'
     | '/guides/assureur-refuse-payer'
+    | '/guides/declarer-sinistre-assurance'
+    | '/guides/delai-prescription-assurance'
     | '/guides/expert-assure'
+    | '/guides/proces-verbal-expertise-assurance'
+    | '/guides/regle-proportionnelle-assurance'
     | '/guides/sous-indemnisation'
+    | '/guides/vetuste-assurance'
     | '/sinistres/catastrophe-naturelle'
     | '/sinistres/degat-des-eaux'
     | '/sinistres/dommages-electriques'
@@ -557,8 +611,13 @@ export interface FileRouteTypes {
     | '/espace/dossiers'
     | '/espace/nouveau'
     | '/guides/assureur-refuse-payer'
+    | '/guides/declarer-sinistre-assurance'
+    | '/guides/delai-prescription-assurance'
     | '/guides/expert-assure'
+    | '/guides/proces-verbal-expertise-assurance'
+    | '/guides/regle-proportionnelle-assurance'
     | '/guides/sous-indemnisation'
+    | '/guides/vetuste-assurance'
     | '/sinistres/catastrophe-naturelle'
     | '/sinistres/degat-des-eaux'
     | '/sinistres/dommages-electriques'
@@ -610,8 +669,13 @@ export interface FileRouteTypes {
     | '/espace/dossiers'
     | '/espace/nouveau'
     | '/guides/assureur-refuse-payer'
+    | '/guides/declarer-sinistre-assurance'
+    | '/guides/delai-prescription-assurance'
     | '/guides/expert-assure'
+    | '/guides/proces-verbal-expertise-assurance'
+    | '/guides/regle-proportionnelle-assurance'
     | '/guides/sous-indemnisation'
+    | '/guides/vetuste-assurance'
     | '/sinistres/catastrophe-naturelle'
     | '/sinistres/degat-des-eaux'
     | '/sinistres/dommages-electriques'
@@ -897,6 +961,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SinistresCatastropheNaturelleRouteImport
       parentRoute: typeof SinistresRoute
     }
+    '/guides/vetuste-assurance': {
+      id: '/guides/vetuste-assurance'
+      path: '/vetuste-assurance'
+      fullPath: '/guides/vetuste-assurance'
+      preLoaderRoute: typeof GuidesVetusteAssuranceRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/sous-indemnisation': {
       id: '/guides/sous-indemnisation'
       path: '/sous-indemnisation'
@@ -904,11 +975,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesSousIndemnisationRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/guides/regle-proportionnelle-assurance': {
+      id: '/guides/regle-proportionnelle-assurance'
+      path: '/regle-proportionnelle-assurance'
+      fullPath: '/guides/regle-proportionnelle-assurance'
+      preLoaderRoute: typeof GuidesRegleProportionnelleAssuranceRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/proces-verbal-expertise-assurance': {
+      id: '/guides/proces-verbal-expertise-assurance'
+      path: '/proces-verbal-expertise-assurance'
+      fullPath: '/guides/proces-verbal-expertise-assurance'
+      preLoaderRoute: typeof GuidesProcesVerbalExpertiseAssuranceRouteImport
+      parentRoute: typeof GuidesRoute
+    }
     '/guides/expert-assure': {
       id: '/guides/expert-assure'
       path: '/expert-assure'
       fullPath: '/guides/expert-assure'
       preLoaderRoute: typeof GuidesExpertAssureRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/delai-prescription-assurance': {
+      id: '/guides/delai-prescription-assurance'
+      path: '/delai-prescription-assurance'
+      fullPath: '/guides/delai-prescription-assurance'
+      preLoaderRoute: typeof GuidesDelaiPrescriptionAssuranceRouteImport
+      parentRoute: typeof GuidesRoute
+    }
+    '/guides/declarer-sinistre-assurance': {
+      id: '/guides/declarer-sinistre-assurance'
+      path: '/declarer-sinistre-assurance'
+      fullPath: '/guides/declarer-sinistre-assurance'
+      preLoaderRoute: typeof GuidesDeclarerSinistreAssuranceRouteImport
       parentRoute: typeof GuidesRoute
     }
     '/guides/assureur-refuse-payer': {
@@ -1120,15 +1219,27 @@ const ExpertRouteWithChildren =
 
 interface GuidesRouteChildren {
   GuidesAssureurRefusePayerRoute: typeof GuidesAssureurRefusePayerRoute
+  GuidesDeclarerSinistreAssuranceRoute: typeof GuidesDeclarerSinistreAssuranceRoute
+  GuidesDelaiPrescriptionAssuranceRoute: typeof GuidesDelaiPrescriptionAssuranceRoute
   GuidesExpertAssureRoute: typeof GuidesExpertAssureRoute
+  GuidesProcesVerbalExpertiseAssuranceRoute: typeof GuidesProcesVerbalExpertiseAssuranceRoute
+  GuidesRegleProportionnelleAssuranceRoute: typeof GuidesRegleProportionnelleAssuranceRoute
   GuidesSousIndemnisationRoute: typeof GuidesSousIndemnisationRoute
+  GuidesVetusteAssuranceRoute: typeof GuidesVetusteAssuranceRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
 }
 
 const GuidesRouteChildren: GuidesRouteChildren = {
   GuidesAssureurRefusePayerRoute: GuidesAssureurRefusePayerRoute,
+  GuidesDeclarerSinistreAssuranceRoute: GuidesDeclarerSinistreAssuranceRoute,
+  GuidesDelaiPrescriptionAssuranceRoute: GuidesDelaiPrescriptionAssuranceRoute,
   GuidesExpertAssureRoute: GuidesExpertAssureRoute,
+  GuidesProcesVerbalExpertiseAssuranceRoute:
+    GuidesProcesVerbalExpertiseAssuranceRoute,
+  GuidesRegleProportionnelleAssuranceRoute:
+    GuidesRegleProportionnelleAssuranceRoute,
   GuidesSousIndemnisationRoute: GuidesSousIndemnisationRoute,
+  GuidesVetusteAssuranceRoute: GuidesVetusteAssuranceRoute,
   GuidesIndexRoute: GuidesIndexRoute,
 }
 

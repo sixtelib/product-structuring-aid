@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, ArrowRight, Scale, Search } from "lucide-react";
+import { BookOpen, ArrowRight, Scale, Search, Percent, Clock, FileText } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 
 export function GuidesIndexPage() {
@@ -12,8 +12,8 @@ export function GuidesIndexPage() {
             Guides
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-            Des contenus clairs pour y voir plus clair après un sinistre : refus d'indemnisation, expert d'assuré,
-            recours et honoraires.
+            Des contenus clairs pour y voir plus clair après un sinistre : refus d'indemnisation,
+            expert d'assuré, recours et honoraires.
           </p>
         </div>
       </section>
@@ -21,6 +21,29 @@ export function GuidesIndexPage() {
       <section className="bg-background">
         <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <ul className="grid gap-5 md:grid-cols-2">
+            <li>
+              <Link
+                to="/guides/delai-prescription-assurance"
+                className="group flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition-shadow hover:shadow-md sm:flex-row sm:items-start sm:gap-5"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
+                  <Clock className="h-6 w-6" />
+                </span>
+                <div className="mt-4 sm:mt-0">
+                  <h2 className="font-sans text-xl font-semibold tracking-tight text-primary group-hover:underline">
+                    Délai de prescription assurance : comment ne pas perdre vos droits
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    2 ans pour agir après un sinistre : comment calculer le délai et
+                    l&apos;interrompre à temps.
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    Lire le guide
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </Link>
+            </li>
             <li>
               <Link
                 to="/guides/expert-assure"
@@ -34,7 +57,31 @@ export function GuidesIndexPage() {
                     Qu'est-ce qu'un expert d'assuré ?
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Rôle, honoraires, différence avec l'expert de l'assureur et déroulement d'une mission.
+                    Rôle, honoraires, différence avec l'expert de l'assureur et déroulement d'une
+                    mission.
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    Lire le guide
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/guides/proces-verbal-expertise-assurance"
+                className="group flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition-shadow hover:shadow-md sm:flex-row sm:items-start sm:gap-5"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
+                  <FileText className="h-6 w-6" />
+                </span>
+                <div className="mt-4 sm:mt-0">
+                  <h2 className="font-sans text-xl font-semibold tracking-tight text-primary group-hover:underline">
+                    Procès-verbal d'expertise : faut-il signer ?
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    Ce que contient le PV, quand signer, quand refuser, et comment se protéger (solde de tout compte,
+                    réserves, copie).
                   </p>
                   <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
                     Lire le guide
@@ -56,8 +103,30 @@ export function GuidesIndexPage() {
                     Assureur refuse de payer : que faire ?
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Les 5 recours concrets ,  contrat, contestation, expert d'assuré, médiateur, justice ,  et
-                    l'ordre dans lequel les enchaîner.
+                    Les 5 recours concrets , contrat, contestation, expert d'assuré, médiateur,
+                    justice , et l'ordre dans lequel les enchaîner.
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    Lire le guide
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/guides/regle-proportionnelle-assurance"
+                className="group flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition-shadow hover:shadow-md sm:flex-row sm:items-start sm:gap-5"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
+                  <Percent className="h-6 w-6" />
+                </span>
+                <div className="mt-4 sm:mt-0">
+                  <h2 className="font-sans text-xl font-semibold tracking-tight text-primary group-hover:underline">
+                    Règle proportionnelle : comment éviter une indemnisation réduite ?
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    Définition, calcul, sous-assurance : comprendre le mécanisme et s'en protéger.
                   </p>
                   <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
                     Lire le guide
@@ -79,7 +148,31 @@ export function GuidesIndexPage() {
                     Sous-indemnisation : comment le détecter ?
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Signes, mécanismes fréquents (vétusté, règle proportionnelle) et recours pour obtenir la différence.
+                    Signes, mécanismes fréquents (vétusté, règle proportionnelle) et recours pour
+                    obtenir la différence.
+                  </p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                    Lire le guide
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/guides/vetuste-assurance"
+                className="group flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition-shadow hover:shadow-md sm:flex-row sm:items-start sm:gap-5"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
+                  <Percent className="h-6 w-6" />
+                </span>
+                <div className="mt-4 sm:mt-0">
+                  <h2 className="font-sans text-xl font-semibold tracking-tight text-primary group-hover:underline">
+                    Vétusté assurance : comment la contester ?
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    Définition, calcul, garantie valeur à neuf, cas contestables et étapes concrètes
+                    pour récupérer la différence.
                   </p>
                   <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
                     Lire le guide
@@ -91,7 +184,9 @@ export function GuidesIndexPage() {
           </ul>
 
           <section className="mt-10 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] p-6">
-            <h2 className="text-[16px] font-semibold text-[#374151]">Nos pages par type de sinistre</h2>
+            <h2 className="text-[16px] font-semibold text-[#374151]">
+              Nos pages par type de sinistre
+            </h2>
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 to="/sinistres/degat-des-eaux"
