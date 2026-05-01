@@ -271,7 +271,7 @@ export function QualificationChatbot() {
         model: "claude-sonnet-4-6",
         max_tokens: 500,
         system: SYSTEM_PROMPT,
-        messages: anthropicMessages,
+        messages: anthropicMessages.slice(-8),
       }),
     });
 
@@ -480,7 +480,7 @@ export function QualificationChatbot() {
 
   async function sendUserText(text: string) {
     const t = text.trim();
-    if (!t || isLoading) return;
+    if (!t || isLoading || messages.length > 20) return;
 
     const userMsg: Msg = { id: uid(), role: "user", text: t };
     const next = [...messages, userMsg];
@@ -522,6 +522,8 @@ export function QualificationChatbot() {
 
   const onlyWelcome =
     messages.length === 1 && messages[0]?.role === "claude" && messages[0]?.text === WELCOME;
+
+  const conversationEnded = messages.length > 20;
 
   const lastClaude = messages.filter((m) => m.role === "claude").slice(-1)[0];
   const lastClaudeVisibleText = cleanMessageText(lastClaude?.text ?? "");
@@ -843,7 +845,7 @@ export function QualificationChatbot() {
         <div ref={bottomRef} />
       </div>
 
-      {!isLoading && onlyWelcome && (
+      {!isLoading && !conversationEnded && onlyWelcome && (
         <div className="mt-2 flex flex-wrap gap-2 px-1 pb-2">
           {STARTUP_TYPE_SINISTRE_PILLS.map((p) => (
             <button
@@ -858,7 +860,7 @@ export function QualificationChatbot() {
         </div>
       )}
 
-      {!isLoading && !onlyWelcome && suggestions.length > 0 && (
+      {!isLoading && !conversationEnded && !onlyWelcome && suggestions.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2 px-1 pb-2">
           {suggestions.map((s) => (
             <button
@@ -873,31 +875,51 @@ export function QualificationChatbot() {
         </div>
       )}
 
-      <form
-        className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void sendUserText(input);
-        }}
-      >
-        <textarea
-          rows={1}
-          style={{ resize: "none" }}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Décrivez votre situation…"
-          autoComplete="off"
-          className="flex-1 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm outline-none placeholder:text-muted-foreground shadow-sm focus:border-[#5B50F0]/40 focus:ring-2 focus:ring-[#5B50F0]/10"
-        />
-        <button
-          type="submit"
-          disabled={isLoading || !input.trim()}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#5B50F0] text-white transition-colors hover:bg-[#4B41D5] disabled:opacity-60"
-          aria-label="Envoyer"
+      {conversationEnded ? (
+        <div className="mt-3 border-t border-gray-100 pt-3">
+          <div className="flex justify-start">
+            <div className="max-w-[85%] rounded-[12px] bg-white px-4 py-2.5 text-foreground shadow-sm">
+              {renderTextBubble("Votre dossier est qualifié. Créez votre compte pour continuer avec un expert.")}
+            </div>
+          </div>
+          <div className="mt-3 flex justify-center">
+            <Link
+              to="/auth"
+              search={{ mode: "signup" }}
+              onClick={goToSignup}
+              className="inline-flex items-center justify-center rounded-lg bg-[#5B50F0] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5]"
+            >
+              Créer mon compte →
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <form
+          className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void sendUserText(input);
+          }}
         >
-          <Send className="h-4 w-4" />
-        </button>
-      </form>
+          <textarea
+            rows={1}
+            style={{ resize: "none" }}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Décrivez votre situation…"
+            autoComplete="off"
+            className="flex-1 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm outline-none placeholder:text-muted-foreground shadow-sm focus:border-[#5B50F0]/40 focus:ring-2 focus:ring-[#5B50F0]/10"
+          />
+          <button
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#5B50F0] text-white transition-colors hover:bg-[#4B41D5] disabled:opacity-60"
+            aria-label="Envoyer"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </form>
+      )}
       <p className="mt-2 text-right text-[10px] text-muted-foreground">Vertual n'est pas un cabinet juridique.</p>
     </div>
   );
