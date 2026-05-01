@@ -59,40 +59,29 @@ const EMPTY_DATA: CollectedData = {
 
 const WELCOME = "Bonjour 👋 Quel type de sinistre avez-vous subi ?";
 
-const SYSTEM_PROMPT = `Tu es un conseiller Vertual (assurance, France). Tu collectes les informations pour orienter l'utilisateur.
+const SYSTEM_PROMPT = `Tu es un assistant de qualification pour Vertual, 
+plateforme française d'expert d'assuré.
 
-Ordre strict des questions : pose une seule question par message, dans cet ordre exact, sans en sauter une :
-1) Ce que l'assureur a proposé (refus total, offre trop basse, absence de réponse, offre partielle, sinistre ignoré, ou autre).
-2) Le nom de l'assureur.
-3) Le montant proposé par l'assureur (ou l'ordre de grandeur).
-4) La date approximative du sinistre.
-5) Si l'assuré dispose de documents (police, rapport, courriers, etc.).
-6) Si l'assuré a déjà tenté de contester (seul, avec un avocat, recours précédent, etc.).
+Ton rôle : qualifier le sinistre de l'assuré en 
+5-7 questions maximum pour créer son dossier.
 
-Le type de sinistre peut déjà avoir été indiqué par l'utilisateur (boutons ou message) ; ne le redemande pas si tu l'as déjà.
+Questions à poser dans l'ordre :
+1. Type de sinistre
+2. Ce que l'assureur a proposé
+3. Montant proposé
+4. Nom de l'assureur
+5. Date du sinistre
+6. Documents disponibles
 
-Ne JAMAIS lister des options dans ton texte : pas de tirets, pas de listes à puces, pas d'énumération « par exemple : A, B, C ». Les choix possibles sont affichés sous forme de boutons (pills) à côté du chat ; contente-toi de poser une question courte et simple, sans proposer toi-même les réponses.
+Règles :
+- Une question à la fois
+- Réponses courtes (max 2 phrases)
+- Quand tu as toutes les infos, génère l'évaluation
 
-Réponds en français.
-À la fin de chaque message, si tu as des infos structurées, ajoute un bloc JSON entre <data> et </data> :
-{"type_sinistre":"","assureur":"","montant_propose":"","date_sinistre":"","description":""}
-Remplis le champ description avec une synthèse courte incluant, quand elles sont connues : la proposition de l'assureur, les documents dont dispose l'assuré, et ses tentatives de contestation.
-Quand tu peux évaluer brièvement, mets l'évaluation entre <evaluation> et </evaluation> (pourcentage de succès, 2 arguments, gain potentiel estimé en euros).
-N'utilise pas le tiret long (tiret cadratin) ; préfère une virgule.
-
-À la fin de chaque réponse, ajoute une balise cachée indiquant quelle catégorie de suggestion afficher. Format exact : <suggest>TYPE</suggest>
-
-Types disponibles :
-- <suggest>type_sinistre</suggest> → quand tu demandes le type de sinistre
-- <suggest>reponse_assureur</suggest> → quand tu demandes ce que l'assureur a proposé/répondu
-- <suggest>montant</suggest> → quand tu demandes un montant d'indemnisation
-- <suggest>assureur</suggest> → quand tu demandes le nom de l'assureur
-- <suggest>anciennete</suggest> → quand tu demandes depuis quand date le sinistre
-- <suggest>oui_non</suggest> → quand tu poses une question dont la réponse est oui ou non (ex: "Avez-vous des documents ?", "Avez-vous déjà contesté ?", "Êtes-vous propriétaire ?")
-- <suggest>none</suggest> → pour les questions ouvertes ou si aucune suggestion n'est pertinente
-
-La balise <suggest> doit toujours être présente, même si c'est <suggest>none</suggest>.
-N'affiche pas cette balise à l'utilisateur, elle sera parsée automatiquement.`;
+À la fin génère :
+<data>{"type_sinistre":"...","assureur":"...","montant_propose":"...","date_sinistre":"..."}</data>
+<evaluation>Score: X/10. [2 phrases max]</evaluation>
+<suggest>TYPE</suggest>`;
 
 /** Pills initiales (type de sinistre), même jeu que type_sinistre ; codées en dur, sans balise suggest sur l'accueil. */
 const STARTUP_TYPE_SINISTRE_PILLS: { label: string; text: string }[] = [
@@ -145,7 +134,14 @@ function suggestionsFromLastClaude(text: string): string[] {
   const suggestType = suggestMatch ? suggestMatch[1].trim().toLowerCase() : "none";
 
   const suggestionSets: Record<string, string[]> = {
-    type_sinistre: ["Dégât des eaux", "Incendie", "Tempête", "Accident auto", "Multirisque", "Autre"],
+    type_sinistre: [
+      "Dégât des eaux",
+      "Incendie",
+      "Tempête",
+      "Accident auto",
+      "Multirisque",
+      "Autre",
+    ],
     reponse_assureur: [
       "Refus total",
       "Offre trop basse",
@@ -204,7 +200,9 @@ function renderTextBubble(text: string) {
 }
 
 export function QualificationChatbot() {
-  const [messages, setMessages] = useState<Msg[]>(() => [{ id: uid(), role: "claude", text: WELCOME }]);
+  const [messages, setMessages] = useState<Msg[]>(() => [
+    { id: uid(), role: "claude", text: WELCOME },
+  ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -212,7 +210,9 @@ export function QualificationChatbot() {
   const [evaluationPreview, setEvaluationPreview] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [dismissedUploadForClaudeMsgId, setDismissedUploadForClaudeMsgId] = useState<string | null>(null);
+  const [dismissedUploadForClaudeMsgId, setDismissedUploadForClaudeMsgId] = useState<string | null>(
+    null,
+  );
   const [sendingDocs, setSendingDocs] = useState(false);
   const [extractedData, setExtractedData] = useState<Record<string, any>>({});
 
@@ -345,7 +345,9 @@ export function QualificationChatbot() {
 
   async function extractFromUploaded(path: string, originalFile: File) {
     try {
-      const { data: urlData, error: urlErr } = await supabase.storage.from("documents").createSignedUrl(path, 3600);
+      const { data: urlData, error: urlErr } = await supabase.storage
+        .from("documents")
+        .createSignedUrl(path, 3600);
       if (urlErr || !urlData?.signedUrl) throw urlErr ?? new Error("Signed URL indisponible");
 
       const lower = originalFile.name.toLowerCase();
@@ -364,7 +366,10 @@ export function QualificationChatbot() {
               : "image/jpeg";
 
         userContent = [
-          { type: "text", text: "Analyse cette image (document d'assurance) et extrais les informations demandées." },
+          {
+            type: "text",
+            text: "Analyse cette image (document d'assurance) et extrais les informations demandées.",
+          },
           { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
         ];
       } else if (isPdf) {
@@ -413,7 +418,9 @@ export function QualificationChatbot() {
 
       const { data: row, error: selErr } = await supabase
         .from("profiles")
-        .select("nom, prenom, adresse, telephone, email_contact, numero_contrat, assureur_principal")
+        .select(
+          "nom, prenom, adresse, telephone, email_contact, numero_contrat, assureur_principal",
+        )
         .eq("id", user.id)
         .maybeSingle();
       if (selErr) {
@@ -425,7 +432,12 @@ export function QualificationChatbot() {
       const profileUpdate: Record<string, string> = {};
 
       const maybeSet = (profileKey: string, extractedVal: unknown) => {
-        const t = typeof extractedVal === "string" ? extractedVal.trim() : extractedVal != null ? String(extractedVal).trim() : "";
+        const t =
+          typeof extractedVal === "string"
+            ? extractedVal.trim()
+            : extractedVal != null
+              ? String(extractedVal).trim()
+              : "";
         if (!t) return;
         if (profileFieldFilled(cur[profileKey])) return;
         profileUpdate[profileKey] = t;
@@ -441,7 +453,10 @@ export function QualificationChatbot() {
 
       if (Object.keys(profileUpdate).length === 0) return;
 
-      const { error: upProfErr } = await supabase.from("profiles").update(profileUpdate).eq("id", user.id);
+      const { error: upProfErr } = await supabase
+        .from("profiles")
+        .update(profileUpdate)
+        .eq("id", user.id);
       if (upProfErr) console.error("Profile enrichment update:", upProfErr);
     } catch (e) {
       console.error("enrichProfileFromExtraction:", e);
@@ -460,11 +475,15 @@ export function QualificationChatbot() {
     };
     const cleaned: Record<string, any> = {};
     for (const [k, v] of Object.entries(update)) {
-      if (v !== undefined && v !== null && !(typeof v === "number" && Number.isNaN(v))) cleaned[k] = v;
+      if (v !== undefined && v !== null && !(typeof v === "number" && Number.isNaN(v)))
+        cleaned[k] = v;
     }
     try {
       if (Object.keys(cleaned).length > 0) {
-        const { error: upErr } = await supabase.from("dossiers").update(cleaned).eq("id", dossierId);
+        const { error: upErr } = await supabase
+          .from("dossiers")
+          .update(cleaned)
+          .eq("id", dossierId);
         if (upErr) throw upErr;
       }
     } catch (e) {
@@ -512,7 +531,10 @@ export function QualificationChatbot() {
   function goToSignup() {
     if (typeof window === "undefined") return;
     migrateLegacyQualificationLocalStorage();
-    window.localStorage.setItem(QUALIFICATION_STORAGE_KEYS.collectedData, JSON.stringify(collectedData));
+    window.localStorage.setItem(
+      QUALIFICATION_STORAGE_KEYS.collectedData,
+      JSON.stringify(collectedData),
+    );
     if (evaluationPreview) {
       window.localStorage.setItem(QUALIFICATION_STORAGE_KEYS.evaluation, evaluationPreview);
     }
@@ -548,7 +570,9 @@ export function QualificationChatbot() {
 
     const rejectedCount = incoming.length - next.length;
     if (rejectedCount > 0) {
-      setUploadError("Certains fichiers ont été ignorés (formats: PDF/JPG/PNG, 10 Mo max par fichier).");
+      setUploadError(
+        "Certains fichiers ont été ignorés (formats: PDF/JPG/PNG, 10 Mo max par fichier).",
+      );
     } else {
       setUploadError(null);
     }
@@ -592,12 +616,16 @@ export function QualificationChatbot() {
     for (const file of filesSnapshot) {
       const fileName = `chatbot/${Date.now()}_${file.name}`;
       try {
-        const { error } = await supabase.storage.from("documents").upload(fileName, file, { upsert: true });
+        const { error } = await supabase.storage
+          .from("documents")
+          .upload(fileName, file, { upsert: true });
         if (error) throw error;
         uploadedItems.push({ path: fileName, file });
 
         try {
-          const existingFiles = JSON.parse(window.localStorage.getItem("vertual_uploaded_files") ?? "[]");
+          const existingFiles = JSON.parse(
+            window.localStorage.getItem("vertual_uploaded_files") ?? "[]",
+          );
           const list = Array.isArray(existingFiles) ? existingFiles : [];
           list.push(fileName);
           window.localStorage.setItem("vertual_uploaded_files", JSON.stringify(list));
@@ -658,7 +686,9 @@ export function QualificationChatbot() {
             <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[85%] rounded-[12px] px-4 py-2.5 ${
-                  m.role === "user" ? "bg-[#5B50F0] text-white" : "bg-white text-foreground shadow-sm"
+                  m.role === "user"
+                    ? "bg-[#5B50F0] text-white"
+                    : "bg-white text-foreground shadow-sm"
                 }`}
               >
                 {renderTextBubble(m.role === "claude" ? cleanMessageText(m.text) : m.text)}
@@ -688,8 +718,12 @@ export function QualificationChatbot() {
                     <p className="text-sm font-semibold text-foreground">
                       Glissez vos documents ici ou cliquez pour parcourir
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG, 10 Mo max par fichier</p>
-                    {uploadError && <p className="mt-2 text-xs font-medium text-red-600">{uploadError}</p>}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      PDF, JPG, PNG, 10 Mo max par fichier
+                    </p>
+                    {uploadError && (
+                      <p className="mt-2 text-xs font-medium text-red-600">{uploadError}</p>
+                    )}
 
                     <input
                       ref={fileInputRef}
@@ -710,7 +744,10 @@ export function QualificationChatbot() {
                     <div className="mt-3 rounded-[12px] border border-border bg-white p-3 shadow-sm">
                       <ul className="space-y-2">
                         {selectedFiles.map((f, idx) => (
-                          <li key={`${f.name}-${f.size}-${f.lastModified}`} className="flex items-center justify-between">
+                          <li
+                            key={`${f.name}-${f.size}-${f.lastModified}`}
+                            className="flex items-center justify-between"
+                          >
                             <span className="truncate text-sm text-foreground">{f.name}</span>
                             <button
                               type="button"
@@ -750,7 +787,9 @@ export function QualificationChatbot() {
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="rounded-[12px] bg-white px-4 py-3 text-sm shadow-sm text-foreground">En cours…</div>
+            <div className="rounded-[12px] bg-white px-4 py-3 text-sm shadow-sm text-foreground">
+              En cours…
+            </div>
           </div>
         )}
 
@@ -761,7 +800,9 @@ export function QualificationChatbot() {
               <div className="inline-flex items-center rounded-full bg-[#5B50F0]/15 px-3 py-1 text-xs font-semibold text-[#5B50F0]">
                 Probabilité de succès: <span className="ml-1 blur-[3px]">{evaluationBlurPct}</span>
               </div>
-              <div className="mt-3 text-sm text-muted-foreground [filter:blur(6px)]">{renderTextBubble(evaluationPreview)}</div>
+              <div className="mt-3 text-sm text-muted-foreground [filter:blur(6px)]">
+                {renderTextBubble(evaluationPreview)}
+              </div>
             </div>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-white" />
             <div className="relative mt-4 flex flex-col items-center">
@@ -787,7 +828,9 @@ export function QualificationChatbot() {
               marginTop: "8px",
             }}
           >
-            <p style={{ fontWeight: 600, color: "#5B50F0", marginBottom: "8px" }}>✨ Informations extraites automatiquement</p>
+            <p style={{ fontWeight: 600, color: "#5B50F0", marginBottom: "8px" }}>
+              ✨ Informations extraites automatiquement
+            </p>
             {(() => {
               const data = nonEmptyExtracted(extractedData);
               const lines: string[] = [];
@@ -804,7 +847,8 @@ export function QualificationChatbot() {
               };
 
               add("Numéro de contrat", data.numero_contrat);
-              const assure = `${String(data.prenom_assure ?? "").trim()} ${String(data.nom_assure ?? "").trim()}`.trim();
+              const assure =
+                `${String(data.prenom_assure ?? "").trim()} ${String(data.nom_assure ?? "").trim()}`.trim();
               if (assure) lines.push(`Assuré : ${assure}`);
               add("Adresse assuré", data.adresse_assure);
               add("Téléphone assuré", data.telephone_assure);
@@ -879,7 +923,9 @@ export function QualificationChatbot() {
         <div className="mt-3 border-t border-gray-100 pt-3">
           <div className="flex justify-start">
             <div className="max-w-[85%] rounded-[12px] bg-white px-4 py-2.5 text-foreground shadow-sm">
-              {renderTextBubble("Votre dossier est qualifié. Créez votre compte pour continuer avec un expert.")}
+              {renderTextBubble(
+                "Votre dossier est qualifié. Créez votre compte pour continuer avec un expert.",
+              )}
             </div>
           </div>
           <div className="mt-3 flex justify-center">
@@ -920,7 +966,9 @@ export function QualificationChatbot() {
           </button>
         </form>
       )}
-      <p className="mt-2 text-right text-[10px] text-muted-foreground">Vertual n'est pas un cabinet juridique.</p>
+      <p className="mt-2 text-right text-[10px] text-muted-foreground">
+        Vertual n'est pas un cabinet juridique.
+      </p>
     </div>
   );
 }

@@ -358,6 +358,9 @@ export function DossierAnalyseIA({ dossier, documents }: DossierAnalyseIAProps) 
       }
     }
 
+    // IMPORTANT: ne pas lancer automatiquement l'analyse IA au chargement.
+    // L'analyse doit se lancer uniquement via le clic sur "Lancer l'analyse IA".
+    // void handleLancerAnalyse()
     setAnalyseLoading(false);
   }, [dossierId, dossier.analyse_ia, dossier.analyse_ia_date]);
 
