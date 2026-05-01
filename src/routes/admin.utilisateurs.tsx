@@ -414,18 +414,19 @@ function AdminUtilisateursPage() {
         if (!userId) throw new Error("Aucun utilisateur retourné après inscription.");
       }
 
-      const upsertRow: Record<string, unknown> = {
-        id: userId,
-        email: email.trim(),
-        full_name,
-        role: "expert",
-        specialite: specialite.trim() || null,
-        phone: telephone.trim() || null,
-      };
+      if (!userId) throw new Error("Impossible de créer le profil : utilisateur introuvable.");
 
-      const { error: upErr } = await supabase
-        .from("profiles")
-        .upsert(upsertRow as never, { onConflict: "id" });
+      const { error: upErr } = await supabase.from("profiles").upsert(
+        {
+          id: userId,
+          full_name: `${prenom.trim()} ${nom.trim()}`,
+          prenom: prenom.trim(),
+          nom: nom.trim(),
+          role: "expert",
+          telephone: telephone.trim(),
+        } as never,
+        { onConflict: "id" },
+      );
       if (upErr) throw new Error(upErr.message);
 
       toast.success("Expert créé avec succès");

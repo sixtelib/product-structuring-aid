@@ -1,13 +1,11 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-export const Route = createFileRoute(
-  '/admin_/utilisateurs/$userId'
-)({
+export const Route = createFileRoute("/admin_/utilisateurs/$userId")({
   component: ProfilUtilisateur,
-})
+});
 
 function ProfilUtilisateur() {
   const { userId } = Route.useParams();
@@ -16,6 +14,18 @@ function ProfilUtilisateur() {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [dossiers, setDossiers] = useState<any[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [form, setForm] = useState({
+    prenom: "",
+    nom: "",
+    telephone: "",
+    assureur_principal: "",
+    adresse: "",
+    numero_contrat: "",
+    email_contact: "",
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -37,6 +47,17 @@ function ProfilUtilisateur() {
         if (!isMounted) return;
 
         setProfile(profileData);
+        if (profileData) {
+          setForm({
+            prenom: profileData.prenom || "",
+            nom: profileData.nom || "",
+            telephone: profileData.telephone || "",
+            assureur_principal: profileData.assureur_principal || "",
+            adresse: profileData.adresse || "",
+            numero_contrat: profileData.numero_contrat || "",
+            email_contact: profileData.email_contact || "",
+          });
+        }
         setDossiers(dossiersData ?? []);
       } catch (err: any) {
         console.error("Erreur chargement profil:", err);
@@ -53,9 +74,85 @@ function ProfilUtilisateur() {
     };
   }, [userId]);
 
+  function Field({ label, value, field }: { label: string; value: string; field: string }) {
+    return (
+      <div>
+        <p
+          style={{
+            fontSize: "0.75rem",
+            color: "#6B7280",
+            textTransform: "uppercase",
+            marginBottom: "4px",
+          }}
+        >
+          {label}
+        </p>
+        {editing ? (
+          <input
+            value={form[field as keyof typeof form]}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                [field]: e.target.value,
+              }))
+            }
+            style={{
+              border: "1px solid #5B50F0",
+              borderRadius: "6px",
+              padding: "6px 10px",
+              width: "100%",
+              fontSize: "0.95rem",
+            }}
+          />
+        ) : (
+          <p>{value || "Non renseigné"}</p>
+        )}
+      </div>
+    );
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("profiles").upsert({
+        id: userId,
+        prenom: form.prenom,
+        nom: form.nom,
+        telephone: form.telephone,
+        assureur_principal: form.assureur_principal,
+        adresse: form.adresse,
+        numero_contrat: form.numero_contrat,
+        email_contact: form.email_contact,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (error) throw error;
+
+      // Sync avec la table dossiers
+      if (form.nom || form.prenom) {
+        await supabase
+          .from("dossiers")
+          .update({
+            nom_assure: form.nom,
+            prenom_assure: form.prenom,
+            assureur: form.assureur_principal,
+          })
+          .eq("user_id", userId);
+      }
+
+      setProfile((prev: any) => ({ ...prev, ...form }));
+      setEditing(false);
+      setSuccessMsg("Profil mis à jour");
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err: any) {
+      setError("Erreur : " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   try {
-    if (loading)
-      return <div style={{ padding: "40px", textAlign: "center" }}>Chargement...</div>;
+    if (loading) return <div style={{ padding: "40px", textAlign: "center" }}>Chargement...</div>;
 
     if (error)
       return (
@@ -67,6 +164,24 @@ function ProfilUtilisateur() {
 
     return (
       <div style={{ padding: "40px", maxWidth: "900px" }}>
+        {successMsg && (
+          <div
+            style={{
+              position: "fixed",
+              top: "20px",
+              right: "20px",
+              background: "#D4EDDA",
+              border: "1px solid #C3E6CB",
+              color: "#155724",
+              padding: "12px 20px",
+              borderRadius: "8px",
+              zIndex: 1000,
+              fontWeight: 500,
+            }}
+          >
+            ✓ {successMsg}
+          </div>
+        )}
         <button
           onClick={() => navigate({ to: "/admin/utilisateurs" })}
           style={{
@@ -98,32 +213,67 @@ function ProfilUtilisateur() {
             marginBottom: "24px",
           }}
         >
-          <h2 style={{ fontWeight: 600, marginBottom: "16px" }}>Informations</h2>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "16px",
+            }}
+          >
+            <h2 style={{ fontWeight: 600, marginBottom: 0 }}>Informations</h2>
+            {!editing ? (
+              <button
+                onClick={() => setEditing(true)}
+                style={{
+                  background: "white",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: "8px",
+                  padding: "8px 16px",
+                  cursor: "pointer",
+                }}
+              >
+                ✏️ Modifier
+              </button>
+            ) : (
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  style={{
+                    background: "#5B50F0",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "8px 16px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {saving ? "Sauvegarde..." : "✓ Sauvegarder"}
+                </button>
+                <button
+                  onClick={() => setEditing(false)}
+                  style={{
+                    background: "white",
+                    border: "1px solid #E5E7EB",
+                    borderRadius: "8px",
+                    padding: "8px 16px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Annuler
+                </button>
+              </div>
+            )}
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-            <div>
-              <p style={{ fontSize: "0.75rem", color: "#6B7280", textTransform: "uppercase" }}>
-                Prénom
-              </p>
-              <p>{profile?.prenom || "Non renseigné"}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: "0.75rem", color: "#6B7280", textTransform: "uppercase" }}>
-                Nom
-              </p>
-              <p>{profile?.nom || "Non renseigné"}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: "0.75rem", color: "#6B7280", textTransform: "uppercase" }}>
-                Téléphone
-              </p>
-              <p>{profile?.telephone || "Non renseigné"}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: "0.75rem", color: "#6B7280", textTransform: "uppercase" }}>
-                Assureur
-              </p>
-              <p>{profile?.assureur_principal || "Non renseigné"}</p>
-            </div>
+            <Field label="Prénom" value={form.prenom} field="prenom" />
+            <Field label="Nom" value={form.nom} field="nom" />
+            <Field label="Téléphone" value={form.telephone} field="telephone" />
+            <Field label="Assureur" value={form.assureur_principal} field="assureur_principal" />
+            <Field label="Adresse" value={form.adresse} field="adresse" />
+            <Field label="Numéro de contrat" value={form.numero_contrat} field="numero_contrat" />
+            <Field label="Email contact" value={form.email_contact} field="email_contact" />
           </div>
         </div>
 
@@ -183,4 +333,3 @@ function ProfilUtilisateur() {
     );
   }
 }
-
