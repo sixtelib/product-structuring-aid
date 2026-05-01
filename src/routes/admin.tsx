@@ -74,6 +74,7 @@ function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  console.log("AdminLayout render, pathname:", pathname);
 
   useEffect(() => {
     if (loading) return;
@@ -98,16 +99,29 @@ function AdminLayout() {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) {
+  const isAdmin = roles.includes("admin");
+  if (loading)
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-9 w-9 animate-spin rounded-full border-2 border-border border-t-primary" />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+        }}
+      >
+        Chargement...
       </div>
     );
+
+  // Ne pas retourner null si pas admin pendant une navigation - attendre que loading soit false
+  if (!loading && (!user || !isAdmin)) {
+    navigate({ to: "/login" });
+    return null;
   }
 
-  const isAdmin = roles.includes("admin");
-  if (!user || !isAdmin) return null;
+  // Pendant la navigation, afficher le layout même si user n'est pas encore chargé
+  if (!user) return <div style={{ minHeight: "100vh", background: "#F8F9FF" }} />;
 
   const navItems = [
     { to: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },

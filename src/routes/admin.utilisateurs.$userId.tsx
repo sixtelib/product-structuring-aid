@@ -10,10 +10,10 @@ export const Route = createFileRoute("/admin/utilisateurs/$userId")({
 function ProfilUtilisateur() {
   const { userId } = Route.useParams();
   const navigate = useNavigate();
-  const [dossiers, setDossiers] = useState<any[]>([]);
-  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [dossiers, setDossiers] = useState<any[]>([]);
 
   useEffect(() => {
     let isMounted = true;
