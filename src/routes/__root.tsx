@@ -16,6 +16,74 @@ const asyncCssActivationScript = `(function(){
   });
 })();`;
 
+export function RootErrorFallback({ error }: { error: Error }) {
+  const isModuleError =
+    error?.message?.includes("dynamically imported") ||
+    error?.message?.includes("Failed to fetch") ||
+    error?.message?.includes("Loading chunk") ||
+    error?.message?.includes("Unexpected token");
+
+  useEffect(() => {
+    if (isModuleError) {
+      const timer = setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isModuleError]);
+
+  if (isModuleError) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          background: "#F8F9FF",
+          gap: "16px",
+        }}
+      >
+        <div style={{ fontSize: "2rem" }}>⟳</div>
+        <p style={{ color: "#6B7280", fontSize: "1rem" }}>Rechargement en cours...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        background: "#F8F9FF",
+        gap: "16px",
+      }}
+    >
+      <p style={{ color: "#EF4444" }}>Une erreur est survenue</p>
+      <button
+        type="button"
+        onClick={() => {
+          window.location.href = "/";
+        }}
+        style={{
+          background: "#5B50F0",
+          color: "white",
+          border: "none",
+          padding: "10px 20px",
+          borderRadius: "8px",
+          cursor: "pointer",
+        }}
+      >
+        Retour à l'accueil
+      </button>
+    </div>
+  );
+}
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
