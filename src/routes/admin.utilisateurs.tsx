@@ -619,9 +619,21 @@ function AdminUtilisateursPage() {
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap gap-2">
                           <button
-                            type="button"
-                            onClick={() => navigate({ to: "/admin/utilisateurs/$userId", params: { userId: u.id } })}
-                            className="rounded-lg bg-[#F3F4F6] px-3 py-2 text-sm font-medium text-[#111827] hover:bg-[#E5E7EB]"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate({
+                                to: "/admin/utilisateurs/$userId",
+                                params: { userId: u.id },
+                              });
+                            }}
+                            style={{
+                              background: "white",
+                              border: "1px solid #E5E7EB",
+                              borderRadius: "8px",
+                              padding: "6px 14px",
+                              cursor: "pointer",
+                              fontSize: "0.875rem",
+                            }}
                           >
                             Voir profil
                           </button>
