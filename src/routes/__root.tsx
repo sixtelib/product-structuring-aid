@@ -1,6 +1,8 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 
@@ -110,6 +112,48 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED") {
+        console.log("Token rafraîchi automatiquement");
+      }
+
+      if (event === "SIGNED_OUT") {
+        const path = window.location.pathname;
+        const publicPaths = [
+          "/",
+          "/login",
+          "/auth",
+          "/reset-password",
+          "/onboarding",
+          "/comment-ca-marche",
+          "/tarifs",
+          "/faq",
+          "/a-propos",
+          "/guides",
+          "/sinistres",
+          "/experts",
+        ];
+
+        const isPublic = publicPaths.some(
+          (p) =>
+            path === p ||
+            path.startsWith("/guides/") ||
+            path.startsWith("/sinistres/") ||
+            path.startsWith("/experts/"),
+        );
+
+        if (!isPublic) {
+          window.location.href = "/login";
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <AuthProvider>
       <Outlet />

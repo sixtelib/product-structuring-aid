@@ -18,7 +18,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { formatDocumentStatusDb } from "@/lib/client-dashboard-ui";
 
 export const Route = createFileRoute("/admin/utilisateurs/$userId")({
-  component: AdminUtilisateurDetailPage,
+  component: AdminUtilisateurProfil,
 });
 
 type DossierRow = Tables<"dossiers"> & {
@@ -106,7 +106,7 @@ function infoCardClass() {
   return "rounded-[12px] bg-white p-6 shadow-[0_1px_8px_rgba(0,0,0,0.06)] sm:p-[24px]";
 }
 
-function AdminUtilisateurDetailPage() {
+function AdminUtilisateurProfil() {
   const { userId } = Route.useParams();
   const navigate = useNavigate();
 
@@ -740,7 +740,9 @@ function AdminUtilisateurDetailPage() {
               </span>
             </div>
             <div className="sm:col-span-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Adresse</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Adresse
+              </p>
               {editing ? (
                 <textarea
                   value={form.adresse}
@@ -768,7 +770,9 @@ function AdminUtilisateurDetailPage() {
               )}
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Numéro de contrat</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Numéro de contrat
+              </p>
               {editing ? (
                 <input
                   value={form.numero_contrat}
@@ -795,7 +799,9 @@ function AdminUtilisateurDetailPage() {
               )}
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Assureur principal</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Assureur principal
+              </p>
               {editing ? (
                 <input
                   value={form.assureur_principal}
