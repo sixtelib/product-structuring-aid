@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Award, Target, TrendingUp, UserPlus, X } from "lucide-react";
@@ -62,7 +62,8 @@ function normalizeStatut(s: string | null | undefined) {
 
 function isStatutActif(statut: string | null | undefined) {
   const s = normalizeStatut(statut);
-  if (s.includes("gagn") || s.includes("perdu") || s.includes("refus") || s.includes("echec")) return false;
+  if (s.includes("gagn") || s.includes("perdu") || s.includes("refus") || s.includes("echec"))
+    return false;
   if (s.includes("clotur") || s.includes("clos")) return false;
   return true;
 }
@@ -90,7 +91,11 @@ function amountValue(v: unknown) {
 }
 
 function eur(n: number) {
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(n);
 }
 
 function periodStartMs(p: PerfPeriod): number | null {
@@ -114,7 +119,8 @@ function dossierInPeriod(d: DossierMetricRow, p: PerfPeriod) {
 function createEphemeralAuthClient() {
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
-  if (!url || !key) throw new Error("Variables VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY manquantes.");
+  if (!url || !key)
+    throw new Error("Variables VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY manquantes.");
   return createClient<Database>(url, key, {
     auth: {
       persistSession: false,
@@ -147,6 +153,11 @@ function progressTone(pct: number) {
 
 function AdminUtilisateursPage() {
   const navigate = useNavigate();
+  const pathname = useRouterState({
+    select: (s) => s.location.pathname,
+  });
+  const isSubRoute =
+    pathname.includes("/admin/utilisateurs/") && pathname !== "/admin/utilisateurs";
   const [users, setUsers] = useState<any[]>([]);
   const [dossiersAll, setDossiersAll] = useState<DossierMetricRow[]>([]);
   const [expertsProfiles, setExpertsProfiles] = useState<ProfileRow[]>([]);
@@ -167,7 +178,10 @@ function AdminUtilisateursPage() {
 
   const [perfExpert, setPerfExpert] = useState<ExpertTableRow | null>(null);
   const [perfPeriod, setPerfPeriod] = useState<PerfPeriod>("30d");
-  const [objectifsForm, setObjectifsForm] = useState<ObjectifsExpert>({ objectifDossiers: 10, objectifRevenu: 5000 });
+  const [objectifsForm, setObjectifsForm] = useState<ObjectifsExpert>({
+    objectifDossiers: 10,
+    objectifRevenu: 5000,
+  });
 
   const isMountedRef = useRef(true);
 
@@ -216,7 +230,10 @@ function AdminUtilisateursPage() {
       if (!isMountedRef.current) return;
       setUsers(Array.from(map.values()));
 
-      const { data: expertsData, error: expertsErr } = await supabase.from("profiles").select("*").eq("role", "expert");
+      const { data: expertsData, error: expertsErr } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("role", "expert");
       if (!isMountedRef.current) return;
       if (expertsErr) throw new Error(expertsErr.message);
       setExpertsProfiles((expertsData as ProfileRow[]) ?? []);
@@ -287,7 +304,9 @@ function AdminUtilisateursPage() {
 
   const perfMetrics = useMemo(() => {
     if (!perfExpert) return null;
-    const mine = dossiersAll.filter((d) => d.expert_id && String(d.expert_id) === perfExpert.profile.id);
+    const mine = dossiersAll.filter(
+      (d) => d.expert_id && String(d.expert_id) === perfExpert.profile.id,
+    );
     const inP = mine.filter((d) => dossierInPeriod(d, perfPeriod));
     const traites = inP.length;
     const enCours = inP.filter((d) => isStatutActif(d.statut)).length;
@@ -342,7 +361,18 @@ function AdminUtilisateursPage() {
 
       let userId: string | null = null;
 
-      const authAdmin = (supabase.auth as unknown as { admin?: { createUser: (args: Record<string, unknown>) => Promise<{ data: { user: { id: string } | null }; error: { message: string } | null }> } }).admin;
+      const authAdmin = (
+        supabase.auth as unknown as {
+          admin?: {
+            createUser: (
+              args: Record<string, unknown>,
+            ) => Promise<{
+              data: { user: { id: string } | null };
+              error: { message: string } | null;
+            }>;
+          };
+        }
+      ).admin;
 
       if (authAdmin?.createUser) {
         try {
@@ -393,7 +423,9 @@ function AdminUtilisateursPage() {
         phone: telephone.trim() || null,
       };
 
-      const { error: upErr } = await supabase.from("profiles").upsert(upsertRow as never, { onConflict: "id" });
+      const { error: upErr } = await supabase
+        .from("profiles")
+        .upsert(upsertRow as never, { onConflict: "id" });
       if (upErr) throw new Error(upErr.message);
 
       toast.success("Expert créé avec succès");
@@ -428,12 +460,16 @@ function AdminUtilisateursPage() {
   const showAssureTable = filter === "all" || filter === "assure";
   const showExpertTable = filter === "expert";
 
-  return (
+  return isSubRoute ? (
+    <Outlet />
+  ) : (
     <div className="min-h-[60vh] bg-[#F8F9FF]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-[1.75rem] font-bold tracking-tight text-[#111827]">Utilisateurs</h1>
-          <p className="mt-1 text-sm text-[#6B7280]">Gérez les assurés et les experts de la plateforme</p>
+          <p className="mt-1 text-sm text-[#6B7280]">
+            Gérez les assurés et les experts de la plateforme
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -472,8 +508,7 @@ function AdminUtilisateursPage() {
             onClick={() => setCreateModalOpen(true)}
             className="inline-flex items-center gap-2 rounded-full border-2 border-[#5B50F0] bg-white px-4 py-2 text-sm font-semibold text-[#5B50F0] transition-colors hover:bg-[#F5F3FF]"
           >
-            <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
-            + Créer un expert
+            <UserPlus className="h-4 w-4 shrink-0" aria-hidden />+ Créer un expert
           </button>
         </div>
       </div>
@@ -508,8 +543,13 @@ function AdminUtilisateursPage() {
                 </thead>
                 <tbody>
                   {expertTableRows.map((row) => (
-                    <tr key={row.profile.id} className="border-b border-[#F3F4F6] hover:bg-[#F8F9FF]">
-                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{row.nomAffiche}</td>
+                    <tr
+                      key={row.profile.id}
+                      className="border-b border-[#F3F4F6] hover:bg-[#F8F9FF]"
+                    >
+                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
+                        {row.nomAffiche}
+                      </td>
                       <td className="px-5 py-4">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${specialiteBadgeClass(row.specialite)}`}
@@ -517,14 +557,22 @@ function AdminUtilisateursPage() {
                           {row.specialite}
                         </span>
                       </td>
-                      <td className="max-w-[200px] truncate px-5 py-4 text-sm text-[#374151]">{row.email}</td>
-                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{row.dossiersEnCours}</td>
+                      <td className="max-w-[200px] truncate px-5 py-4 text-sm text-[#374151]">
+                        {row.email}
+                      </td>
+                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
+                        {row.dossiersEnCours}
+                      </td>
                       <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
                         {row.tauxSucces == null ? "Non renseigné" : `${row.tauxSucces}%`}
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-[#5B50F0]">{eur(row.revenuGenere)}</td>
+                      <td className="px-5 py-4 text-sm font-semibold text-[#5B50F0]">
+                        {eur(row.revenuGenere)}
+                      </td>
                       <td className="px-5 py-4">
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(row.statut)}`}>
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(row.statut)}`}
+                        >
                           {row.statut}
                         </span>
                       </td>
@@ -574,7 +622,9 @@ function AdminUtilisateursPage() {
                   const nom = String(u.nom ?? "").trim();
                   const dossierName = `${prenom} ${nom}`.trim();
                   const profileFullName =
-                    typeof u.profile?.full_name === "string" ? String(u.profile.full_name).trim() : "";
+                    typeof u.profile?.full_name === "string"
+                      ? String(u.profile.full_name).trim()
+                      : "";
 
                   let primary: string;
                   let subtitle: ReactNode = "Non renseigné";
@@ -589,7 +639,11 @@ function AdminUtilisateursPage() {
                   }
 
                   const createdLabel = u.date_inscription
-                    ? new Date(u.date_inscription).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
+                    ? new Date(u.date_inscription).toLocaleDateString("fr-FR", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
                     : "Non renseigné";
 
                   return (
@@ -602,16 +656,22 @@ function AdminUtilisateursPage() {
                       </td>
 
                       <td className="px-5 py-4">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${roleBadgeClass("assure")}`}>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${roleBadgeClass("assure")}`}
+                        >
                           Assuré
                         </span>
                       </td>
 
                       <td className="px-5 py-4 text-sm text-[#111827]">{createdLabel}</td>
-                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{u.nb_dossiers}</td>
+                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
+                        {u.nb_dossiers}
+                      </td>
 
                       <td className="px-5 py-4">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(u.statut)}`}>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(u.statut)}`}
+                        >
                           {u.statut}
                         </span>
                       </td>
@@ -708,7 +768,9 @@ function AdminUtilisateursPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#6B7280]">Mot de passe temporaire *</label>
+                <label className="text-xs font-semibold text-[#6B7280]">
+                  Mot de passe temporaire *
+                </label>
                 <input
                   required
                   type="password"
@@ -781,7 +843,9 @@ function AdminUtilisateursPage() {
             <div className="pr-10">
               <h2 className="text-xl font-bold text-[#111827]">{perfExpert.nomAffiche}</h2>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${specialiteBadgeClass(perfExpert.specialite)}`}>
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${specialiteBadgeClass(perfExpert.specialite)}`}
+                >
                   {perfExpert.specialite}
                 </span>
                 <span className="text-sm text-[#6B7280]">
@@ -810,7 +874,9 @@ function AdminUtilisateursPage() {
                   type="button"
                   onClick={() => setPerfPeriod(key)}
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    perfPeriod === key ? "bg-[#5B50F0] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
+                    perfPeriod === key
+                      ? "bg-[#5B50F0] text-white"
+                      : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
                   }`}
                 >
                   {label}
@@ -822,28 +888,38 @@ function AdminUtilisateursPage() {
               <div className="rounded-xl border border-[#E5E7EB] bg-[#FAFBFF] p-4">
                 <div className="flex items-center gap-2 text-[#6B7280]">
                   <Award className="h-4 w-4" />
-                  <span className="text-xs font-semibold uppercase tracking-wide">Dossiers traités</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide">
+                    Dossiers traités
+                  </span>
                 </div>
                 <p className="mt-2 text-2xl font-bold text-[#111827]">{perfMetrics.traites}</p>
               </div>
               <div className="rounded-xl border border-[#E5E7EB] bg-[#FAFBFF] p-4">
                 <div className="flex items-center gap-2 text-[#6B7280]">
                   <TrendingUp className="h-4 w-4" />
-                  <span className="text-xs font-semibold uppercase tracking-wide">Dossiers en cours</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide">
+                    Dossiers en cours
+                  </span>
                 </div>
                 <p className="mt-2 text-2xl font-bold text-[#111827]">{perfMetrics.enCours}</p>
               </div>
               <div className="rounded-xl border border-[#E5E7EB] bg-[#FAFBFF] p-4">
                 <div className="flex items-center gap-2 text-[#6B7280]">
                   <Target className="h-4 w-4" />
-                  <span className="text-xs font-semibold uppercase tracking-wide">Taux de succès</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide">
+                    Taux de succès
+                  </span>
                 </div>
-                <p className="mt-2 text-2xl font-bold text-[#111827]">{perfMetrics.taux == null ? "Non renseigné" : `${perfMetrics.taux}%`}</p>
+                <p className="mt-2 text-2xl font-bold text-[#111827]">
+                  {perfMetrics.taux == null ? "Non renseigné" : `${perfMetrics.taux}%`}
+                </p>
               </div>
               <div className="rounded-xl border border-[#E5E7EB] bg-[#FAFBFF] p-4">
                 <div className="flex items-center gap-2 text-[#6B7280]">
                   <UserPlus className="h-4 w-4" />
-                  <span className="text-xs font-semibold uppercase tracking-wide">Revenu généré</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide">
+                    Revenu généré
+                  </span>
                 </div>
                 <p className="mt-2 text-2xl font-bold text-[#5B50F0]">{eur(perfMetrics.revenu)}</p>
               </div>
@@ -859,7 +935,10 @@ function AdminUtilisateursPage() {
                     min={1}
                     value={objectifsForm.objectifDossiers}
                     onChange={(e) =>
-                      setObjectifsForm((o) => ({ ...o, objectifDossiers: Math.max(1, Number(e.target.value) || 1) }))
+                      setObjectifsForm((o) => ({
+                        ...o,
+                        objectifDossiers: Math.max(1, Number(e.target.value) || 1),
+                      }))
                     }
                     className="mt-1 h-10 w-full rounded-lg border border-[#E5E7EB] px-3 text-sm"
                   />
@@ -870,7 +949,8 @@ function AdminUtilisateursPage() {
                     />
                   </div>
                   <p className="mt-1 text-xs text-[#6B7280]">
-                    {perfMetrics.traites} / {objectifsForm.objectifDossiers} ({progressDossiersPct}%)
+                    {perfMetrics.traites} / {objectifsForm.objectifDossiers} ({progressDossiersPct}
+                    %)
                   </p>
                 </div>
                 <div>
@@ -880,7 +960,10 @@ function AdminUtilisateursPage() {
                     min={1}
                     value={objectifsForm.objectifRevenu}
                     onChange={(e) =>
-                      setObjectifsForm((o) => ({ ...o, objectifRevenu: Math.max(1, Number(e.target.value) || 1) }))
+                      setObjectifsForm((o) => ({
+                        ...o,
+                        objectifRevenu: Math.max(1, Number(e.target.value) || 1),
+                      }))
                     }
                     className="mt-1 h-10 w-full rounded-lg border border-[#E5E7EB] px-3 text-sm"
                   />
@@ -891,7 +974,8 @@ function AdminUtilisateursPage() {
                     />
                   </div>
                   <p className="mt-1 text-xs text-[#6B7280]">
-                    {eur(perfMetrics.revenu)} / {eur(objectifsForm.objectifRevenu)} ({progressRevenuPct}%)
+                    {eur(perfMetrics.revenu)} / {eur(objectifsForm.objectifRevenu)} (
+                    {progressRevenuPct}%)
                   </p>
                 </div>
               </div>
@@ -909,17 +993,28 @@ function AdminUtilisateursPage() {
               <h3 className="text-sm font-bold text-[#111827]">Historique dossiers</h3>
               <ul className="mt-3 space-y-3">
                 {perfMetrics.derniers.map((d) => (
-                  <li key={d.id} className="rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3">
+                  <li
+                    key={d.id}
+                    className="rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-sm font-semibold text-[#111827]">{d.type_sinistre ?? "Non renseigné"}</span>
-                      <span className="text-sm font-semibold text-[#5B50F0]">{eur(amountValue(d.montant_estime))}</span>
+                      <span className="text-sm font-semibold text-[#111827]">
+                        {d.type_sinistre ?? "Non renseigné"}
+                      </span>
+                      <span className="text-sm font-semibold text-[#5B50F0]">
+                        {eur(amountValue(d.montant_estime))}
+                      </span>
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       <span className="inline-flex rounded-full bg-[#F3F4F6] px-2 py-0.5 text-xs font-medium text-[#6B7280]">
                         {d.statut ?? "Non renseigné"}
                       </span>
                       <span className="text-xs text-[#6B7280]">
-                        {new Date(d.date_ouverture).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
+                        {new Date(d.date_ouverture).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </span>
                     </div>
                   </li>
