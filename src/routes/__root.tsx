@@ -219,7 +219,30 @@ function RootComponent() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        try {
+          const {
+            data: { session },
+            error,
+          } = await supabase.auth.getSession();
+          if (error || !session) {
+            window.location.reload();
+            return;
+          }
+          await supabase.auth.refreshSession();
+        } catch {
+          window.location.reload();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (

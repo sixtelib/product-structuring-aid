@@ -202,9 +202,18 @@ function AdminDossiersIndexPage() {
 
   const [assignOpen, setAssignOpen] = useState(false);
   const [assigning, setAssigning] = useState<Pick<DossierRow, "id" | "type_sinistre" | "user_id" | "expert_id"> | null>(null);
-  const [expertInput, setExpertInput] = useState("");
+  const [experts, setExperts] = useState<Array<any>>([]);
+  const [expertSearch, setExpertSearch] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedExpertId, setSelectedExpertId] = useState("");
   const [savingAssign, setSavingAssign] = useState(false);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleClick = () => setShowDropdown(false);
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -238,6 +247,27 @@ function AdminDossiersIndexPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!assignOpen) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error: err } = await supabase
+        .from("profiles")
+        .select("id, full_name, prenom, nom, specialite")
+        .eq("role", "expert");
+      if (cancelled) return;
+      if (err) {
+        console.error(err);
+        setExperts([]);
+        return;
+      }
+      setExperts(data ?? []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [assignOpen]);
 
   const hasActiveFilters = useMemo(() => {
     return (
@@ -343,13 +373,15 @@ function AdminDossiersIndexPage() {
     >,
   ) {
     setAssigning(d);
-    setExpertInput("");
+    setExpertSearch("");
+    setShowDropdown(false);
+    setSelectedExpertId("");
     setAssignOpen(true);
   }
 
   async function confirmAssign() {
     if (!assigning?.id) return;
-    const expertId = expertInput.trim();
+    const expertId = selectedExpertId.trim();
     if (!expertId) return;
 
     setSavingAssign(true);
@@ -358,7 +390,9 @@ function AdminDossiersIndexPage() {
       if (uErr) throw uErr;
       setAssignOpen(false);
       setAssigning(null);
-      setExpertInput("");
+      setExpertSearch("");
+      setShowDropdown(false);
+      setSelectedExpertId("");
       await load();
     } catch (e) {
       console.error(e);
@@ -741,7 +775,9 @@ function AdminDossiersIndexPage() {
                 onClick={() => {
                   setAssignOpen(false);
                   setAssigning(null);
-                  setExpertInput("");
+                  setExpertSearch("");
+                  setShowDropdown(false);
+                  setSelectedExpertId("");
                 }}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#F3F4F6] hover:bg-[#E5E7EB]"
               >
@@ -751,12 +787,101 @@ function AdminDossiersIndexPage() {
 
             <div className="mt-6">
               <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">UUID de l'expert</label>
-              <input
-                value={expertInput}
-                onChange={(e) => setExpertInput(e.target.value)}
-                placeholder="ex: 2d3f... (UUID complet)"
-                className="mt-2 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-              />
+              <div style={{ position: "relative" }} onMouseDown={(e) => e.stopPropagation()}>
+                <input
+                  type="text"
+                  placeholder="Rechercher un expert par nom..."
+                  value={expertSearch}
+                  onChange={(e) => {
+                    setExpertSearch(e.target.value);
+                    setShowDropdown(true);
+                    setSelectedExpertId("");
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  style={{
+                    width: "100%",
+                    border: "1px solid #E5E7EB",
+                    borderRadius: "8px",
+                    padding: "10px 16px",
+                    fontSize: "0.95rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+
+                {showDropdown && experts && experts.length > 0 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      background: "white",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: "8px",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                      zIndex: 100,
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                    }}
+                  >
+                    {experts
+                      .filter((e: any) => {
+                        const name = e.full_name || `${e.prenom || ""} ${e.nom || ""}`.trim();
+                        return name.toLowerCase().includes(expertSearch.toLowerCase());
+                      })
+                      .map((expert: any) => {
+                        const name =
+                          expert.full_name ||
+                          `${expert.prenom || ""} ${expert.nom || ""}`.trim() ||
+                          "Expert sans nom";
+                        return (
+                          <div
+                            key={expert.id}
+                            onClick={() => {
+                              setSelectedExpertId(expert.id);
+                              setExpertSearch(name);
+                              setShowDropdown(false);
+                            }}
+                            style={{
+                              padding: "12px 16px",
+                              cursor: "pointer",
+                              borderBottom: "1px solid #F3F4F6",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              background: selectedExpertId === expert.id ? "#F8F7FF" : "white",
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "#F8F7FF")}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = selectedExpertId === expert.id ? "#F8F7FF" : "white";
+                            }}
+                          >
+                            <span style={{ fontWeight: 500 }}>{name}</span>
+                            {expert.specialite && (
+                              <span
+                                style={{
+                                  fontSize: "0.75rem",
+                                  background: "#EEE9FF",
+                                  color: "#5B50F0",
+                                  padding: "2px 8px",
+                                  borderRadius: "999px",
+                                }}
+                              >
+                                {expert.specialite}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    {experts.filter((e: any) => {
+                      const name = e.full_name || `${e.prenom || ""} ${e.nom || ""}`.trim();
+                      return name.toLowerCase().includes(expertSearch.toLowerCase());
+                    }).length === 0 && (
+                      <div style={{ padding: "16px", color: "#9CA3AF", textAlign: "center" }}>Aucun expert trouvé</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
@@ -765,7 +890,9 @@ function AdminDossiersIndexPage() {
                 onClick={() => {
                   setAssignOpen(false);
                   setAssigning(null);
-                  setExpertInput("");
+                  setExpertSearch("");
+                  setShowDropdown(false);
+                  setSelectedExpertId("");
                 }}
                 className="rounded-xl bg-[#F3F4F6] px-4 py-2.5 text-sm font-semibold text-[#111827] hover:bg-[#E5E7EB]"
               >
@@ -773,7 +900,7 @@ function AdminDossiersIndexPage() {
               </button>
               <button
                 type="button"
-                disabled={!expertInput.trim() || savingAssign}
+                disabled={!selectedExpertId.trim() || savingAssign}
                 onClick={() => void confirmAssign()}
                 className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow disabled:opacity-60"
               >
