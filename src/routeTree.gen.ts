@@ -63,7 +63,7 @@ import { Route as AdminDossiersIndexRouteImport } from './routes/admin.dossiers.
 import { Route as ExpertDossiersIdRouteImport } from './routes/expert.dossiers.$id'
 import { Route as EspaceDossiersCaseIdRouteImport } from './routes/espace.dossiers.$caseId'
 import { Route as DashboardDossiersIdRouteImport } from './routes/dashboard.dossiers.$id'
-import { Route as AdminUtilisateursUserIdRouteImport } from './routes/admin.utilisateurs.$userId'
+import { Route as AdminUtilisateursUserIdRouteImport } from './routes/admin_.utilisateurs.$userId'
 import { Route as AdminDossiersDossierIdRouteImport } from './routes/admin.dossiers.$dossierId'
 
 const VillesRoute = VillesRouteImport.update({
@@ -344,9 +344,9 @@ const DashboardDossiersIdRoute = DashboardDossiersIdRouteImport.update({
   getParentRoute: () => DashboardRoute,
 } as any)
 const AdminUtilisateursUserIdRoute = AdminUtilisateursUserIdRouteImport.update({
-  id: '/$userId',
-  path: '/$userId',
-  getParentRoute: () => AdminUtilisateursRoute,
+  id: '/admin_/utilisateurs/$userId',
+  path: '/admin/utilisateurs/$userId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminDossiersDossierIdRoute = AdminDossiersDossierIdRouteImport.update({
   id: '/$dossierId',
@@ -383,7 +383,7 @@ export interface FileRoutesByFullPath {
   '/admin/experts': typeof AdminExpertsRoute
   '/admin/facturation': typeof AdminFacturationRoute
   '/admin/reporting': typeof AdminReportingRoute
-  '/admin/utilisateurs': typeof AdminUtilisateursRouteWithChildren
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
@@ -435,7 +435,7 @@ export interface FileRoutesByTo {
   '/admin/experts': typeof AdminExpertsRoute
   '/admin/facturation': typeof AdminFacturationRoute
   '/admin/reporting': typeof AdminReportingRoute
-  '/admin/utilisateurs': typeof AdminUtilisateursRouteWithChildren
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
@@ -494,7 +494,7 @@ export interface FileRoutesById {
   '/admin/experts': typeof AdminExpertsRoute
   '/admin/facturation': typeof AdminFacturationRoute
   '/admin/reporting': typeof AdminReportingRoute
-  '/admin/utilisateurs': typeof AdminUtilisateursRouteWithChildren
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
@@ -517,7 +517,7 @@ export interface FileRoutesById {
   '/guides/': typeof GuidesIndexRoute
   '/sinistres/': typeof SinistresIndexRoute
   '/admin/dossiers/$dossierId': typeof AdminDossiersDossierIdRoute
-  '/admin/utilisateurs/$userId': typeof AdminUtilisateursUserIdRoute
+  '/admin_/utilisateurs/$userId': typeof AdminUtilisateursUserIdRoute
   '/dashboard/dossiers/$id': typeof DashboardDossiersIdRoute
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
@@ -687,7 +687,7 @@ export interface FileRouteTypes {
     | '/guides/'
     | '/sinistres/'
     | '/admin/dossiers/$dossierId'
-    | '/admin/utilisateurs/$userId'
+    | '/admin_/utilisateurs/$userId'
     | '/dashboard/dossiers/$id'
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
@@ -719,6 +719,7 @@ export interface RootRouteChildren {
   SinistresRoute: typeof SinistresRouteWithChildren
   TarifsRoute: typeof TarifsRoute
   VillesRoute: typeof VillesRoute
+  AdminUtilisateursUserIdRoute: typeof AdminUtilisateursUserIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1101,12 +1102,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardDossiersIdRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/admin/utilisateurs/$userId': {
-      id: '/admin/utilisateurs/$userId'
-      path: '/$userId'
+    '/admin_/utilisateurs/$userId': {
+      id: '/admin_/utilisateurs/$userId'
+      path: '/admin/utilisateurs/$userId'
       fullPath: '/admin/utilisateurs/$userId'
       preLoaderRoute: typeof AdminUtilisateursUserIdRouteImport
-      parentRoute: typeof AdminUtilisateursRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/dossiers/$dossierId': {
       id: '/admin/dossiers/$dossierId'
@@ -1132,23 +1133,12 @@ const AdminDossiersRouteWithChildren = AdminDossiersRoute._addFileChildren(
   AdminDossiersRouteChildren,
 )
 
-interface AdminUtilisateursRouteChildren {
-  AdminUtilisateursUserIdRoute: typeof AdminUtilisateursUserIdRoute
-}
-
-const AdminUtilisateursRouteChildren: AdminUtilisateursRouteChildren = {
-  AdminUtilisateursUserIdRoute: AdminUtilisateursUserIdRoute,
-}
-
-const AdminUtilisateursRouteWithChildren =
-  AdminUtilisateursRoute._addFileChildren(AdminUtilisateursRouteChildren)
-
 interface AdminRouteChildren {
   AdminDossiersRoute: typeof AdminDossiersRouteWithChildren
   AdminExpertsRoute: typeof AdminExpertsRoute
   AdminFacturationRoute: typeof AdminFacturationRoute
   AdminReportingRoute: typeof AdminReportingRoute
-  AdminUtilisateursRoute: typeof AdminUtilisateursRouteWithChildren
+  AdminUtilisateursRoute: typeof AdminUtilisateursRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -1157,7 +1147,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminExpertsRoute: AdminExpertsRoute,
   AdminFacturationRoute: AdminFacturationRoute,
   AdminReportingRoute: AdminReportingRoute,
-  AdminUtilisateursRoute: AdminUtilisateursRouteWithChildren,
+  AdminUtilisateursRoute: AdminUtilisateursRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -1293,6 +1283,7 @@ const rootRouteChildren: RootRouteChildren = {
   SinistresRoute: SinistresRouteWithChildren,
   TarifsRoute: TarifsRoute,
   VillesRoute: VillesRoute,
+  AdminUtilisateursUserIdRoute: AdminUtilisateursUserIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

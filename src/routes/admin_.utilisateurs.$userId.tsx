@@ -1,11 +1,13 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-export const Route = createFileRoute("/admin/utilisateurs/$userId")({
+export const Route = createFileRoute(
+  '/admin_/utilisateurs/$userId'
+)({
   component: ProfilUtilisateur,
-});
+})
 
 function ProfilUtilisateur() {
   const { userId } = Route.useParams();
@@ -52,7 +54,8 @@ function ProfilUtilisateur() {
   }, [userId]);
 
   try {
-    if (loading) return <div style={{ padding: "40px", textAlign: "center" }}>Chargement...</div>;
+    if (loading)
+      return <div style={{ padding: "40px", textAlign: "center" }}>Chargement...</div>;
 
     if (error)
       return (
@@ -180,3 +183,4 @@ function ProfilUtilisateur() {
     );
   }
 }
+
