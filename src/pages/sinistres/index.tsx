@@ -60,12 +60,12 @@ export function SinistresIndexPage() {
 
       <section className="bg-background">
         <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-wrap gap-[24px]">
             {sinistres.map((s) => (
               <Link
                 key={s.to}
                 to={s.to}
-                className="group flex items-start justify-between gap-4 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] p-6 transition-colors hover:border-[#5B50F0]"
+                className="group flex min-w-0 flex-[1_1_100%] items-start justify-between gap-4 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] p-6 transition-colors hover:border-[#5B50F0] md:min-w-[300px] md:max-w-[calc(50%-12px)] md:flex-[1_1_calc(50%-12px)]"
               >
                 <div className="flex items-start gap-4">
                   <span className="text-2xl leading-none" aria-hidden>

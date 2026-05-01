@@ -194,6 +194,36 @@ function AdminLayout() {
         })}
       </nav>
 
+      <a
+        href="/expert"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          margin: "0 12px 8px",
+          padding: "10px 16px",
+          background: "rgba(91, 80, 240, 0.15)",
+          border: "1px solid rgba(91, 80, 240, 0.3)",
+          borderRadius: "8px",
+          color: "#A89FF5",
+          fontSize: "0.875rem",
+          fontWeight: 500,
+          textDecoration: "none",
+          cursor: "pointer",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(91, 80, 240, 0.25)";
+          e.currentTarget.style.color = "white";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(91, 80, 240, 0.15)";
+          e.currentTarget.style.color = "#A89FF5";
+        }}
+      >
+        <span>⚡</span>
+        Vue expert
+      </a>
+
       <div className="border-t border-white/10 p-4">
         <p className="truncate text-xs text-[#9CA3AF]">{user.email}</p>
         <button

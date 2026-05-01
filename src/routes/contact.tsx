@@ -58,10 +58,10 @@ function ContactPage() {
                 Par email
               </p>
               <a
-                href="mailto:contact@recours.fr"
+                href="mailto:contact@vertual.fr"
                 className="mt-1 block text-sm text-foreground hover:text-primary"
               >
-                contact@recours.fr
+                contact@vertual.fr
               </a>
             </div>
             <div className="rounded-xl border border-border bg-card p-6">
@@ -144,10 +144,11 @@ function ContactPage() {
                     required
                     className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                   >
-                    <option value="">,  Choisir , </option>
-                    <option>Question sur un dossier en cours</option>
-                    <option>Sinistre complexe / partenariat</option>
+                    <option value="">Choisir un sujet</option>
+                    <option>Devenir expert partenaire</option>
+                    <option>Partenariat / B2B</option>
                     <option>Presse</option>
+                    <option>Question générale</option>
                     <option>Autre</option>
                   </select>
                 </div>

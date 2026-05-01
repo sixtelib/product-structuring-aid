@@ -378,12 +378,12 @@ function HomePage() {
               </p>
             </div>
           </FadeInUp>
-          <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-14 grid grid-cols-1 items-stretch gap-[24px] min-[480px]:grid-cols-2 md:grid-cols-4">
             {steps.map((s, idx) => {
               const Icon = s.icon;
               return (
-                <FadeInUp key={s.title} delay={0.1 * (idx + 1)}>
-                  <div className="rounded-2xl bg-white p-8 shadow-[0_4px_24px_rgba(91,80,240,0.08)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_8px_40px_rgba(91,80,240,0.15)]">
+                <FadeInUp key={s.title} delay={0.1 * (idx + 1)} className="h-full">
+                  <div className="flex h-full flex-col rounded-2xl bg-white p-8 shadow-[0_4px_24px_rgba(91,80,240,0.08)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_8px_40px_rgba(91,80,240,0.15)]">
                     <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
                       <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
                     </span>

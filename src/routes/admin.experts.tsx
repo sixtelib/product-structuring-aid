@@ -9,20 +9,25 @@ export const Route = createFileRoute("/admin/experts")({
 
 type DossierRow = Tables<"dossiers">;
 
-type ExpertRow = {
-  expertId: string;
-  inProgress: number;
+type ExpertDataRow = {
+  id: string;
+  nom: string;
+  specialite: string | null;
+  enCours: number;
   total: number;
-  closed: number;
-  won: number;
-  successRate?: number; // 0..1
-  revenueWon: number;
+  gagnes: number;
+  clotures: number;
+  revenu: number;
   revenueLost: number;
+  successRate?: number;
 };
 
 function AdminExpertsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expertProfiles, setExpertProfiles] = useState<
+    Array<Pick<Tables<"profiles">, "id" | "full_name" | "prenom" | "nom" | "specialite" | "telephone">>
+  >([]);
   const [dossiers, setDossiers] = useState<
     Array<
       Pick<
@@ -48,22 +53,27 @@ function AdminExpertsPage() {
       setError(null);
 
       try {
-        const { data, error: err } = await supabase
-          .from("dossiers")
-          .select(
-            "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur",
-          )
-          .not("expert_id", "is", null);
+        const [dossiersRes, profilesRes] = await Promise.all([
+          supabase
+            .from("dossiers")
+            .select(
+              "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur",
+            ),
+          supabase.from("profiles").select("id, full_name, prenom, nom, specialite, telephone").eq("role", "expert"),
+        ]);
 
         if (!isMounted) return;
-        if (err) throw err;
+        if (dossiersRes.error) throw dossiersRes.error;
+        if (profilesRes.error) throw profilesRes.error;
         if (!isMounted) return;
-        setDossiers((data ?? []) as any);
+        setDossiers((dossiersRes.data ?? []) as any);
+        setExpertProfiles((profilesRes.data ?? []) as any);
       } catch (e) {
         if (!isMounted) return;
         console.error(e);
         setError(e instanceof Error ? e.message : "Erreur de chargement.");
         setDossiers([]);
+        setExpertProfiles([]);
       } finally {
         if (!isMounted) return;
         setLoading(false);
@@ -101,12 +111,10 @@ function AdminExpertsPage() {
   }
 
   const stats = useMemo(() => {
-    const expertIds = new Set<string>();
     let inProgress = 0;
     let revenue = 0;
 
     dossiers.forEach((d) => {
-      if (d.expert_id) expertIds.add(String(d.expert_id));
       const st = normalizeStatut(d.statut);
       if (st === "en_cours" || st === "en cours" || st.includes("en_cours")) inProgress += 1;
 
@@ -115,61 +123,70 @@ function AdminExpertsPage() {
     });
 
     return {
-      activeExperts: expertIds.size,
+      activeExperts: expertProfiles?.length ?? 0,
       inProgress,
       revenue,
     };
-  }, [dossiers]);
+  }, [dossiers, expertProfiles]);
 
-  const expertsTable = useMemo(() => {
-    const byExpert = new Map<string, ExpertRow>();
+  const expertsData = useMemo(() => {
+    return (expertProfiles ?? []).map((profile) => {
+      const expertDossiers = dossiers?.filter((d) => d.expert_id && String(d.expert_id) === String(profile.id)) ?? [];
 
-    dossiers.forEach((d) => {
-      const expertId = d.expert_id ? String(d.expert_id) : "";
-      if (!expertId) return;
+      const enCours = expertDossiers.filter((d) => {
+        const s = normalizeStatut(d.statut);
+        return s === "en_cours" || s === "en_analyse" || s === "en analyse" || s.includes("en_analyse");
+      }).length;
 
-      const st = normalizeStatut(d.statut);
-      const isInProgress = st === "en_cours" || st === "en cours" || st.includes("en_cours");
-      const isWon = st.includes("gagn");
-      const isLost = st.includes("perdu") || st.includes("refus") || st.includes("echec");
-      const isClosed = st.includes("clotur") || isWon || isLost;
-      const fee = amount(d.montant_estime) * 0.1;
+      const clotures = expertDossiers.filter((d) => {
+        const s = normalizeStatut(d.statut);
+        return s.includes("clotur") || s.includes("gagn") || s.includes("perdu");
+      }).length;
 
-      const row =
-        byExpert.get(expertId) ??
-        ({
-          expertId,
-          inProgress: 0,
-          total: 0,
-          closed: 0,
-          won: 0,
-          revenueWon: 0,
-          revenueLost: 0,
-        } satisfies ExpertRow);
+      const gagnes = expertDossiers.filter((d) => normalizeStatut(d.statut).includes("gagn")).length;
 
-      row.total += 1;
-      if (isInProgress) row.inProgress += 1;
-      if (isClosed) row.closed += 1;
-      if (isWon) {
-        row.won += 1;
-        row.revenueWon += fee;
-      }
-      if (isLost) row.revenueLost += fee;
+      const revenu = expertDossiers
+        .filter((d) => normalizeStatut(d.statut).includes("gagn"))
+        .reduce((sum, d) => sum + amount(d.montant_estime) * 0.1, 0);
 
-      byExpert.set(expertId, row);
+      const revenueLost = expertDossiers
+        .filter((d) => {
+          const s = normalizeStatut(d.statut);
+          return s.includes("perdu") || s.includes("refus") || s.includes("echec");
+        })
+        .reduce((sum, d) => sum + amount(d.montant_estime) * 0.1, 0);
+
+      const nom =
+        (profile.full_name && profile.full_name.trim()) ||
+        `${profile.prenom || ""} ${profile.nom || ""}`.trim() ||
+        "Expert sans nom";
+
+      return {
+        id: profile.id,
+        nom,
+        specialite: profile.specialite,
+        enCours,
+        total: expertDossiers.length,
+        gagnes,
+        clotures,
+        revenu,
+        revenueLost,
+        successRate: clotures > 0 ? gagnes / clotures : undefined,
+      } satisfies ExpertDataRow;
     });
+  }, [expertProfiles, dossiers]);
 
-    const rows = Array.from(byExpert.values()).map((r) => ({
-      ...r,
-      successRate: r.closed > 0 ? r.won / r.closed : undefined,
-    }));
-
-    rows.sort((a, b) => (b.revenueWon + b.revenueLost) - (a.revenueWon + a.revenueLost));
-    return rows;
-  }, [dossiers]);
+  const expertsDataSorted = useMemo(() => {
+    return [...expertsData].sort((a, b) => b.revenu + b.revenueLost - (a.revenu + a.revenueLost));
+  }, [expertsData]);
 
   const expertNameById = useMemo(() => {
     const map = new Map<string, string>();
+    expertProfiles.forEach((p) => {
+      const nom =
+        (p.full_name && p.full_name.trim()) || `${p.prenom || ""} ${p.nom || ""}`.trim() || "Expert sans nom";
+      map.set(p.id, nom);
+    });
     dossiers.forEach((d) => {
       if (!d.expert_id) return;
       const id = String(d.expert_id);
@@ -178,7 +195,7 @@ function AdminExpertsPage() {
       if (label) map.set(id, label);
     });
     return map;
-  }, [dossiers]);
+  }, [dossiers, expertProfiles]);
 
   function expertLabel(expertId: string) {
     return expertNameById.get(expertId) ?? "Non assigné";
@@ -246,8 +263,8 @@ function AdminExpertsPage() {
           </div>
         ) : error ? (
           <div className="p-6 text-sm text-destructive">Erreur de chargement : {error}</div>
-        ) : dossiers.length === 0 ? (
-          <div className="p-6 text-sm text-[#6B7280]">Aucun expert assigné pour le moment</div>
+        ) : expertProfiles.length === 0 ? (
+          <div className="p-6 text-sm text-[#6B7280]">Aucun expert enregistré pour le moment</div>
         ) : (
           <div className="w-full overflow-x-auto">
             <table className="min-w-full border-collapse">
@@ -264,16 +281,16 @@ function AdminExpertsPage() {
               </thead>
 
               <tbody>
-                {expertsTable.map((ex) => {
+                {expertsDataSorted.map((ex) => {
                   const rateLabel =
                     ex.successRate == null ? "Non renseigné" : `${Math.round(ex.successRate * 100)}%`;
 
                   return (
-                    <tr key={ex.expertId} className="border-b border-[#F3F4F6] hover:bg-[#F8F9FF]">
+                    <tr key={ex.id} className="border-b border-[#F3F4F6] hover:bg-[#F8F9FF]">
                       <td className="px-5 py-4">
-                        <p className="text-sm font-semibold text-[#111827]">{expertLabel(ex.expertId)}</p>
+                        <p className="text-sm font-semibold text-[#111827]">{ex.nom}</p>
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{ex.inProgress}</td>
+                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{ex.enCours}</td>
                       <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{ex.total}</td>
                       <td className="px-5 py-4">
                         {ex.successRate == null ? (
@@ -284,13 +301,13 @@ function AdminExpertsPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{eur(ex.revenueWon)}</td>
+                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{eur(ex.revenu)}</td>
                       <td className="px-5 py-4 text-sm font-semibold text-red-700">{eur(ex.revenueLost)}</td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap gap-2">
                           <button
                             type="button"
-                            onClick={() => window.alert(`Détail expert : ${expertLabel(ex.expertId)}`)}
+                            onClick={() => window.alert(`Détail expert : ${ex.nom}`)}
                             className="rounded-lg bg-[#F3F4F6] px-3 py-2 text-sm font-medium text-[#111827] hover:bg-[#E5E7EB]"
                           >
                             Voir détail

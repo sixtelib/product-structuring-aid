@@ -10,6 +10,22 @@ export const Route = createFileRoute("/admin/dossiers/")({
 
 type DossierRow = Tables<"dossiers">;
 
+/** Champs chargés pour la liste admin (certaines colonnes peuvent ne pas être dans le client types généré). */
+type AdminDossierListRow = {
+  id: string;
+  user_id: string;
+  expert_id: string | null;
+  statut: string | null;
+  type_sinistre: string | null;
+  date_ouverture: string | null;
+  montant_estime: number | null;
+  nom_assure: string | null;
+  prenom_assure: string | null;
+  nom_expert: string | null;
+  prenom_expert: string | null;
+  assureur_nom: string | null;
+};
+
 type StatusFilter = "all" | "en_cours" | "en_analyse" | "cloture" | "gagne" | "perdu";
 
 type TypeFilter =
@@ -42,8 +58,8 @@ const TYPE_OPTIONS: Array<{ value: TypeFilter; label: string }> = [
 
 type AppliedFilters = {
   client: string;
-  expert: string;
-  assureur: string;
+  expertIds: string[];
+  assureurs: string[];
   type: TypeFilter;
   statut: StatusFilter;
   dateFrom: string;
@@ -57,6 +73,13 @@ function normalize(s: string | null | undefined) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+}
+
+function filterExpertDisplayName(p: { id: string; full_name: string | null; prenom: string | null; nom: string | null }) {
+  const fn = (p.full_name ?? "").trim();
+  if (fn) return fn;
+  const n = [p.prenom, p.nom].filter(Boolean).join(" ").trim();
+  return n || shortId(p.id);
 }
 
 function amountValue(v: unknown) {
@@ -142,7 +165,7 @@ function Select({
         onChange={(e) => onChange(e.target.value)}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
-        className="h-11 w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 pr-9 text-sm font-medium text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+        className="h-10 w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] pr-9 text-[0.875rem] font-medium text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -160,29 +183,14 @@ function AdminDossiersIndexPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dossiers, setDossiers] = useState<
-    Array<
-      Pick<
-        DossierRow,
-        | "id"
-        | "user_id"
-        | "expert_id"
-        | "statut"
-        | "type_sinistre"
-        | "date_ouverture"
-        | "montant_estime"
-        | "nom_assure"
-        | "prenom_assure"
-        | "nom_expert"
-        | "prenom_expert"
-        | "assureur"
-      >
-    >
-  >([]);
+  const [dossiers, setDossiers] = useState<AdminDossierListRow[]>([]);
 
   const [clientQuery, setClientQuery] = useState("");
-  const [expertQuery, setExpertQuery] = useState("");
-  const [assureurQuery, setAssureurQuery] = useState("");
+  const [selectedExperts, setSelectedExperts] = useState<string[]>([]);
+  const [selectedAssureurs, setSelectedAssureurs] = useState<string[]>([]);
+  const [showExpertDropdown, setShowExpertDropdown] = useState(false);
+  const [showAssureurDropdown, setShowAssureurDropdown] = useState(false);
+  const [filterExpertProfiles, setFilterExpertProfiles] = useState<Array<{ id: string; full_name: string | null; prenom: string | null; nom: string | null }>>([]);
   const [typeDraft, setTypeDraft] = useState<TypeFilter>("all");
   const [statusDraft, setStatusDraft] = useState<StatusFilter>("all");
   const [dateFromDraft, setDateFromDraft] = useState("");
@@ -190,8 +198,8 @@ function AdminDossiersIndexPage() {
 
   const [applied, setApplied] = useState<AppliedFilters>({
     client: "",
-    expert: "",
-    assureur: "",
+    expertIds: [],
+    assureurs: [],
     type: "all",
     statut: "all",
     dateFrom: "",
@@ -201,7 +209,12 @@ function AdminDossiersIndexPage() {
   const [page, setPage] = useState(1);
 
   const [assignOpen, setAssignOpen] = useState(false);
-  const [assigning, setAssigning] = useState<Pick<DossierRow, "id" | "type_sinistre" | "user_id" | "expert_id"> | null>(null);
+  const [assigning, setAssigning] = useState<
+    Pick<
+      AdminDossierListRow,
+      "id" | "type_sinistre" | "user_id" | "expert_id" | "nom_assure" | "prenom_assure" | "nom_expert" | "prenom_expert"
+    > | null
+  >(null);
   const [experts, setExperts] = useState<Array<any>>([]);
   const [expertSearch, setExpertSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -210,7 +223,11 @@ function AdminDossiersIndexPage() {
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleClick = () => setShowDropdown(false);
+    const handleClick = () => {
+      setShowDropdown(false);
+      setShowExpertDropdown(false);
+      setShowAssureurDropdown(false);
+    };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
@@ -219,18 +236,28 @@ function AdminDossiersIndexPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: err } = await supabase
-        .from("dossiers")
-        .select(
-          "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur",
-        )
-        .order("date_ouverture", { ascending: false });
-      if (err) throw err;
-      setDossiers((data ?? []) as any);
+      const [dRes, eRes] = await Promise.all([
+        supabase
+          .from("dossiers")
+          .select(
+            "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur_nom",
+          )
+          .order("date_ouverture", { ascending: false }),
+        supabase.from("profiles").select("id, full_name, prenom, nom").eq("role", "expert"),
+      ]);
+      if (dRes.error) throw dRes.error;
+      setDossiers((dRes.data ?? []) as unknown as AdminDossierListRow[]);
+      if (eRes.error) {
+        console.error(eRes.error);
+        setFilterExpertProfiles([]);
+      } else {
+        setFilterExpertProfiles((eRes.data ?? []) as any);
+      }
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "Erreur de chargement.");
       setDossiers([]);
+      setFilterExpertProfiles([]);
     } finally {
       setLoading(false);
     }
@@ -272,8 +299,8 @@ function AdminDossiersIndexPage() {
   const hasActiveFilters = useMemo(() => {
     return (
       Boolean(applied.client.trim()) ||
-      Boolean(applied.expert.trim()) ||
-      Boolean(applied.assureur.trim()) ||
+      applied.expertIds.length > 0 ||
+      applied.assureurs.length > 0 ||
       applied.type !== "all" ||
       applied.statut !== "all" ||
       Boolean(applied.dateFrom) ||
@@ -281,11 +308,18 @@ function AdminDossiersIndexPage() {
     );
   }, [applied]);
 
+  const assureursUniques = useMemo(() => {
+    const s = new Set<string>();
+    dossiers.forEach((d) => {
+      const a = (d.assureur_nom ?? "").toString().trim();
+      if (a) s.add(a);
+    });
+    return Array.from(s).sort((a, b) => a.localeCompare(b, "fr"));
+  }, [dossiers]);
+
   const filtered = useMemo(() => {
     const out = dossiers.filter((d) => {
       const clientQ = normalize(applied.client);
-      const expertQ = normalize(applied.expert);
-      const assureurQ = normalize(applied.assureur);
 
       if (clientQ) {
         const id8 = String(d.id ?? "").slice(0, 8);
@@ -293,14 +327,15 @@ function AdminDossiersIndexPage() {
         if (!hay.includes(clientQ)) return false;
       }
 
-      if (expertQ) {
-        const hay = `${normalize(d.nom_expert)} ${normalize(d.prenom_expert)} ${normalize(d.expert_id)}`;
-        if (!hay.includes(expertQ)) return false;
-      }
+      const expertMatch =
+        applied.expertIds.length === 0 ||
+        (d.expert_id != null && applied.expertIds.includes(String(d.expert_id)));
 
-      if (assureurQ) {
-        if (!normalize(d.assureur).includes(assureurQ)) return false;
-      }
+      const assureurMatch =
+        applied.assureurs.length === 0 ||
+        (d.assureur_nom != null && applied.assureurs.includes(String(d.assureur_nom).trim()));
+
+      if (!expertMatch || !assureurMatch) return false;
 
       if (applied.type !== "all" && typeKey(d.type_sinistre) !== applied.type) return false;
       if (!statusMatchesFilter(d.statut, applied.statut)) return false;
@@ -357,7 +392,7 @@ function AdminDossiersIndexPage() {
     try {
       const { error: uErr } = await supabase.from("dossiers").update({ statut: newStatut }).eq("id", dossierId);
       if (uErr) throw uErr;
-      setDossiers((prev) => prev.map((d) => (d.id === dossierId ? ({ ...d, statut: newStatut } as any) : d)));
+      setDossiers((prev) => prev.map((d) => (d.id === dossierId ? { ...d, statut: newStatut } : d)));
     } catch (e) {
       console.error(e);
       window.alert(e instanceof Error ? e.message : "Impossible de changer le statut.");
@@ -368,7 +403,7 @@ function AdminDossiersIndexPage() {
 
   function openAssign(
     d: Pick<
-      DossierRow,
+      AdminDossierListRow,
       "id" | "type_sinistre" | "user_id" | "expert_id" | "nom_assure" | "prenom_assure" | "nom_expert" | "prenom_expert"
     >,
   ) {
@@ -418,41 +453,141 @@ function AdminDossiersIndexPage() {
         </span>
       </div>
 
-      <section className="mt-5 rounded-xl bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
-        <div className="flex items-center gap-2.5 border-b border-[#E5E7EB] pb-4">
-          <Search className="h-5 w-5 text-[#5B50F0]" aria-hidden />
-          <h2 className="text-base font-semibold text-[#111827]">Recherche</h2>
+      <section className="mt-5 rounded-xl bg-white p-4 shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
+        <div className="border-b border-[#E5E7EB] pb-3">
+          <div className="mb-3 flex items-center gap-2.5">
+            <Search className="h-5 w-5 shrink-0 text-[#5B50F0]" aria-hidden />
+            <h2 className="text-[0.95rem] font-semibold text-[#111827]">Recherche</h2>
+          </div>
         </div>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">Client</label>
             <input
               value={clientQuery}
               onChange={(e) => setClientQuery(e.target.value)}
               placeholder="Nom, prénom ou numéro de dossier"
-              className="mt-2 h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+              className="mt-2 h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] text-[0.875rem] text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
             />
           </div>
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">Expert</label>
-            <input
-              value={expertQuery}
-              onChange={(e) => setExpertQuery(e.target.value)}
-              placeholder="Nom ou prénom de l'expert"
-              className="mt-2 h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-            />
+            <div className="relative mt-2">
+              <button
+                type="button"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={() => {
+                  setShowExpertDropdown((v) => !v);
+                  setShowAssureurDropdown(false);
+                }}
+                className="flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] text-left text-[0.875rem] font-medium text-[#111827] outline-none hover:bg-[#FAFAFA] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+                aria-expanded={showExpertDropdown}
+                aria-haspopup="listbox"
+              >
+                <span>
+                  Expert :{" "}
+                  {selectedExperts.length === 0
+                    ? "Tous"
+                    : `${selectedExperts.length} sélectionné${selectedExperts.length > 1 ? "s" : ""}`}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden />
+              </button>
+              {showExpertDropdown ? (
+                <div
+                  role="listbox"
+                  className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  {filterExpertProfiles.length === 0 ? (
+                    <p className="px-4 py-3 text-[0.875rem] text-[#6B7280]">Aucun expert</p>
+                  ) : (
+                    filterExpertProfiles.map((ex) => {
+                      const checked = selectedExperts.includes(ex.id);
+                      return (
+                        <label
+                          key={ex.id}
+                          className="flex cursor-pointer items-center gap-3 text-[0.875rem] text-[#111827] hover:bg-[#F9FAFB]"
+                          style={{ padding: "10px 16px" }}
+                        >
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 shrink-0 rounded border-[#E5E7EB] text-[#5B50F0] focus:ring-[#5B50F0]"
+                            checked={checked}
+                            onChange={() =>
+                              setSelectedExperts((prev) =>
+                                prev.includes(ex.id) ? prev.filter((x) => x !== ex.id) : [...prev, ex.id],
+                              )
+                            }
+                          />
+                          <span className="min-w-0 flex-1">{filterExpertDisplayName(ex)}</span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">Assureur</label>
-            <input
-              value={assureurQuery}
-              onChange={(e) => setAssureurQuery(e.target.value)}
-              placeholder="AXA, MAAF, Allianz..."
-              className="mt-2 h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-            />
+            <div className="relative mt-2">
+              <button
+                type="button"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={() => {
+                  setShowAssureurDropdown((v) => !v);
+                  setShowExpertDropdown(false);
+                }}
+                className="flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] text-left text-[0.875rem] font-medium text-[#111827] outline-none hover:bg-[#FAFAFA] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+                aria-expanded={showAssureurDropdown}
+                aria-haspopup="listbox"
+              >
+                <span>
+                  Assureur :{" "}
+                  {selectedAssureurs.length === 0
+                    ? "Tous"
+                    : `${selectedAssureurs.length} sélectionné${selectedAssureurs.length > 1 ? "s" : ""}`}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden />
+              </button>
+              {showAssureurDropdown ? (
+                <div
+                  role="listbox"
+                  className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  {assureursUniques.length === 0 ? (
+                    <p className="px-4 py-3 text-[0.875rem] text-[#6B7280]">Aucun assureur</p>
+                  ) : (
+                    assureursUniques.map((nom) => {
+                      const checked = selectedAssureurs.includes(nom);
+                      return (
+                        <label
+                          key={nom}
+                          className="flex cursor-pointer items-center gap-3 text-[0.875rem] text-[#111827] hover:bg-[#F9FAFB]"
+                          style={{ padding: "10px 16px" }}
+                        >
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 shrink-0 rounded border-[#E5E7EB] text-[#5B50F0] focus:ring-[#5B50F0]"
+                            checked={checked}
+                            onChange={() =>
+                              setSelectedAssureurs((prev) =>
+                                prev.includes(nom) ? prev.filter((x) => x !== nom) : [...prev, nom],
+                              )
+                            }
+                          />
+                          <span className="min-w-0 flex-1">{nom}</span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div>
@@ -486,35 +621,37 @@ function AdminDossiersIndexPage() {
                 type="date"
                 value={dateFromDraft}
                 onChange={(e) => setDateFromDraft(e.target.value)}
-                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+                className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] text-[0.875rem] text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
                 aria-label="Du"
               />
               <input
                 type="date"
                 value={dateToDraft}
                 onChange={(e) => setDateToDraft(e.target.value)}
-                className="h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+                className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] text-[0.875rem] text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
                 aria-label="Au"
               />
             </div>
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-end gap-3">
+        <div className="mt-4 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={() => {
               setClientQuery("");
-              setExpertQuery("");
-              setAssureurQuery("");
+              setSelectedExperts([]);
+              setSelectedAssureurs([]);
+              setShowExpertDropdown(false);
+              setShowAssureurDropdown(false);
               setTypeDraft("all");
               setStatusDraft("all");
               setDateFromDraft("");
               setDateToDraft("");
               setApplied({
                 client: "",
-                expert: "",
-                assureur: "",
+                expertIds: [],
+                assureurs: [],
                 type: "all",
                 statut: "all",
                 dateFrom: "",
@@ -530,8 +667,8 @@ function AdminDossiersIndexPage() {
             onClick={() =>
               setApplied({
                 client: clientQuery,
-                expert: expertQuery,
-                assureur: assureurQuery,
+                expertIds: [...selectedExperts],
+                assureurs: [...selectedAssureurs],
                 type: typeDraft,
                 statut: statusDraft,
                 dateFrom: dateFromDraft,
@@ -635,7 +772,9 @@ function AdminDossiersIndexPage() {
                           </span>
                         </td>
 
-                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{d.assureur ? d.assureur : "Non renseigné"}</td>
+                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
+                          {d.assureur_nom ? d.assureur_nom : "Non renseigné"}
+                        </td>
 
                         <td className="px-5 py-4">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(d.statut)}`}>

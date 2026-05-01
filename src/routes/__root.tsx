@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 
+import "../main";
 import appCss from "../styles.css?url";
 
 const GOOGLE_FONT_STYLESHEET =
@@ -16,70 +17,22 @@ const asyncCssActivationScript = `(function(){
   });
 })();`;
 
-export function RootErrorFallback({ error }: { error: Error }) {
-  const isModuleError =
-    error?.message?.includes("dynamically imported") ||
-    error?.message?.includes("Failed to fetch") ||
-    error?.message?.includes("Loading chunk") ||
-    error?.message?.includes("Unexpected token");
-
+export function RootErrorFallback({ error: _error }: { error: Error }) {
   useEffect(() => {
-    if (isModuleError) {
-      const timer = setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isModuleError]);
-
-  if (isModuleError) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh",
-          background: "#F8F9FF",
-          gap: "16px",
-        }}
-      >
-        <div style={{ fontSize: "2rem" }}>⟳</div>
-        <p style={{ color: "#6B7280", fontSize: "1rem" }}>Rechargement en cours...</p>
-      </div>
-    );
-  }
+    window.location.reload();
+  }, []);
 
   return (
     <div
       style={{
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         minHeight: "100vh",
         background: "#F8F9FF",
-        gap: "16px",
       }}
     >
-      <p style={{ color: "#EF4444" }}>Une erreur est survenue</p>
-      <button
-        type="button"
-        onClick={() => {
-          window.location.href = "/";
-        }}
-        style={{
-          background: "#5B50F0",
-          color: "white",
-          border: "none",
-          padding: "10px 20px",
-          borderRadius: "8px",
-          cursor: "pointer",
-        }}
-      >
-        Retour à l'accueil
-      </button>
+      <p style={{ color: "#9CA3AF" }}>Chargement...</p>
     </div>
   );
 }
@@ -219,28 +172,7 @@ function RootComponent() {
       }
     });
 
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible") {
-        try {
-          const {
-            data: { session },
-            error,
-          } = await supabase.auth.getSession();
-          if (error || !session) {
-            window.location.reload();
-            return;
-          }
-          await supabase.auth.refreshSession();
-        } catch {
-          window.location.reload();
-        }
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
       subscription.unsubscribe();
     };
   }, []);
