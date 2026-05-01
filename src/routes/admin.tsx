@@ -29,8 +29,11 @@ class AdminErrorBoundary extends Component<
   }
 
   static getDerivedStateFromError(error: unknown) {
+    console.error("AdminErrorBoundary caught:", error);
     const err =
-      error instanceof Error ? error : new Error(typeof error === "string" ? error : "Erreur inconnue");
+      error instanceof Error
+        ? error
+        : new Error(typeof error === "string" ? error : "Erreur inconnue");
     return { hasError: true, error: err };
   }
 
@@ -45,7 +48,9 @@ class AdminErrorBoundary extends Component<
             minHeight: "100vh",
           }}
         >
-          <p style={{ color: "#EF4444", marginBottom: "16px" }}>Erreur : {this.state.error?.message}</p>
+          <p style={{ color: "#EF4444", marginBottom: "16px" }}>
+            Erreur : {this.state.error?.message}
+          </p>
           <button
             type="button"
             onClick={() => this.setState({ hasError: false, error: null })}
@@ -85,16 +90,19 @@ function AdminLayout() {
   }, [loading, roles, user, navigate]);
 
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = "/login";
-        return;
-      }
-      await supabase.auth.refreshSession();
-    }, 10 * 60 * 1000); // 10 minutes
+    const interval = setInterval(
+      async () => {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) {
+          window.location.href = "/login";
+          return;
+        }
+        await supabase.auth.refreshSession();
+      },
+      10 * 60 * 1000,
+    ); // 10 minutes
 
     return () => clearInterval(interval);
   }, []);
@@ -250,4 +258,3 @@ function AdminLayout() {
     </div>
   );
 }
-
