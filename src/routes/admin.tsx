@@ -11,6 +11,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { setImpersonationFromProfile } from "@/lib/expertImpersonation";
 import { useAuth } from "@/lib/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +78,11 @@ function AdminLayout() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expertPreviewOpen, setExpertPreviewOpen] = useState(false);
+  const [expertPreviewList, setExpertPreviewList] = useState<
+    Array<{ id: string; full_name: string | null; specialite: string | null }>
+  >([]);
+  const [expertPreviewLoading, setExpertPreviewLoading] = useState(false);
 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   console.log("AdminLayout render, pathname:", pathname);
@@ -88,6 +94,35 @@ function AdminLayout() {
       navigate({ to: "/dashboard", replace: true });
     }
   }, [loading, roles, user, navigate]);
+
+  useEffect(() => {
+    if (!expertPreviewOpen) return;
+    let cancelled = false;
+    setExpertPreviewLoading(true);
+    void supabase
+      .from("profiles")
+      .select("id, full_name, specialite")
+      .eq("role", "expert")
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error(error);
+          setExpertPreviewList([]);
+        } else {
+          setExpertPreviewList(
+            (data ?? []) as Array<{
+              id: string;
+              full_name: string | null;
+              specialite: string | null;
+            }>,
+          );
+        }
+        setExpertPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [expertPreviewOpen]);
 
   useEffect(() => {
     const interval = setInterval(
@@ -194,8 +229,9 @@ function AdminLayout() {
         })}
       </nav>
 
-      <a
-        href="/expert"
+      <button
+        type="button"
+        onClick={() => setExpertPreviewOpen(true)}
         style={{
           display: "flex",
           alignItems: "center",
@@ -208,8 +244,9 @@ function AdminLayout() {
           color: "#A89FF5",
           fontSize: "0.875rem",
           fontWeight: 500,
-          textDecoration: "none",
           cursor: "pointer",
+          width: "calc(100% - 24px)",
+          textAlign: "left",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "rgba(91, 80, 240, 0.25)";
@@ -222,7 +259,7 @@ function AdminLayout() {
       >
         <span>⚡</span>
         Vue expert
-      </a>
+      </button>
 
       <div className="border-t border-white/10 p-4">
         <p className="truncate text-xs text-[#9CA3AF]">{user.email}</p>
@@ -240,6 +277,59 @@ function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FF]">
+      {expertPreviewOpen ? (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[85vh] w-full max-w-lg overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] px-5 py-4">
+              <p className="text-sm font-semibold text-[#111827]">Vue expert — choisir un profil</p>
+              <button
+                type="button"
+                aria-label="Fermer"
+                onClick={() => setExpertPreviewOpen(false)}
+                className="rounded-lg p-2 text-[#6B7280] hover:bg-[#F3F4F6]"
+              >
+                <X className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto px-2 py-2">
+              {expertPreviewLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E5E7EB] border-t-[#5B50F0]" />
+                </div>
+              ) : expertPreviewList.length === 0 ? (
+                <p className="px-3 py-8 text-center text-sm text-[#6B7280]">Aucun expert.</p>
+              ) : (
+                expertPreviewList.map((ex) => {
+                  const label = (ex.full_name ?? "").trim() || ex.id.slice(0, 8);
+                  return (
+                    <button
+                      key={ex.id}
+                      type="button"
+                      onClick={() => {
+                        setImpersonationFromProfile(ex);
+                        setExpertPreviewOpen(false);
+                        void navigate({
+                          to: "/expert/dossiers",
+                          search: { impersonate: ex.id },
+                        });
+                      }}
+                      className="flex w-full flex-col gap-1 rounded-lg px-3 py-3 text-left hover:bg-[#F8F9FF]"
+                    >
+                      <span className="text-sm font-semibold text-[#111827]">{label}</span>
+                      {ex.specialite ? (
+                        <span className="text-xs text-[#6B7280]">{ex.specialite}</span>
+                      ) : (
+                        <span className="text-xs text-[#9CA3AF]">—</span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex min-h-screen">
         {!isMobile ? (
           <div className="sticky top-0 h-screen shrink-0">{Sidebar}</div>

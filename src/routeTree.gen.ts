@@ -51,6 +51,8 @@ import { Route as GuidesExpertAssureRouteImport } from './routes/guides.expert-a
 import { Route as GuidesDelaiPrescriptionAssuranceRouteImport } from './routes/guides.delai-prescription-assurance'
 import { Route as GuidesDeclarerSinistreAssuranceRouteImport } from './routes/guides.declarer-sinistre-assurance'
 import { Route as GuidesAssureurRefusePayerRouteImport } from './routes/guides.assureur-refuse-payer'
+import { Route as ExpertProfilRouteImport } from './routes/expert.profil'
+import { Route as ExpertDossiersRouteImport } from './routes/expert.dossiers'
 import { Route as EspaceNouveauRouteImport } from './routes/espace.nouveau'
 import { Route as EspaceDossiersRouteImport } from './routes/espace.dossiers'
 import { Route as DashboardNouveauRouteImport } from './routes/dashboard.nouveau'
@@ -59,6 +61,7 @@ import { Route as AdminReportingRouteImport } from './routes/admin.reporting'
 import { Route as AdminFacturationRouteImport } from './routes/admin.facturation'
 import { Route as AdminExpertsRouteImport } from './routes/admin.experts'
 import { Route as AdminDossiersRouteImport } from './routes/admin.dossiers'
+import { Route as ExpertDossiersIndexRouteImport } from './routes/expert.dossiers.index'
 import { Route as AdminDossiersIndexRouteImport } from './routes/admin.dossiers.index'
 import { Route as ExpertDossiersIdRouteImport } from './routes/expert.dossiers.$id'
 import { Route as EspaceDossiersCaseIdRouteImport } from './routes/espace.dossiers.$caseId'
@@ -283,6 +286,16 @@ const GuidesAssureurRefusePayerRoute =
     path: '/assureur-refuse-payer',
     getParentRoute: () => GuidesRoute,
   } as any)
+const ExpertProfilRoute = ExpertProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => ExpertRoute,
+} as any)
+const ExpertDossiersRoute = ExpertDossiersRouteImport.update({
+  id: '/dossiers',
+  path: '/dossiers',
+  getParentRoute: () => ExpertRoute,
+} as any)
 const EspaceNouveauRoute = EspaceNouveauRouteImport.update({
   id: '/nouveau',
   path: '/nouveau',
@@ -323,15 +336,20 @@ const AdminDossiersRoute = AdminDossiersRouteImport.update({
   path: '/dossiers',
   getParentRoute: () => AdminRoute,
 } as any)
+const ExpertDossiersIndexRoute = ExpertDossiersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ExpertDossiersRoute,
+} as any)
 const AdminDossiersIndexRoute = AdminDossiersIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminDossiersRoute,
 } as any)
 const ExpertDossiersIdRoute = ExpertDossiersIdRouteImport.update({
-  id: '/dossiers/$id',
-  path: '/dossiers/$id',
-  getParentRoute: () => ExpertRoute,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ExpertDossiersRoute,
 } as any)
 const EspaceDossiersCaseIdRoute = EspaceDossiersCaseIdRouteImport.update({
   id: '/$caseId',
@@ -387,6 +405,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/expert/dossiers': typeof ExpertDossiersRouteWithChildren
+  '/expert/profil': typeof ExpertProfilRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/declarer-sinistre-assurance': typeof GuidesDeclarerSinistreAssuranceRoute
   '/guides/delai-prescription-assurance': typeof GuidesDelaiPrescriptionAssuranceRoute
@@ -411,6 +431,7 @@ export interface FileRoutesByFullPath {
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
   '/admin/dossiers/': typeof AdminDossiersIndexRoute
+  '/expert/dossiers/': typeof ExpertDossiersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -439,6 +460,7 @@ export interface FileRoutesByTo {
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/expert/profil': typeof ExpertProfilRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/declarer-sinistre-assurance': typeof GuidesDeclarerSinistreAssuranceRoute
   '/guides/delai-prescription-assurance': typeof GuidesDelaiPrescriptionAssuranceRoute
@@ -463,6 +485,7 @@ export interface FileRoutesByTo {
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
   '/admin/dossiers': typeof AdminDossiersIndexRoute
+  '/expert/dossiers': typeof ExpertDossiersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -498,6 +521,8 @@ export interface FileRoutesById {
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/expert/dossiers': typeof ExpertDossiersRouteWithChildren
+  '/expert/profil': typeof ExpertProfilRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/declarer-sinistre-assurance': typeof GuidesDeclarerSinistreAssuranceRoute
   '/guides/delai-prescription-assurance': typeof GuidesDelaiPrescriptionAssuranceRoute
@@ -522,6 +547,7 @@ export interface FileRoutesById {
   '/espace/dossiers/$caseId': typeof EspaceDossiersCaseIdRoute
   '/expert/dossiers/$id': typeof ExpertDossiersIdRoute
   '/admin/dossiers/': typeof AdminDossiersIndexRoute
+  '/expert/dossiers/': typeof ExpertDossiersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -558,6 +584,8 @@ export interface FileRouteTypes {
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/expert/dossiers'
+    | '/expert/profil'
     | '/guides/assureur-refuse-payer'
     | '/guides/declarer-sinistre-assurance'
     | '/guides/delai-prescription-assurance'
@@ -582,6 +610,7 @@ export interface FileRouteTypes {
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
     | '/admin/dossiers/'
+    | '/expert/dossiers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -610,6 +639,7 @@ export interface FileRouteTypes {
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/expert/profil'
     | '/guides/assureur-refuse-payer'
     | '/guides/declarer-sinistre-assurance'
     | '/guides/delai-prescription-assurance'
@@ -634,6 +664,7 @@ export interface FileRouteTypes {
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
     | '/admin/dossiers'
+    | '/expert/dossiers'
   id:
     | '__root__'
     | '/'
@@ -668,6 +699,8 @@ export interface FileRouteTypes {
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/expert/dossiers'
+    | '/expert/profil'
     | '/guides/assureur-refuse-payer'
     | '/guides/declarer-sinistre-assurance'
     | '/guides/delai-prescription-assurance'
@@ -692,6 +725,7 @@ export interface FileRouteTypes {
     | '/espace/dossiers/$caseId'
     | '/expert/dossiers/$id'
     | '/admin/dossiers/'
+    | '/expert/dossiers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1018,6 +1052,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesAssureurRefusePayerRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/expert/profil': {
+      id: '/expert/profil'
+      path: '/profil'
+      fullPath: '/expert/profil'
+      preLoaderRoute: typeof ExpertProfilRouteImport
+      parentRoute: typeof ExpertRoute
+    }
+    '/expert/dossiers': {
+      id: '/expert/dossiers'
+      path: '/dossiers'
+      fullPath: '/expert/dossiers'
+      preLoaderRoute: typeof ExpertDossiersRouteImport
+      parentRoute: typeof ExpertRoute
+    }
     '/espace/nouveau': {
       id: '/espace/nouveau'
       path: '/nouveau'
@@ -1074,6 +1122,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDossiersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/expert/dossiers/': {
+      id: '/expert/dossiers/'
+      path: '/'
+      fullPath: '/expert/dossiers/'
+      preLoaderRoute: typeof ExpertDossiersIndexRouteImport
+      parentRoute: typeof ExpertDossiersRoute
+    }
     '/admin/dossiers/': {
       id: '/admin/dossiers/'
       path: '/'
@@ -1083,10 +1138,10 @@ declare module '@tanstack/react-router' {
     }
     '/expert/dossiers/$id': {
       id: '/expert/dossiers/$id'
-      path: '/dossiers/$id'
+      path: '/$id'
       fullPath: '/expert/dossiers/$id'
       preLoaderRoute: typeof ExpertDossiersIdRouteImport
-      parentRoute: typeof ExpertRoute
+      parentRoute: typeof ExpertDossiersRoute
     }
     '/espace/dossiers/$caseId': {
       id: '/espace/dossiers/$caseId'
@@ -1194,14 +1249,30 @@ const EspaceRouteChildren: EspaceRouteChildren = {
 const EspaceRouteWithChildren =
   EspaceRoute._addFileChildren(EspaceRouteChildren)
 
-interface ExpertRouteChildren {
-  ExpertIndexRoute: typeof ExpertIndexRoute
+interface ExpertDossiersRouteChildren {
   ExpertDossiersIdRoute: typeof ExpertDossiersIdRoute
+  ExpertDossiersIndexRoute: typeof ExpertDossiersIndexRoute
+}
+
+const ExpertDossiersRouteChildren: ExpertDossiersRouteChildren = {
+  ExpertDossiersIdRoute: ExpertDossiersIdRoute,
+  ExpertDossiersIndexRoute: ExpertDossiersIndexRoute,
+}
+
+const ExpertDossiersRouteWithChildren = ExpertDossiersRoute._addFileChildren(
+  ExpertDossiersRouteChildren,
+)
+
+interface ExpertRouteChildren {
+  ExpertDossiersRoute: typeof ExpertDossiersRouteWithChildren
+  ExpertProfilRoute: typeof ExpertProfilRoute
+  ExpertIndexRoute: typeof ExpertIndexRoute
 }
 
 const ExpertRouteChildren: ExpertRouteChildren = {
+  ExpertDossiersRoute: ExpertDossiersRouteWithChildren,
+  ExpertProfilRoute: ExpertProfilRoute,
   ExpertIndexRoute: ExpertIndexRoute,
-  ExpertDossiersIdRoute: ExpertDossiersIdRoute,
 }
 
 const ExpertRouteWithChildren =

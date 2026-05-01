@@ -100,6 +100,15 @@ function AdminIndexPage() {
       .then(({ data }) => setExperts(data ?? []));
   }, []);
 
+  const filteredAssignExperts = useMemo(() => {
+    const q = expertSearch.trim().toLowerCase();
+    if (!q) return experts;
+    return experts.filter((expert: any) => {
+      const name = expert.full_name || `${expert.prenom || ""} ${expert.nom || ""}`.trim() || "";
+      return name.toLowerCase().includes(q);
+    });
+  }, [experts, expertSearch]);
+
   const stats = useMemo(() => {
     const total = dossiers.length;
     const unassigned = dossiers.filter((d) => !d.expert_id).length;
@@ -288,60 +297,63 @@ function AdminIndexPage() {
             </div>
 
             <div className="max-h-[60vh] overflow-auto px-6 py-5">
-              <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">
-                Rechercher un expert
-              </label>
-              <input
-                type="text"
-                value={expertSearch}
-                onChange={(e) => {
-                  setExpertSearch(e.target.value);
-                  setSelectedExpertId("");
-                }}
-                placeholder="Nom, prénom…"
-                className="mt-2 h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-              />
-              {expertSearch.length > 0 && (
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    color: "#6B7280",
+                    textTransform: "uppercase",
+                    display: "block",
+                    marginBottom: "8px",
+                  }}
+                >
+                  SÉLECTIONNER UN EXPERT
+                </label>
+
                 <div
                   style={{
                     border: "1px solid #E5E7EB",
                     borderRadius: "8px",
-                    background: "white",
                     maxHeight: "200px",
                     overflowY: "auto",
-                    marginTop: "4px",
                   }}
                 >
-                  {experts
-                    .filter((e: any) => {
-                      const name = e.full_name || `${e.prenom || ""} ${e.nom || ""}`.trim();
-                      return name.toLowerCase().includes(expertSearch.toLowerCase());
-                    })
-                    .map((expert: any) => {
+                  {experts.length === 0 ? (
+                    <div style={{ padding: "16px", color: "#9CA3AF", textAlign: "center" }}>Aucun expert disponible</div>
+                  ) : filteredAssignExperts.length === 0 ? (
+                    <div style={{ padding: "16px", color: "#9CA3AF", textAlign: "center" }}>Aucun expert trouvé</div>
+                  ) : (
+                    filteredAssignExperts.map((expert: any) => {
                       const name =
-                        expert.full_name || `${expert.prenom || ""} ${expert.nom || ""}`.trim() || "Expert sans nom";
+                        expert.full_name ||
+                        `${expert.prenom || ""} ${expert.nom || ""}`.trim() ||
+                        "Expert sans nom";
                       return (
                         <div
                           key={expert.id}
-                          onClick={() => {
-                            setSelectedExpertId(expert.id);
-                            setExpertSearch(name);
-                          }}
+                          onClick={() => setSelectedExpertId(expert.id)}
                           style={{
                             padding: "12px 16px",
                             cursor: "pointer",
                             borderBottom: "1px solid #F3F4F6",
                             display: "flex",
                             justifyContent: "space-between",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "#F8F7FF";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "white";
+                            alignItems: "center",
+                            background: selectedExpertId === expert.id ? "#EEE9FF" : "white",
                           }}
                         >
-                          <span style={{ fontWeight: 500 }}>{name}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <div
+                              style={{
+                                width: "8px",
+                                height: "8px",
+                                borderRadius: "50%",
+                                background: selectedExpertId === expert.id ? "#5B50F0" : "#E5E7EB",
+                              }}
+                            />
+                            <span style={{ fontWeight: selectedExpertId === expert.id ? 600 : 400 }}>{name}</span>
+                          </div>
                           {expert.specialite && (
                             <span
                               style={{
@@ -357,15 +369,26 @@ function AdminIndexPage() {
                           )}
                         </div>
                       );
-                    })}
-                  {experts.filter((e: any) => {
-                    const name = e.full_name || `${e.prenom || ""} ${e.nom || ""}`.trim();
-                    return name.toLowerCase().includes(expertSearch.toLowerCase());
-                  }).length === 0 && (
-                    <div style={{ padding: "16px", color: "#9CA3AF", textAlign: "center" }}>Aucun expert trouvé</div>
+                    })
                   )}
                 </div>
-              )}
+
+                <input
+                  type="text"
+                  placeholder="Filtrer par nom..."
+                  value={expertSearch}
+                  onChange={(e) => setExpertSearch(e.target.value)}
+                  style={{
+                    width: "100%",
+                    marginTop: "8px",
+                    border: "1px solid #E5E7EB",
+                    borderRadius: "8px",
+                    padding: "8px 12px",
+                    fontSize: "0.875rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-5">

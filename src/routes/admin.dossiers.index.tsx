@@ -125,14 +125,32 @@ function typeBadgeClass(t: TypeFilter) {
   return "bg-[#EDE9FE] text-[#5B50F0]";
 }
 
-function statusBadgeClass(statut: string | null | undefined) {
+/** Libellé + classes Tailwind pour le badge statut (liste admin). */
+function formatStatut(statut: string | null | undefined): { label: string; badgeClass: string } {
   const s = normalize(statut);
-  if (s.includes("gagn")) return "bg-green-50 text-green-700";
-  if (s.includes("perdu") || s.includes("refus") || s.includes("echec")) return "bg-red-50 text-red-700";
-  if (s.includes("analyse")) return "bg-orange-50 text-orange-700";
-  if (s.includes("clotur") || s.includes("clos")) return "bg-[#F3F4F6] text-[#6B7280]";
-  if (s === "en_cours" || s === "en cours" || s.includes("en_cours")) return "bg-blue-50 text-blue-700";
-  return "bg-[#F3F4F6] text-[#6B7280]";
+  if (!s) {
+    return { label: "Non renseigné", badgeClass: "bg-[#F3F4F6] text-[#6B7280]" };
+  }
+  if (s.includes("qualif")) {
+    return { label: "Qualification", badgeClass: "bg-yellow-50 text-yellow-800" };
+  }
+  if (s.includes("analyse")) {
+    return { label: "En analyse", badgeClass: "bg-orange-50 text-orange-700" };
+  }
+  if (s === "en_cours" || s === "en cours" || s.includes("en_cours")) {
+    return { label: "En cours", badgeClass: "bg-blue-50 text-blue-700" };
+  }
+  if (s.includes("gagn")) {
+    return { label: "Gagné", badgeClass: "bg-green-50 text-green-700" };
+  }
+  if (s.includes("perdu") || s.includes("refus") || s.includes("echec")) {
+    return { label: "Perdu", badgeClass: "bg-red-50 text-red-700" };
+  }
+  if (s.includes("clotur") || s.includes("clos")) {
+    return { label: "Clôturé", badgeClass: "bg-[#F3F4F6] text-[#6B7280]" };
+  }
+  const raw = String(statut).trim();
+  return { label: raw || "Non renseigné", badgeClass: "bg-[#F3F4F6] text-[#6B7280]" };
 }
 
 function statusMatchesFilter(statut: string | null | undefined, filter: StatusFilter) {
@@ -220,7 +238,6 @@ function AdminDossiersIndexPage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedExpertId, setSelectedExpertId] = useState("");
   const [savingAssign, setSavingAssign] = useState(false);
-  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleClick = () => {
@@ -384,20 +401,6 @@ function AdminDossiersIndexPage() {
       await navigator.clipboard.writeText(text);
     } catch {
       window.alert("Impossible de copier.");
-    }
-  }
-
-  async function updateStatus(dossierId: string, newStatut: string) {
-    setUpdatingStatusId(dossierId);
-    try {
-      const { error: uErr } = await supabase.from("dossiers").update({ statut: newStatut }).eq("id", dossierId);
-      if (uErr) throw uErr;
-      setDossiers((prev) => prev.map((d) => (d.id === dossierId ? { ...d, statut: newStatut } : d)));
-    } catch (e) {
-      console.error(e);
-      window.alert(e instanceof Error ? e.message : "Impossible de changer le statut.");
-    } finally {
-      setUpdatingStatusId(null);
     }
   }
 
@@ -734,6 +737,7 @@ function AdminDossiersIndexPage() {
                     const typeLabel = TYPE_OPTIONS.find((o) => o.value === t)?.label ?? (d.type_sinistre ?? "Non renseigné");
                     const amt = d.montant_estime == null ? null : amountValue(d.montant_estime);
                     const commission = amt == null ? null : amt * 0.1;
+                    const statutBadge = formatStatut(d.statut);
                     return (
                       <tr
                         key={d.id}
@@ -772,13 +776,19 @@ function AdminDossiersIndexPage() {
                           </span>
                         </td>
 
-                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
-                          {d.assureur_nom ? d.assureur_nom : "Non renseigné"}
+                        <td className="px-5 py-4 text-sm text-[#111827]">
+                          {d.assureur_nom?.trim() ? (
+                            <span className="font-semibold">{d.assureur_nom}</span>
+                          ) : (
+                            <span className="italic text-[#9CA3AF]">Non renseigné</span>
+                          )}
                         </td>
 
                         <td className="px-5 py-4">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(d.statut)}`}>
-                            {d.statut ?? "Non renseigné"}
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statutBadge.badgeClass}`}
+                          >
+                            {statutBadge.label}
                           </span>
                         </td>
 
@@ -801,8 +811,15 @@ function AdminDossiersIndexPage() {
                           )}
                         </td>
 
-                        <td className="px-5 py-4">
-                          <div className="flex flex-wrap items-center gap-2">
+                        <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "8px",
+                              alignItems: "center",
+                              justifyContent: "flex-end",
+                            }}
+                          >
                             {!d.expert_id && (
                               <button
                                 type="button"
@@ -839,23 +856,6 @@ function AdminDossiersIndexPage() {
                               <Eye className="h-4 w-4 text-[#6B7280]" aria-hidden />
                               Voir
                             </button>
-
-                            <div className="min-w-[160px]">
-                              <Select
-                                ariaLabel="Changer le statut"
-                                value={String(d.statut ?? "")}
-                                onChange={(v) => void updateStatus(d.id, v)}
-                                options={[
-                                  { value: "", label: "Sélectionner…" },
-                                  { value: "en_cours", label: "En cours" },
-                                  { value: "en_analyse", label: "En analyse" },
-                                  { value: "cloture", label: "Clôturé" },
-                                  { value: "gagne", label: "Gagné" },
-                                  { value: "perdu", label: "Perdu" },
-                                ]}
-                              />
-                              {updatingStatusId === d.id && <p className="mt-1 text-xs font-medium text-[#6B7280]">Mise à jour…</p>}
-                            </div>
                           </div>
                         </td>
                       </tr>

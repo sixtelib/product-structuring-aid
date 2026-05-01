@@ -1,530 +1,683 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Download, FileText, MessageSquare, Save, Send, Shield } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { ArrowLeft, Download, Eye, FileText, Image as ImageIcon, MessageSquare, Send, Shield, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
 import type { Tables } from "@/integrations/supabase/types";
-import { useDossierSummary } from "@/hooks/useDossierSummary";
+import { useAuth } from "@/lib/auth";
+import { formatDocumentStatusDb } from "@/lib/client-dashboard-ui";
 import { DossierAnalyseIA } from "@/components/DossierAnalyseIA";
+import {
+  getImpersonatedExpertDisplayName,
+  getImpersonatedExpertId,
+  getImpersonatedExpertNomPrenomForDossierFilter,
+} from "@/lib/expertImpersonation";
 
 export const Route = createFileRoute("/expert/dossiers/$id")({
   component: ExpertDossierDetailPage,
 });
 
-type DossierRow = Tables<"dossiers">;
-type DocumentRow = Tables<"documents">;
+type DossierRow = Tables<"dossiers"> & {
+  nom_assure?: string | null;
+  prenom_assure?: string | null;
+  nom_expert?: string | null;
+  prenom_expert?: string | null;
+};
+
+type DocumentRow = Tables<"documents"> & { chemin?: string | null; storage_path?: string | null };
 type MessageRow = Tables<"messages">;
-type ProfileRow = Tables<"profiles">;
+type ProfileRow = Pick<Tables<"profiles">, "full_name" | "email">;
 
-function renderInlineMarkdown(text: string) {
-  const nodes: Array<string | JSX.Element> = [];
-  const re = /\*\*(.+?)\*\*/g;
-  let last = 0;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(text))) {
-    if (match.index > last) nodes.push(text.slice(last, match.index));
-    nodes.push(<strong key={`b-${match.index}`}>{match[1]}</strong>);
-    last = match.index + match[0].length;
-  }
-  if (last < text.length) nodes.push(text.slice(last));
-  return nodes;
+function normalize(s: string | null | undefined) {
+  return (s ?? "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
-function renderMarkdown(text: string) {
-  return text
-    .split(/\r?\n/)
-    .map((raw, idx) => {
-      const line = raw.trimEnd();
-      if (!line.trim()) return null;
-      if (line.trim() === "---") return <hr key={`hr-${idx}`} className="my-3 border-border" />;
-      if (line.startsWith("## ")) {
-        return (
-          <h2 key={`h2-${idx}`} className="mt-4 text-base font-semibold text-foreground">
-            {renderInlineMarkdown(line.slice(3))}
-          </h2>
-        );
-      }
-      return (
-        <p key={`p-${idx}`} className="mt-2 text-sm leading-relaxed text-foreground">
-          {renderInlineMarkdown(line)}
-        </p>
-      );
-    })
-    .filter(Boolean);
+function formatStatut(statut: string): { label: string; bg: string; color: string } {
+  const s = normalize(statut);
+  if (s.includes("qualif")) return { label: "Qualification", bg: "#FEF3C7", color: "#92400E" };
+  if (s.includes("analyse")) return { label: "En analyse", bg: "#FFF3CD", color: "#856404" };
+  if (s.includes("en_cours") || s === "en cours") return { label: "En cours", bg: "#D1ECF1", color: "#0C5460" };
+  if (s.includes("gagn")) return { label: "Gagné", bg: "#D4EDDA", color: "#155724" };
+  if (s.includes("perdu") || s.includes("refus")) return { label: "Perdu", bg: "#F8D7DA", color: "#721C24" };
+  if (s.includes("clotur") || s.includes("clos")) return { label: "Clôturé", bg: "#E2E3E5", color: "#383D41" };
+  const map: Record<string, { label: string; bg: string; color: string }> = {
+    negociation: { label: "Négociation", bg: "#EEE9FF", color: "#5B50F0" },
+    "négociation": { label: "Négociation", bg: "#EEE9FF", color: "#5B50F0" },
+  };
+  return map[statut] ?? { label: statut, bg: "#E2E3E5", color: "#383D41" };
 }
 
-function statusBadge(statut: string) {
-  const bucket =
-    statut === "attente_documents"
-      ? "waiting"
-      : statut === "gagne" || statut === "perdu" || statut === "clos"
-        ? "closed"
-        : "active";
-  if (bucket === "waiting") return { label: "En attente", cls: "bg-accent/10 text-accent" };
-  if (bucket === "closed") return { label: "Clos", cls: "bg-muted text-muted-foreground" };
-  return { label: "En cours", cls: "bg-sky-500/10 text-sky-700" };
-}
-
-function eur(amount: number | string | null | undefined) {
-  const n = amount == null ? 0 : typeof amount === "number" ? amount : Number(amount);
+function eur(n: number | null | undefined) {
+  const v = n == null ? 0 : Number(n);
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(
-    Number.isFinite(n) ? n : 0,
+    Number.isFinite(v) ? v : 0,
   );
+}
+
+function dateFr(d: string | null | undefined) {
+  if (!d) return "Non renseigné";
+  const t = new Date(d);
+  if (Number.isNaN(t.getTime())) return "Non renseigné";
+  return t.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+function timeAgo(dateString: string): string {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffMins < 1) return "à l'instant";
+  if (diffMins < 60) return `il y a ${diffMins} min`;
+  if (diffHours < 24) return `il y a ${diffHours}h`;
+  return `il y a ${diffDays} jour${diffDays > 1 ? "s" : ""}`;
+}
+
+function authorLabel(auteur: string, expertDisplay: string) {
+  if (auteur === "admin") return "Administrateur";
+  if (auteur === "expert") return expertDisplay.trim() || "Expert";
+  if (auteur === "client") return "Assuré";
+  return auteur;
+}
+
+function isStaffMessage(auteur: string) {
+  return auteur === "admin" || auteur === "expert";
+}
+
+function docIcon(nom: string) {
+  const lower = nom.toLowerCase();
+  if (lower.endsWith(".pdf")) return <FileText className="h-5 w-5 shrink-0 text-red-600" aria-hidden />;
+  if (/\.(png|jpg|jpeg|webp|gif)$/i.test(lower)) return <ImageIcon className="h-5 w-5 shrink-0 text-[#5B50F0]" aria-hidden />;
+  return <FileText className="h-5 w-5 shrink-0 text-[#6B7280]" aria-hidden />;
+}
+
+function storagePathFor(doc: DocumentRow): string | null {
+  const chemin = doc.chemin ?? null;
+  const path = chemin ?? doc.storage_path ?? doc.nom;
+  return path && String(path).trim() ? String(path).trim() : null;
+}
+
+function previewKindFromNom(nom: string): "pdf" | "image" | "other" {
+  const lower = nom.toLowerCase();
+  if (lower.endsWith(".pdf")) return "pdf";
+  if (/\.(jpg|jpeg|png|webp)$/i.test(lower)) return "image";
+  return "other";
+}
+
+function cardClass() {
+  return "rounded-[12px] border border-[#E5E7EB] bg-white p-6 shadow-[0_1px_8px_rgba(0,0,0,0.06)]";
+}
+
+class DossierAnalyseIAErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <section className={`${cardClass()} mt-6`}>
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <p className="font-semibold">Analyse IA</p>
+            <p className="mt-1">Une erreur s&apos;est produite dans cette section.</p>
+            <button
+              type="button"
+              className="mt-3 inline-flex rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
+              onClick={() => this.setState({ hasError: false })}
+            >
+              Réessayer
+            </button>
+          </div>
+        </section>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function ExpertDossierDetailPage() {
-  const { id } = Route.useParams();
-  const { user } = useAuth();
+  const { id: dossierId } = Route.useParams();
   const navigate = useNavigate();
+  const { user, isAdmin, isExpert } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [dossier, setDossier] = useState<DossierRow | null>(null);
-  const [assure, setAssure] = useState<ProfileRow | null>(null);
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [mandatDocuments, setMandatDocuments] = useState<DocumentRow[]>([]);
   const [messages, setMessages] = useState<MessageRow[]>([]);
-  const [downloadingPath, setDownloadingPath] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
-  const [sending, setSending] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [savingNotes, setSavingNotes] = useState(false);
+  const [assureProfile, setAssureProfile] = useState<ProfileRow | null>(null);
+  const [selfExpertName, setSelfExpertName] = useState("");
 
-  const summaryInput = useMemo(() => {
-    if (!dossier) return null;
-    return {
-      id: dossier.id,
-      type_sinistre: dossier.type_sinistre,
-      statut: dossier.statut,
-      montant_estime: dossier.montant_estime,
-      description: dossier.description,
-      assureur_nom: dossier.assureur_nom,
-      date_sinistre: dossier.date_sinistre,
-      date_ouverture: dossier.date_ouverture,
-      documents: documents.map((d) => ({ nom: d.nom, statut: d.statut, created_at: d.created_at })),
-    };
-  }, [dossier, documents]);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<DocumentRow | null>(null);
+  const [previewSignedUrl, setPreviewSignedUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
 
-  const { summary, loading: summaryLoading, error: summaryError, generate } = useDossierSummary(summaryInput);
+  const [messageText, setMessageText] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
+  const expertMessageLabel = useMemo(() => {
+    const imp = getImpersonatedExpertDisplayName();
+    if (imp?.trim()) return imp.trim();
+    return selfExpertName.trim() || "Expert";
+  }, [selfExpertName]);
 
-    (async () => {
-      setLoading(true);
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (isAdmin && !getImpersonatedExpertId()) {
+        void navigate({ to: "/admin", replace: true });
+        return;
+      }
+      if (!isAdmin && !isExpert) {
+        void navigate({ to: "/dashboard", replace: true });
+        return;
+      }
 
-      const { data: d, error: dErr } = await supabase
+      const { data: dRow, error: dErr } = await supabase
         .from("dossiers")
         .select("*, analyse_ia, analyse_ia_date")
-        .eq("id", id)
+        .eq("id", dossierId)
         .maybeSingle();
-
-      if (cancelled) return;
-      if (dErr) {
-        toast.error(dErr.message);
+      if (dErr) throw dErr;
+      if (!dRow) {
         setDossier(null);
+        setDocuments([]);
         setMandatDocuments([]);
-        setLoading(false);
+        setMessages([]);
+        setAssureProfile(null);
         return;
       }
-      if (!d) {
-        setDossier(null);
-        setMandatDocuments([]);
-        setLoading(false);
-        return;
+      const d = dRow as DossierRow;
+
+      if (isAdmin) {
+        const imp = getImpersonatedExpertId();
+        const { nom, prenom } = getImpersonatedExpertNomPrenomForDossierFilter();
+        const matchId = imp && d.expert_id === imp;
+        const matchName =
+          nom.trim() !== "" || prenom.trim() !== ""
+            ? String(d.nom_expert ?? "").trim() === nom.trim() && String(d.prenom_expert ?? "").trim() === prenom.trim()
+            : false;
+        if (imp && !matchId && !matchName) {
+          toast.error("Ce dossier n'est pas accessible pour cet aperçu expert.");
+          setDossier(null);
+          setLoading(false);
+          return;
+        }
       }
 
-      setDossier(d as DossierRow);
-      setNotes((d as any).notes_expert ?? "");
+      setDossier(d);
 
-      const [pRes, docRes, msgRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", (d as any).user_id).maybeSingle(),
-        supabase.from("documents").select("*").eq("dossier_id", id).order("created_at", { ascending: false }),
-        supabase.from("messages").select("*").eq("dossier_id", id).order("created_at", { ascending: true }),
+      const [docRes, msgRes] = await Promise.all([
+        supabase.from("documents").select("*").eq("dossier_id", dossierId),
+        supabase.from("messages").select("*").eq("dossier_id", dossierId).order("created_at", { ascending: true }),
       ]);
-
-      if (cancelled) return;
-
-      if (pRes.error) toast.error(pRes.error.message);
-      setAssure((pRes.data as ProfileRow | null) ?? null);
-
-      if (docRes.error) toast.error(docRes.error.message);
       setDocuments((docRes.data as DocumentRow[]) ?? []);
-
-      const { data: mandatRows, error: mandatErr } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("user_id", (d as DossierRow).user_id)
-        .eq("type", "mandat");
-      if (mandatErr) console.error(mandatErr);
-      setMandatDocuments((mandatRows as DocumentRow[]) ?? []);
-
-      if (msgRes.error) toast.error(msgRes.error.message);
       setMessages((msgRes.data as MessageRow[]) ?? []);
 
+      const { data: mandatRows } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("user_id", d.user_id)
+        .eq("type", "mandat");
+      setMandatDocuments((mandatRows as DocumentRow[]) ?? []);
+
+      const aRes = await supabase.from("profiles").select("full_name, email").eq("id", d.user_id).maybeSingle();
+      setAssureProfile((aRes.data as ProfileRow) ?? null);
+
+      if (user?.id && isExpert && !isAdmin) {
+        const pr = await supabase.from("profiles").select("full_name, prenom, nom").eq("id", user.id).maybeSingle();
+        const row = pr.data as { full_name?: string | null; prenom?: string | null; nom?: string | null } | null;
+        if (row) {
+          const nm = (row.full_name ?? "").trim() || `${row.prenom ?? ""} ${row.nom ?? ""}`.trim();
+          setSelfExpertName(nm);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error(e instanceof Error ? e.message : "Impossible de charger le dossier.");
+      setDossier(null);
+    } finally {
       setLoading(false);
-    })();
+    }
+  }, [dossierId, navigate, isAdmin, isExpert, user?.id]);
 
+  useEffect(() => {
+    void loadAll();
+  }, [loadAll]);
+
+  useEffect(() => {
+    const ch = supabase
+      .channel(`expert-messages-${dossierId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `dossier_id=eq.${dossierId}` },
+        (payload) => {
+          const row = payload.new as MessageRow;
+          setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
+        },
+      )
+      .subscribe();
     return () => {
-      cancelled = true;
+      void supabase.removeChannel(ch);
     };
-  }, [id, user?.id]);
-
-  const header = useMemo(() => {
-    if (!dossier) return null;
-    const badge = statusBadge(dossier.statut);
-    return {
-      badge,
-      opened: new Date(dossier.date_ouverture).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" }),
-      amount: eur(dossier.montant_estime),
-    };
-  }, [dossier]);
-
-  const dossierAnalysePayload = useMemo(() => {
-    if (!dossier) return null;
-    const full = (assure?.full_name ?? "").trim();
-    const parts = full.split(/\s+/).filter(Boolean);
-    const prenom_assure = parts.length > 1 ? parts[0] : undefined;
-    const nom_assure = parts.length > 1 ? parts.slice(1).join(" ") : parts[0];
-    return {
-      dossier: {
-        id: dossier.id,
-        type_sinistre: dossier.type_sinistre,
-        montant_estime: Number(dossier.montant_estime),
-        statut: dossier.statut,
-        assureur: dossier.assureur_nom ?? undefined,
-        description: dossier.description ?? undefined,
-        nom_assure: nom_assure ?? undefined,
-        prenom_assure: prenom_assure,
-        analyse_ia: (dossier as any).analyse_ia ?? null,
-        analyse_ia_date: (dossier as any).analyse_ia_date ?? null,
-      },
-      documents: documents.map((d) => ({
-        id: d.id,
-        nom: d.nom,
-        chemin: d.storage_path ?? undefined,
-      })),
-    };
-  }, [dossier, assure, documents]);
-
-  async function sendMessage(e: React.FormEvent) {
-    e.preventDefault();
-    const text = draft.trim();
-    if (!text) return;
-    setSending(true);
-    try {
-      const { data, error } = await supabase
-        .from("messages")
-        .insert({ dossier_id: id, auteur: "expert", contenu: text })
-        .select()
-        .single();
-      if (error) throw error;
-      setDraft("");
-      if (data) setMessages((prev) => [...prev, data as MessageRow]);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Impossible d'envoyer le message.");
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function saveNotes() {
-    if (!dossier) return;
-    setSavingNotes(true);
-    try {
-      const { error } = await supabase.from("dossiers").update({ notes_expert: notes }).eq("id", dossier.id);
-      if (error) throw error;
-      toast.success("Notes sauvegardées.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Impossible de sauvegarder les notes.");
-    } finally {
-      setSavingNotes(false);
-    }
-  }
+  }, [dossierId]);
 
   async function downloadDoc(doc: DocumentRow) {
-    if (!doc.storage_path) {
+    const path = storagePathFor(doc);
+    if (!path) {
       toast.error("Chemin de fichier manquant.");
       return;
     }
-    setDownloadingPath(doc.storage_path);
+    setDownloadingId(doc.id);
     try {
-      const { data, error } = await supabase.storage.from("documents").createSignedUrl(doc.storage_path, 60);
-      if (error || !data?.signedUrl) throw error ?? new Error("Lien indisponible");
-      window.open(data.signedUrl, "_blank");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Impossible de télécharger le document.");
+      const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 3600);
+      if (error || !data?.signedUrl) throw error ?? new Error("Lien indisponible.");
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Téléchargement impossible.");
     } finally {
-      setDownloadingPath(null);
+      setDownloadingId(null);
     }
   }
 
-  return (
-    <div className="mx-auto max-w-6xl space-y-6 px-5 py-10 sm:px-8 sm:py-14">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+  function closePreview() {
+    setPreviewDoc(null);
+    setPreviewSignedUrl(null);
+    setPreviewError(false);
+    setPreviewLoading(false);
+  }
+
+  async function openPreview(doc: DocumentRow) {
+    const path = storagePathFor(doc);
+    if (!path) {
+      toast.error("Chemin de fichier manquant.");
+      return;
+    }
+    setPreviewDoc(doc);
+    setPreviewSignedUrl(null);
+    setPreviewError(false);
+    setPreviewLoading(true);
+    try {
+      const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 3600);
+      if (error || !data?.signedUrl) throw error ?? new Error("signed url");
+      setPreviewSignedUrl(data.signedUrl);
+    } catch {
+      setPreviewError(true);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
+  async function sendMessage() {
+    const text = messageText.trim();
+    if (!text) return;
+    setSendingMessage(true);
+    try {
+      const { error } = await supabase.from("messages").insert({
+        dossier_id: dossierId,
+        auteur: "expert",
+        contenu: text,
+        created_at: new Date().toISOString(),
+      });
+      if (error) throw error;
+      setMessageText("");
+      const { data: msgData, error: qErr } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("dossier_id", dossierId)
+        .order("created_at", { ascending: true });
+      if (qErr) throw qErr;
+      setMessages((msgData as MessageRow[]) ?? []);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Envoi impossible.");
+    } finally {
+      setSendingMessage(false);
+    }
+  }
+
+  async function copyId() {
+    if (!dossier?.id) return;
+    try {
+      await navigator.clipboard.writeText(dossier.id);
+      toast.success("ID copié.");
+    } catch {
+      toast.error("Impossible de copier.");
+    }
+  }
+
+  const commission = useMemo(() => {
+    if (dossier?.montant_estime == null) return null;
+    const n = Number(dossier.montant_estime);
+    if (!Number.isFinite(n)) return null;
+    return n * 0.1;
+  }, [dossier?.montant_estime]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center bg-[#F8F9FF]">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#E5E7EB] border-t-[#5B50F0]" />
+      </div>
+    );
+  }
+
+  if (!dossier) {
+    return (
+      <div className="mx-auto max-w-[1100px] bg-[#F8F9FF] px-4 py-10">
+        <p className="text-sm text-[#6B7280]">Dossier introuvable.</p>
         <button
           type="button"
-          onClick={() => navigate({ to: "/expert" })}
-          className="inline-flex items-center gap-2 rounded-lg border-2 border-border bg-white px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+          onClick={() => void navigate({ to: "/expert/dossiers" })}
+          className="mt-4 text-sm font-semibold text-[#5B50F0] hover:underline"
         >
-          <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-          Retour
+          ← Retour aux dossiers
         </button>
-        <Link
-          to="/dashboard"
-          className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-        >
-          Aller au dashboard client
-        </Link>
       </div>
+    );
+  }
 
-      {loading ? (
-        <div className="flex justify-center py-24">
-          <div className="h-9 w-9 animate-spin rounded-full border-2 border-border border-t-primary" />
-        </div>
-      ) : !dossier || !header ? (
-        <div className="rounded-xl border border-border bg-white p-10 text-center shadow-[var(--shadow-soft)]">
-          <p className="text-sm font-medium text-foreground">Dossier introuvable</p>
-          <p className="mt-2 text-sm text-muted-foreground">Vérifiez l'identifiant ou vos droits d'accès.</p>
-        </div>
-      ) : (
-        <>
-          {/* 1) Header dossier */}
-          <section className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dossier</p>
-                <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{dossier.type_sinistre}</h1>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-semibold ${header.badge.cls}`}>
-                    {header.badge.label}
-                  </span>
-                  <span className="text-sm text-muted-foreground">Ouvert le {header.opened}</span>
-                  <span className="text-sm font-semibold text-foreground">{header.amount}</span>
+  const statutFmt = formatStatut(dossier.statut);
+  const assureurLabel = dossier.assureur_nom ?? (dossier as { assureur?: string | null }).assureur ?? "Non renseigné";
+  const assureNom =
+    dossier.nom_assure || dossier.prenom_assure
+      ? `${dossier.prenom_assure ?? ""} ${dossier.nom_assure ?? ""}`.trim()
+      : assureProfile?.full_name?.trim() || "Inconnu";
+
+  return (
+    <div className="bg-[#F8F9FF] pb-12">
+      {previewDoc ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div role="presentation" className="absolute inset-0 bg-[rgba(0,0,0,0.7)]" onClick={closePreview} />
+          <div className="relative z-10 flex max-h-[90vh] w-[90vw] max-w-[900px] flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#E5E7EB] px-6 py-5">
+              <h2 className="min-w-0 flex-1 break-words pr-2 text-base font-semibold text-[#111827]">{previewDoc.nom}</h2>
+              <button type="button" onClick={closePreview} className="shrink-0 rounded-lg p-2 text-[#6B7280] hover:bg-[#F3F4F6]" aria-label="Fermer">
+                <X className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto p-6">
+              {previewLoading ? (
+                <div className="flex min-h-[200px] flex-col items-center justify-center gap-4 py-12">
+                  <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#E5E7EB] border-t-[#5B50F0]" />
+                  <p className="text-sm font-medium text-[#6B7280]">Chargement…</p>
                 </div>
-              </div>
-
-              <div className="w-full max-w-sm rounded-xl border border-border bg-secondary p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Assuré</p>
-                <p className="mt-2 text-sm font-semibold text-foreground">{assure?.full_name || ", "}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{assure?.id ? `Email : ${assure.id}` : "Email : , "}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{assure?.phone ? `Téléphone : ${assure.phone}` : "Téléphone : , "}</p>
-                {dossier.user_id ? (
+              ) : previewError || !previewSignedUrl ? (
+                <div className="flex flex-col items-center justify-center gap-6 py-8 text-center">
+                  <p className="max-w-md text-sm text-[#374151]">Impossible de charger l&apos;aperçu.</p>
                   <button
                     type="button"
-                    onClick={() =>
-                      navigate({
-                        to: "/admin/utilisateurs/$userId",
-                        params: { userId: String(dossier.user_id) },
-                      })
-                    }
-                    className="mt-3 inline-flex items-center gap-2 rounded-lg border-2 border-primary bg-white px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
+                    onClick={() => void downloadDoc(previewDoc)}
+                    disabled={downloadingId === previewDoc.id}
+                    className="inline-flex items-center gap-2 rounded-[10px] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                    style={{ backgroundColor: "#5B50F0" }}
                   >
-                    Voir profil
+                    <Download className="h-4 w-4" aria-hidden />
+                    Télécharger
                   </button>
-                ) : null}
-              </div>
-            </div>
-          </section>
-
-          {/* Résumé IA */}
-          <section className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
-              <div className="flex items-center gap-2.5">
-                <span className="text-lg" aria-hidden>
-                  ✨
-                </span>
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">Résumé IA</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => void generate()}
-                disabled={summaryLoading || !summaryInput}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow disabled:opacity-60"
-              >
-                {summaryLoading ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground" />
-                    Génération…
-                  </span>
-                ) : (
-                  "✨ Générer le résumé IA"
-                )}
-              </button>
-            </div>
-
-            {summaryError && <p className="mt-4 text-sm text-destructive">{summaryError}</p>}
-
-            {summary && (
-              <div className="mt-5 rounded-xl border border-dashed border-primary bg-[#F5F3FF] p-5">
-                <div className="flex items-start gap-3">
-                  <span className="mt-0.5 text-lg" aria-hidden>
-                    ✨
-                  </span>
-                  <div className="min-w-0 flex-1 text-sm leading-relaxed text-foreground">
-                    {renderMarkdown(summary)}
-                  </div>
                 </div>
-              </div>
-            )}
-          </section>
-
-          {/* Mandat de représentation (hors dossier) */}
-          {mandatDocuments.length > 0 ? (
-            <section className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
-              <div className="flex items-center gap-2.5 border-b border-border pb-4">
-                <Shield className="h-5 w-5 text-primary" aria-hidden />
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">Mandat de représentation</h2>
-              </div>
-              <ul className="mt-4 divide-y divide-border">
-                {mandatDocuments.map((doc) => (
-                  <li key={doc.id} className="flex flex-col gap-3 py-4 first:pt-0 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{doc.nom}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(doc.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                        Signé
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => void downloadDoc(doc)}
-                        disabled={!doc.storage_path || downloadingPath === doc.storage_path}
-                        className="inline-flex items-center gap-2 rounded-lg border-2 border-primary bg-transparent px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 disabled:opacity-50"
-                      >
-                        <Download className="h-4 w-4" />
-                        Télécharger
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
-          {/* 2) Documents */}
-          <section className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
-            <div className="flex items-center gap-2.5 border-b border-border pb-4">
-              <FileText className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">Documents</h2>
-            </div>
-            {documents.length === 0 ? (
-              <p className="mt-6 text-sm text-muted-foreground">Aucun document uploadé.</p>
-            ) : (
-              <ul className="mt-4 divide-y divide-border">
-                {documents.map((doc) => (
-                  <li key={doc.id} className="flex flex-col gap-3 py-4 first:pt-0 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{doc.nom}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(doc.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                        {doc.statut}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => void downloadDoc(doc)}
-                        disabled={!doc.storage_path || downloadingPath === doc.storage_path}
-                        className="inline-flex items-center gap-2 rounded-lg border-2 border-primary bg-transparent px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 disabled:opacity-50"
-                      >
-                        <Download className="h-4 w-4" />
-                        Télécharger
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {/* 3) Messagerie */}
-          <section className="overflow-hidden rounded-xl border border-border bg-white shadow-[var(--shadow-soft)]">
-            <div className="flex items-center gap-2.5 border-b border-border px-6 py-4 sm:px-8">
-              <MessageSquare className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">Messagerie</h2>
-            </div>
-            <div className="max-h-[420px] space-y-4 overflow-y-auto px-6 py-6 sm:px-8">
-              {messages.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">Aucun message.</p>
+              ) : previewKindFromNom(previewDoc.nom) === "pdf" ? (
+                <iframe title={previewDoc.nom} src={previewSignedUrl} className="w-full rounded-lg border-0" style={{ height: "70vh" }} />
+              ) : previewKindFromNom(previewDoc.nom) === "image" ? (
+                <img src={previewSignedUrl} alt={previewDoc.nom} className="mx-auto rounded-lg" style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain" }} />
               ) : (
-                messages.map((m) => {
-                  const mine = m.auteur === "expert";
-                  return (
-                    <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                      <div
-                        className={`max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[70%] ${
-                          mine
-                            ? "bg-primary text-primary-foreground"
-                            : "border border-border bg-secondary text-foreground"
-                        }`}
-                      >
-                        <p className="whitespace-pre-line">{m.contenu}</p>
-                        <p className={`mt-2 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                          {new Date(m.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })
+                <div className="flex flex-col items-center justify-center gap-6 py-8 text-center">
+                  <p className="text-sm text-[#374151]">Aperçu non disponible pour ce type.</p>
+                  <button
+                    type="button"
+                    onClick={() => void downloadDoc(previewDoc)}
+                    disabled={downloadingId === previewDoc.id}
+                    className="inline-flex items-center gap-2 rounded-[10px] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                    style={{ backgroundColor: "#5B50F0" }}
+                  >
+                    <Download className="h-4 w-4" aria-hidden />
+                    Télécharger
+                  </button>
+                </div>
               )}
             </div>
-            <form onSubmit={(e) => void sendMessage(e)} className="flex gap-3 border-t border-border bg-white px-5 py-4 sm:px-8">
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Écrire un message à l'assuré..."
-                className="min-h-10 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/25"
-              />
-              <button
-                type="submit"
-                disabled={sending || !draft.trim()}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow disabled:opacity-45"
-              >
-                <Send className="h-4 w-4" />
-                Envoyer
-              </button>
-            </form>
-          </section>
+          </div>
+        </div>
+      ) : null}
 
-          {dossierAnalysePayload ? (
-            <DossierAnalyseIA dossier={dossierAnalysePayload.dossier} documents={dossierAnalysePayload.documents} />
-          ) : null}
+      <div className="mx-auto max-w-[1100px] px-4 py-6 sm:px-6">
+        <button
+          type="button"
+          onClick={() => void navigate({ to: "/expert/dossiers" })}
+          className="inline-flex items-center gap-2 font-medium text-[#5B50F0] hover:underline"
+          style={{ fontSize: "0.875rem" }}
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+          ← Dossiers
+        </button>
 
-          {/* 4) Notes internes */}
-          <section className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
-            <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Interne</p>
-                <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">Notes internes</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => void saveNotes()}
-                disabled={savingNotes}
-                className="inline-flex items-center gap-2 rounded-lg border-2 border-primary bg-transparent px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                Sauvegarder les notes
-              </button>
+        <header className="mt-6 flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-bold tracking-tight text-[#111827] sm:text-3xl">{assureNom}</h1>
+            <p className="mt-2 text-sm text-[#6B7280]">
+              {dossier.type_sinistre} · Ouvert le {dateFr(dossier.date_ouverture)}
+            </p>
+          </div>
+          <span
+            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+            style={{ backgroundColor: statutFmt.bg, color: statutFmt.color }}
+          >
+            {statutFmt.label}
+          </span>
+        </header>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <section className={cardClass()}>
+            <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">
+              <FileText className="h-5 w-5 text-[#5B50F0]" aria-hidden />
+              <h2 className="text-lg font-semibold text-[#111827]">Détails du dossier</h2>
             </div>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={6}
-              placeholder="Notes visibles uniquement par vous (expert)…"
-              className="mt-5 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/25"
-            />
+            <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">ID</dt>
+                <dd className="mt-1 flex flex-wrap items-center gap-2">
+                  <code className="break-all text-sm text-[#111827]">{dossier.id}</code>
+                  <button
+                    type="button"
+                    onClick={() => void copyId()}
+                    className="rounded-lg bg-[#F3F4F6] px-2 py-1 text-xs font-semibold text-[#111827] hover:bg-[#E5E7EB]"
+                  >
+                    Copier
+                  </button>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Date d&apos;ouverture</dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">{dateFr(dossier.date_ouverture)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Type de sinistre</dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">{dossier.type_sinistre}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Montant estimé</dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">{eur(dossier.montant_estime)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Commission Vertual</dt>
+                <dd className="mt-1 text-sm font-semibold text-[#5B50F0]">{commission == null ? "—" : eur(commission)}</dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Assureur</dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">{assureurLabel}</dd>
+              </div>
+              {dossier.description ? (
+                <div className="sm:col-span-2">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Description</dt>
+                  <dd className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[#374151]">{dossier.description}</dd>
+                </div>
+              ) : null}
+            </dl>
           </section>
-        </>
-      )}
+
+          <section className={cardClass()}>
+            <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">
+              <Shield className="h-5 w-5 text-[#5B50F0]" aria-hidden />
+              <h2 className="text-lg font-semibold text-[#111827]">Assuré</h2>
+            </div>
+            <p className="text-sm font-medium text-[#111827]">{assureNom}</p>
+            {assureProfile?.email ? <p className="mt-2 text-sm text-[#6B7280]">{assureProfile.email}</p> : null}
+          </section>
+        </div>
+
+        <DossierAnalyseIAErrorBoundary key={dossierId}>
+          <DossierAnalyseIA
+            dossier={{
+              id: dossier.id,
+              type_sinistre: dossier.type_sinistre,
+              montant_estime: Number(dossier.montant_estime),
+              statut: dossier.statut,
+              assureur: (dossier.assureur_nom ?? (dossier as { assureur?: string }).assureur) ?? undefined,
+              description: dossier.description ?? undefined,
+              nom_assure: dossier.nom_assure ?? undefined,
+              prenom_assure: dossier.prenom_assure ?? undefined,
+              analyse_ia: (dossier as { analyse_ia?: string | null }).analyse_ia ?? null,
+              analyse_ia_date: (dossier as { analyse_ia_date?: string | null }).analyse_ia_date ?? null,
+            }}
+            documents={documents.map((d) => ({
+              id: d.id,
+              nom: d.nom,
+              chemin: d.chemin ?? d.storage_path ?? undefined,
+            }))}
+          />
+        </DossierAnalyseIAErrorBoundary>
+
+        <section className={`${cardClass()} mt-6`}>
+          <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">
+            <MessageSquare className="h-5 w-5 text-[#5B50F0]" aria-hidden />
+            <h2 className="text-lg font-semibold text-[#111827]">Messagerie interne</h2>
+          </div>
+          <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
+            {messages.length === 0 ? (
+              <p className="text-sm text-[#6B7280]">Aucun message.</p>
+            ) : (
+              messages.map((m) => {
+                const staff = isStaffMessage(m.auteur);
+                return (
+                  <div key={m.id} className={`flex ${staff ? "justify-start" : "justify-end"}`}>
+                    <div
+                      className={`max-w-[85%] rounded-xl px-4 py-3 text-sm shadow-sm sm:max-w-[70%] ${
+                        staff ? "bg-[#F3F4F6] text-[#111827]" : "bg-[#EEE9FF] text-[#111827]"
+                      }`}
+                    >
+                      <p className="text-xs font-semibold text-[#6B7280]">{authorLabel(m.auteur, expertMessageLabel)}</p>
+                      <p className="mt-2 whitespace-pre-wrap leading-relaxed">{m.contenu}</p>
+                      <p className="mt-2 text-[11px] text-[#6B7280]">{timeAgo(m.created_at)}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <div className="mt-6 flex flex-col gap-3 border-t border-[#F3F4F6] pt-4 sm:flex-row sm:items-end">
+            <textarea
+              rows={3}
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              placeholder="Écrire un message..."
+              className="min-h-[88px] w-full flex-1 resize-y rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+            />
+            <button
+              type="button"
+              disabled={sendingMessage || !messageText.trim()}
+              onClick={() => void sendMessage()}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+              style={{ backgroundColor: "#5B50F0" }}
+            >
+              <Send className="h-4 w-4" aria-hidden />
+              Envoyer
+            </button>
+          </div>
+        </section>
+
+        {mandatDocuments.length > 0 ? (
+          <section className={`${cardClass()} mt-6`}>
+            <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">
+              <Shield className="h-5 w-5 text-[#5B50F0]" aria-hidden />
+              <h2 className="text-lg font-semibold text-[#111827]">Mandat de représentation</h2>
+            </div>
+            <ul className="space-y-3">
+              {mandatDocuments.map((doc) => (
+                <li key={doc.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    {docIcon(doc.nom)}
+                    <span className="truncate text-sm font-medium text-[#111827]">{doc.nom}</span>
+                    <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">Signé</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={downloadingId === doc.id}
+                    onClick={() => void downloadDoc(doc)}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-[#5B50F0] bg-white px-3 py-2 text-sm font-semibold text-[#5B50F0] hover:bg-[#F5F3FF] disabled:opacity-50"
+                  >
+                    <Download className="h-4 w-4" aria-hidden />
+                    Télécharger
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        <section className={`${cardClass()} mt-6`}>
+          <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">
+            <FileText className="h-5 w-5 text-[#5B50F0]" aria-hidden />
+            <h2 className="text-lg font-semibold text-[#111827]">Documents ({documents.length})</h2>
+          </div>
+          {documents.length === 0 ? (
+            <p className="text-sm text-[#6B7280]">Aucun document</p>
+          ) : (
+            <ul className="space-y-3">
+              {documents.map((doc) => {
+                const st = formatDocumentStatusDb(doc.statut);
+                return (
+                  <li key={doc.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <button type="button" onClick={() => void openPreview(doc)} className="flex min-w-0 flex-1 items-center gap-3 text-left hover:opacity-80">
+                        {docIcon(doc.nom)}
+                        <span className="truncate text-sm font-medium text-[#111827]">{doc.nom}</span>
+                      </button>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${st.className}`}>{st.label}</span>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void openPreview(doc)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-semibold text-[#111827] hover:bg-[#F9FAFB]"
+                      >
+                        <Eye className="h-4 w-4 shrink-0" aria-hidden />
+                        Aperçu
+                      </button>
+                      <button
+                        type="button"
+                        disabled={downloadingId === doc.id}
+                        onClick={() => void downloadDoc(doc)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-[#5B50F0] bg-white px-3 py-2 text-sm font-semibold text-[#5B50F0] hover:bg-[#F5F3FF] disabled:opacity-50"
+                      >
+                        <Download className="h-4 w-4" aria-hidden />
+                        Télécharger
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
-
