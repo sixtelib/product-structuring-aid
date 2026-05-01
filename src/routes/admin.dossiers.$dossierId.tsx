@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   Download,
@@ -129,6 +129,35 @@ function previewKindFromNom(nom: string): "pdf" | "image" | "other" {
 
 function cardClass() {
   return "rounded-[12px] border border-[#E5E7EB] bg-white p-6 shadow-[0_1px_8px_rgba(0,0,0,0.06)]";
+}
+
+class DossierAnalyseIAErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <section className={`${cardClass()} mt-6`}>
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <p className="font-semibold">Analyse IA</p>
+            <p className="mt-1">Une erreur s&apos;est produite dans cette section. Le reste du dossier reste disponible.</p>
+            <button
+              type="button"
+              className="mt-3 inline-flex rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
+              onClick={() => this.setState({ hasError: false })}
+            >
+              Réessayer
+            </button>
+          </div>
+        </section>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function expertRowLabel(e: {
@@ -833,25 +862,27 @@ function AdminDossierDetailPage() {
           </section>
         </div>
 
-        <DossierAnalyseIA
-          dossier={{
-            id: dossier.id,
-            type_sinistre: dossier.type_sinistre,
-            montant_estime: Number(dossier.montant_estime),
-            statut: dossier.statut,
-            assureur: (dossier.assureur_nom ?? dossier.assureur) ?? undefined,
-            description: dossier.description ?? undefined,
-            nom_assure: dossier.nom_assure ?? undefined,
-            prenom_assure: dossier.prenom_assure ?? undefined,
-            analyse_ia: (dossier as any).analyse_ia ?? null,
-            analyse_ia_date: (dossier as any).analyse_ia_date ?? null,
-          }}
-          documents={documents.map((d) => ({
-            id: d.id,
-            nom: d.nom,
-            chemin: d.chemin ?? (d as DocumentRow & { storage_path?: string | null }).storage_path ?? undefined,
-          }))}
-        />
+        <DossierAnalyseIAErrorBoundary key={dossierId}>
+          <DossierAnalyseIA
+            dossier={{
+              id: dossier.id,
+              type_sinistre: dossier.type_sinistre,
+              montant_estime: Number(dossier.montant_estime),
+              statut: dossier.statut,
+              assureur: (dossier.assureur_nom ?? dossier.assureur) ?? undefined,
+              description: dossier.description ?? undefined,
+              nom_assure: dossier.nom_assure ?? undefined,
+              prenom_assure: dossier.prenom_assure ?? undefined,
+              analyse_ia: (dossier as any).analyse_ia ?? null,
+              analyse_ia_date: (dossier as any).analyse_ia_date ?? null,
+            }}
+            documents={documents.map((d) => ({
+              id: d.id,
+              nom: d.nom,
+              chemin: d.chemin ?? (d as DocumentRow & { storage_path?: string | null }).storage_path ?? undefined,
+            }))}
+          />
+        </DossierAnalyseIAErrorBoundary>
 
         <section className={`${cardClass()} mt-6`}>
           <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">

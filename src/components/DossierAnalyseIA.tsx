@@ -244,7 +244,9 @@ async function callAnthropic(options: {
 
   if (!res.ok) {
     const bodyText = await res.text().catch(() => "");
-    throw new Error(bodyText || `Erreur API Anthropic (${res.status}).`);
+    const err = new Error(bodyText || `Erreur API Anthropic (${res.status}).`) as Error & { status?: number };
+    err.status = res.status;
+    throw err;
   }
 
   const data = (await res.json()) as {
@@ -257,6 +259,26 @@ async function callAnthropic(options: {
   const text = data?.content?.find((c) => c?.type === "text")?.text?.trim() ?? "";
   if (!text) throw new Error("Réponse IA vide.");
   return text;
+}
+
+function getAnthropicErrorStatus(err: unknown): number | undefined {
+  if (err && typeof err === "object" && "status" in err) {
+    const s = (err as { status?: unknown }).status;
+    return typeof s === "number" ? s : undefined;
+  }
+  return undefined;
+}
+
+function isAnthropicQuotaExceeded(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  const status = getAnthropicErrorStatus(err);
+  return (
+    msg.includes("credit") ||
+    msg.includes("quota") ||
+    msg.includes("billing") ||
+    status === 429 ||
+    status === 402
+  );
 }
 
 function scoreLabel(score: number): { label: string; color: string; ring: string } {
@@ -399,8 +421,14 @@ export function DossierAnalyseIA({ dossier, documents }: DossierAnalyseIAProps) 
         .eq("id", d.id);
       if (error) throw new Error(error.message);
       setAnalyseDate(now);
-    } catch (e) {
-      setAnalyseError(e instanceof Error ? e.message : "Analyse impossible.");
+    } catch (err) {
+      if (isAnthropicQuotaExceeded(err)) {
+        setAnalyseError("Crédit API insuffisant. Rechargez votre compte Anthropic.");
+      } else {
+        const msg = err instanceof Error ? err.message : "Analyse impossible.";
+        setAnalyseError("Erreur : " + msg);
+      }
+      setAnalyseLoading(false);
     } finally {
       setAnalyseLoading(false);
     }
@@ -452,8 +480,13 @@ Sois précis, factuel et orienté résultat pour l'expert.`;
         max_tokens: 2000,
       });
       setChatMessages((prev) => [...prev, { id: uid(), role: "assistant", text: reply }]);
-    } catch (e) {
-      setChatError(e instanceof Error ? e.message : "Envoi impossible.");
+    } catch (err) {
+      if (isAnthropicQuotaExceeded(err)) {
+        setChatError("Crédit API insuffisant. Rechargez votre compte Anthropic.");
+      } else {
+        const msg = err instanceof Error ? err.message : "Envoi impossible.";
+        setChatError("Erreur : " + msg);
+      }
       setChatMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
       setChatInput(text);
     } finally {
@@ -491,8 +524,13 @@ nouvelle estimation chiffrée, délai de réponse demandé.`,
         max_tokens: 4000,
       });
       setReportText(text);
-    } catch (e) {
-      setReportError(e instanceof Error ? e.message : "Génération impossible.");
+    } catch (err) {
+      if (isAnthropicQuotaExceeded(err)) {
+        setReportError("Crédit API insuffisant. Rechargez votre compte Anthropic.");
+      } else {
+        const msg = err instanceof Error ? err.message : "Génération impossible.";
+        setReportError("Erreur : " + msg);
+      }
     } finally {
       setReportLoading(false);
     }
