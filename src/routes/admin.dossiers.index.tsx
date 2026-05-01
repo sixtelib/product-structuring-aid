@@ -75,11 +75,26 @@ function normalize(s: string | null | undefined) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function filterExpertDisplayName(p: { id: string; full_name: string | null; prenom: string | null; nom: string | null }) {
+function filterExpertDisplayName(p: { id: string; full_name: string | null }) {
   const fn = (p.full_name ?? "").trim();
-  if (fn) return fn;
-  const n = [p.prenom, p.nom].filter(Boolean).join(" ").trim();
-  return n || shortId(p.id);
+  return fn || shortId(p.id);
+}
+
+/** Libellé dans le <select> d'assignation : "Prénom Nom (spécialité)" ou full_name seul si pas de spécialité. */
+function assignExpertSelectLabel(ex: { full_name: string | null; specialite: string | null }) {
+  const full = (ex.full_name ?? "").trim();
+  const sp = (ex.specialite ?? "").trim();
+  if (!sp) return full || "Sans nom";
+  const parts = full.split(/\s+/).filter(Boolean);
+  const prenom = parts[0] ?? "";
+  const nom = parts.slice(1).join(" ").trim();
+  const pn = `${prenom} ${nom}`.trim() || full || "Sans nom";
+  return `${pn} (${sp})`;
+}
+
+function expertNomPrenomFromFullName(fullName: string | null | undefined): { nom_expert: string; prenom_expert: string } {
+  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  return { prenom_expert: parts[0] ?? "", nom_expert: parts[1] ?? "" };
 }
 
 function amountValue(v: unknown) {
@@ -208,7 +223,9 @@ function AdminDossiersIndexPage() {
   const [selectedAssureurs, setSelectedAssureurs] = useState<string[]>([]);
   const [showExpertDropdown, setShowExpertDropdown] = useState(false);
   const [showAssureurDropdown, setShowAssureurDropdown] = useState(false);
-  const [filterExpertProfiles, setFilterExpertProfiles] = useState<Array<{ id: string; full_name: string | null; prenom: string | null; nom: string | null }>>([]);
+  const [filterExpertProfiles, setFilterExpertProfiles] = useState<
+    Array<{ id: string; full_name: string | null; specialite: string | null }>
+  >([]);
   const [typeDraft, setTypeDraft] = useState<TypeFilter>("all");
   const [statusDraft, setStatusDraft] = useState<StatusFilter>("all");
   const [dateFromDraft, setDateFromDraft] = useState("");
@@ -233,15 +250,11 @@ function AdminDossiersIndexPage() {
       "id" | "type_sinistre" | "user_id" | "expert_id" | "nom_assure" | "prenom_assure" | "nom_expert" | "prenom_expert"
     > | null
   >(null);
-  const [experts, setExperts] = useState<Array<any>>([]);
-  const [expertSearch, setExpertSearch] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
   const [selectedExpertId, setSelectedExpertId] = useState("");
   const [savingAssign, setSavingAssign] = useState(false);
 
   useEffect(() => {
     const handleClick = () => {
-      setShowDropdown(false);
       setShowExpertDropdown(false);
       setShowAssureurDropdown(false);
     };
@@ -260,7 +273,7 @@ function AdminDossiersIndexPage() {
             "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur_nom",
           )
           .order("date_ouverture", { ascending: false }),
-        supabase.from("profiles").select("id, full_name, prenom, nom").eq("role", "expert"),
+        supabase.from("profiles").select("id, full_name, specialite").eq("role", "expert"),
       ]);
       if (dRes.error) throw dRes.error;
       setDossiers((dRes.data ?? []) as unknown as AdminDossierListRow[]);
@@ -268,7 +281,7 @@ function AdminDossiersIndexPage() {
         console.error(eRes.error);
         setFilterExpertProfiles([]);
       } else {
-        setFilterExpertProfiles((eRes.data ?? []) as any);
+        setFilterExpertProfiles((eRes.data ?? []) as Array<{ id: string; full_name: string | null; specialite: string | null }>);
       }
     } catch (e) {
       console.error(e);
@@ -291,27 +304,6 @@ function AdminDossiersIndexPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (!assignOpen) return;
-    let cancelled = false;
-    (async () => {
-      const { data, error: err } = await supabase
-        .from("profiles")
-        .select("id, full_name, prenom, nom, specialite")
-        .eq("role", "expert");
-      if (cancelled) return;
-      if (err) {
-        console.error(err);
-        setExperts([]);
-        return;
-      }
-      setExperts(data ?? []);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [assignOpen]);
 
   const hasActiveFilters = useMemo(() => {
     return (
@@ -411,8 +403,6 @@ function AdminDossiersIndexPage() {
     >,
   ) {
     setAssigning(d);
-    setExpertSearch("");
-    setShowDropdown(false);
     setSelectedExpertId("");
     setAssignOpen(true);
   }
@@ -424,12 +414,15 @@ function AdminDossiersIndexPage() {
 
     setSavingAssign(true);
     try {
-      const { error: uErr } = await supabase.from("dossiers").update({ expert_id: expertId }).eq("id", assigning.id);
+      const profile = filterExpertProfiles.find((p) => p.id === expertId);
+      const { nom_expert, prenom_expert } = expertNomPrenomFromFullName(profile?.full_name ?? null);
+      const { error: uErr } = await supabase
+        .from("dossiers")
+        .update({ expert_id: expertId, nom_expert, prenom_expert })
+        .eq("id", assigning.id);
       if (uErr) throw uErr;
       setAssignOpen(false);
       setAssigning(null);
-      setExpertSearch("");
-      setShowDropdown(false);
       setSelectedExpertId("");
       await load();
     } catch (e) {
@@ -914,8 +907,6 @@ function AdminDossiersIndexPage() {
                 onClick={() => {
                   setAssignOpen(false);
                   setAssigning(null);
-                  setExpertSearch("");
-                  setShowDropdown(false);
                   setSelectedExpertId("");
                 }}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#F3F4F6] hover:bg-[#E5E7EB]"
@@ -924,103 +915,29 @@ function AdminDossiersIndexPage() {
               </button>
             </div>
 
-            <div className="mt-6">
-              <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">UUID de l'expert</label>
-              <div style={{ position: "relative" }} onMouseDown={(e) => e.stopPropagation()}>
-                <input
-                  type="text"
-                  placeholder="Rechercher un expert par nom..."
-                  value={expertSearch}
-                  onChange={(e) => {
-                    setExpertSearch(e.target.value);
-                    setShowDropdown(true);
-                    setSelectedExpertId("");
-                  }}
-                  onFocus={() => setShowDropdown(true)}
-                  style={{
-                    width: "100%",
-                    border: "1px solid #E5E7EB",
-                    borderRadius: "8px",
-                    padding: "10px 16px",
-                    fontSize: "0.95rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-
-                {showDropdown && experts && experts.length > 0 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      right: 0,
-                      background: "white",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "8px",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                      zIndex: 100,
-                      maxHeight: "200px",
-                      overflowY: "auto",
-                    }}
-                  >
-                    {experts
-                      .filter((e: any) => {
-                        const name = e.full_name || `${e.prenom || ""} ${e.nom || ""}`.trim();
-                        return name.toLowerCase().includes(expertSearch.toLowerCase());
-                      })
-                      .map((expert: any) => {
-                        const name =
-                          expert.full_name ||
-                          `${expert.prenom || ""} ${expert.nom || ""}`.trim() ||
-                          "Expert sans nom";
-                        return (
-                          <div
-                            key={expert.id}
-                            onClick={() => {
-                              setSelectedExpertId(expert.id);
-                              setExpertSearch(name);
-                              setShowDropdown(false);
-                            }}
-                            style={{
-                              padding: "12px 16px",
-                              cursor: "pointer",
-                              borderBottom: "1px solid #F3F4F6",
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              background: selectedExpertId === expert.id ? "#F8F7FF" : "white",
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = "#F8F7FF")}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = selectedExpertId === expert.id ? "#F8F7FF" : "white";
-                            }}
-                          >
-                            <span style={{ fontWeight: 500 }}>{name}</span>
-                            {expert.specialite && (
-                              <span
-                                style={{
-                                  fontSize: "0.75rem",
-                                  background: "#EEE9FF",
-                                  color: "#5B50F0",
-                                  padding: "2px 8px",
-                                  borderRadius: "999px",
-                                }}
-                              >
-                                {expert.specialite}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    {experts.filter((e: any) => {
-                      const name = e.full_name || `${e.prenom || ""} ${e.nom || ""}`.trim();
-                      return name.toLowerCase().includes(expertSearch.toLowerCase());
-                    }).length === 0 && (
-                      <div style={{ padding: "16px", color: "#9CA3AF", textAlign: "center" }}>Aucun expert trouvé</div>
-                    )}
-                  </div>
-                )}
+            <div className="mt-6" onMouseDown={(e) => e.stopPropagation()}>
+              <label htmlFor="assign-expert-select" className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">
+                Expert
+              </label>
+              <div className="relative mt-2">
+                <select
+                  id="assign-expert-select"
+                  value={selectedExpertId}
+                  onChange={(e) => setSelectedExpertId(e.target.value)}
+                  className="h-10 w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 pr-9 text-[0.875rem] font-medium text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+                >
+                  <option value="">Sélectionner un expert…</option>
+                  {filterExpertProfiles.map((ex) => (
+                    <option key={ex.id} value={ex.id}>
+                      {assignExpertSelectLabel(ex)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7280]" aria-hidden />
               </div>
+              {filterExpertProfiles.length === 0 ? (
+                <p className="mt-2 text-xs text-[#6B7280]">Aucun expert dans la base. Vérifiez les profils (rôle expert).</p>
+              ) : null}
             </div>
 
             <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
@@ -1029,8 +946,6 @@ function AdminDossiersIndexPage() {
                 onClick={() => {
                   setAssignOpen(false);
                   setAssigning(null);
-                  setExpertSearch("");
-                  setShowDropdown(false);
                   setSelectedExpertId("");
                 }}
                 className="rounded-xl bg-[#F3F4F6] px-4 py-2.5 text-sm font-semibold text-[#111827] hover:bg-[#E5E7EB]"
