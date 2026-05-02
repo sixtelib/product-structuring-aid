@@ -7,6 +7,7 @@ import {
   getImpersonatedExpertNomPrenomForDossierFilter,
   setImpersonationFromProfile,
 } from "@/lib/expertImpersonation";
+import { expertMisfitRedirectPath } from "@/lib/expertRoleRouting";
 
 export const Route = createFileRoute("/expert/dossiers/")({
   component: ExpertDossiersListPage,
@@ -62,8 +63,16 @@ function ExpertDossiersListPage() {
       return;
     }
     if (!isAdmin && !isExpert) {
-      void navigate({ to: "/dashboard", replace: true });
-      return;
+      let cancelledGate = false;
+      void (async () => {
+        const path = user ? await expertMisfitRedirectPath(supabase, user, false) : null;
+        if (cancelledGate) return;
+        if (path) void navigate({ to: path, replace: true });
+        else void navigate({ to: "/dashboard", replace: true });
+      })();
+      return () => {
+        cancelledGate = true;
+      };
     }
 
     if (isAdmin && impersonate) {

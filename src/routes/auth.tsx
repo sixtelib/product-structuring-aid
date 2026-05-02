@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { expertMisfitRedirectPath } from "@/lib/expertRoleRouting";
 import { Logo } from "@/components/site/Logo";
 import {
   migrateLegacyQualificationLocalStorage,
@@ -31,7 +32,10 @@ function AuthPage() {
   const [busy, setBusy] = useState<"google" | "apple" | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
+  const [phone, setPhone] = useState("");
+  const [adresse, setAdresse] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -48,6 +52,12 @@ function AuthPage() {
 
     let cancelled = false;
     void (async () => {
+      const expertPath = await expertMisfitRedirectPath(supabase, user, false);
+      if (cancelled) return;
+      if (expertPath) {
+        navigate({ to: expertPath, replace: true });
+        return;
+      }
       const { data } = await supabase.from("profiles").select("mandat_signe").eq("id", user.id).maybeSingle();
       if (cancelled) return;
       const meta = user.user_metadata as { mandat_signe?: boolean } | undefined;
@@ -91,15 +101,51 @@ function AuthPage() {
     try {
       migrateLegacyQualificationLocalStorage();
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const p = prenom.trim();
+        const n = nom.trim();
+        if (!p || !n) {
+          toast.error("Prénom et nom sont obligatoires.");
+          return;
+        }
+        const full_name_computed = `${p} ${n}`.trim();
+        const phoneVal = phone.trim() || null;
+        const adresseVal = adresse.trim() || null;
+
+        const { data: signData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/espace/dossiers`,
-            data: { full_name: fullName },
+            data: {
+              role: "assure",
+              full_name: full_name_computed,
+              prenom: p,
+              nom: n,
+              phone: phoneVal ?? undefined,
+              adresse: adresseVal ?? undefined,
+            },
           },
         });
         if (error) throw error;
+
+        const uid = signData.user?.id;
+        if (uid && signData.session) {
+          const authEmail = (signData.user.email ?? email).trim() || null;
+          const { error: profileErr } = await supabase
+            .from("profiles")
+            .update({
+              role: "assure",
+              prenom: p,
+              nom: n,
+              full_name: full_name_computed,
+              phone: phoneVal,
+              adresse: adresseVal,
+              email: authEmail,
+            })
+            .eq("id", uid);
+          if (profileErr) throw profileErr;
+        }
+
         toast.success("Compte créé. Vous êtes connecté.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -177,17 +223,56 @@ function AuthPage() {
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             {mode === "signup" && (
-              <div>
-                <label className="block text-sm font-medium text-foreground">Nom complet</label>
-                <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  placeholder="Marie Dupont"
-                />
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground">Prénom</label>
+                    <input
+                      type="text"
+                      required
+                      value={prenom}
+                      onChange={(e) => setPrenom(e.target.value)}
+                      autoComplete="given-name"
+                      className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      placeholder="Marie"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground">Nom</label>
+                    <input
+                      type="text"
+                      required
+                      value={nom}
+                      onChange={(e) => setNom(e.target.value)}
+                      autoComplete="family-name"
+                      className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      placeholder="Dupont"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground">Téléphone</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    autoComplete="tel"
+                    className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    placeholder="06 12 34 56 78"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground">Adresse</label>
+                  <input
+                    type="text"
+                    value={adresse}
+                    onChange={(e) => setAdresse(e.target.value)}
+                    autoComplete="street-address"
+                    className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    placeholder="Numéro et rue, code postal, ville…"
+                  />
+                </div>
+              </>
             )}
 
             <div>

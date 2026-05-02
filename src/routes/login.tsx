@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { expertMisfitRedirectPath } from "@/lib/expertRoleRouting";
 import { Logo } from "@/components/site/Logo";
 import {
   migrateLegacyQualificationLocalStorage,
@@ -52,6 +53,12 @@ function LoginPage() {
 
     let cancelled = false;
     void (async () => {
+      const expertPath = await expertMisfitRedirectPath(supabase, user, false);
+      if (cancelled) return;
+      if (expertPath) {
+        navigate({ to: expertPath, replace: true });
+        return;
+      }
       const { data } = await supabase.from("profiles").select("mandat_signe").eq("id", user.id).maybeSingle();
       if (cancelled) return;
       const meta = user.user_metadata as { mandat_signe?: boolean } | undefined;

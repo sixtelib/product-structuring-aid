@@ -43,17 +43,32 @@ export const handler = async (event: NetlifyEvent): Promise<NetlifyResponse> => 
   }
 
   let email = "";
-  let specialite = "";
+  let specialite: string[] = [];
   try {
     const parsed = JSON.parse(event.body ?? "{}") as { email?: unknown; specialite?: unknown };
     email = typeof parsed.email === "string" ? parsed.email.trim() : "";
-    specialite = typeof parsed.specialite === "string" ? parsed.specialite.trim() : "";
+    const raw = parsed.specialite;
+    if (Array.isArray(raw)) {
+      specialite = raw
+        .filter((x): x is string => typeof x === "string")
+        .map((x) => x.trim())
+        .filter(Boolean);
+    } else if (typeof raw === "string" && raw.trim()) {
+      specialite = [raw.trim()];
+    }
   } catch {
     return { statusCode: 400, headers: cors, body: JSON.stringify({ error: "Corps JSON invalide." }) };
   }
 
   if (!email) {
     return { statusCode: 400, headers: cors, body: JSON.stringify({ error: "Email requis." }) };
+  }
+  if (specialite.length === 0) {
+    return {
+      statusCode: 400,
+      headers: cors,
+      body: JSON.stringify({ error: "Au moins une spécialité est requise." }),
+    };
   }
 
   const supabase = createClient(url, serviceKey, {

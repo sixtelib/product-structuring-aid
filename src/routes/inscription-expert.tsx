@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { expertMisfitRedirectPath } from "@/lib/expertRoleRouting";
 import { Logo } from "@/components/site/Logo";
 
 export const Route = createFileRoute("/inscription-expert")({
@@ -20,7 +21,7 @@ type Specialite = (typeof SPECIALITES)[number];
 
 function ExpertSignupPage() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin, isExpert } = useAuth();
 
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
@@ -33,15 +34,33 @@ function ExpertSignupPage() {
   const fullName = useMemo(() => `${prenom.trim()} ${nom.trim()}`.trim(), [prenom, nom]);
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/dashboard", replace: true });
-  }, [loading, user, navigate]);
+    if (loading || !user) return;
+    let cancelled = false;
+    void (async () => {
+      if (isAdmin) {
+        navigate({ to: "/admin", replace: true });
+        return;
+      }
+      if (isExpert) {
+        navigate({ to: "/expert", replace: true });
+        return;
+      }
+      const path = await expertMisfitRedirectPath(supabase, user, false);
+      if (cancelled) return;
+      if (path) navigate({ to: path, replace: true });
+      else navigate({ to: "/dashboard", replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, user, isAdmin, isExpert, navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim() || !password.trim() || !prenom.trim() || !nom.trim()) return;
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: signData, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -50,10 +69,29 @@ function ExpertSignupPage() {
             full_name: fullName,
             phone: phone.trim(),
             specialite,
+            prenom: prenom.trim(),
+            nom: nom.trim(),
           },
         },
       });
       if (error) throw error;
+
+      const uid = signData.user?.id;
+      if (uid && signData.session) {
+        const { error: profileErr } = await supabase
+          .from("profiles")
+          .update({
+            role: "expert",
+            prenom: prenom.trim(),
+            nom: nom.trim(),
+            full_name: fullName,
+            phone: phone.trim() || null,
+            specialite,
+            email: email.trim() || null,
+          })
+          .eq("id", uid);
+        if (profileErr) throw profileErr;
+      }
 
       toast.success("Compte expert créé. Vous pouvez vous connecter.");
       navigate({ to: "/login", replace: true });

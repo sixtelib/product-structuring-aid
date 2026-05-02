@@ -220,20 +220,9 @@ async function callAnthropic(options: {
   messages: Array<{ role: "user" | "assistant"; content: string }>;
   max_tokens: number;
 }): Promise<string> {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
-  if (!apiKey) {
-    throw new Error("Clé API Anthropic manquante (VITE_ANTHROPIC_API_KEY).");
-  }
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("/.netlify/functions/anthropic", {
     method: "POST",
-    mode: "cors",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: ANTHROPIC_MODEL,
       max_tokens: options.max_tokens,

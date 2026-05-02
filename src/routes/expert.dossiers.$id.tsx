@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
+import { expertMisfitRedirectPath } from "@/lib/expertRoleRouting";
 import { formatDocumentStatusDb } from "@/lib/client-dashboard-ui";
 import { DossierAnalyseIA } from "@/components/DossierAnalyseIA";
 import {
@@ -179,6 +180,13 @@ function ExpertDossierDetailPage() {
         return;
       }
       if (!isAdmin && !isExpert) {
+        if (user) {
+          const path = await expertMisfitRedirectPath(supabase, user, false);
+          if (path) {
+            void navigate({ to: path, replace: true });
+            return;
+          }
+        }
         void navigate({ to: "/dashboard", replace: true });
         return;
       }
@@ -249,7 +257,7 @@ function ExpertDossierDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [dossierId, navigate, isAdmin, isExpert, user?.id]);
+  }, [dossierId, navigate, isAdmin, isExpert, user]);
 
   useEffect(() => {
     void loadAll();

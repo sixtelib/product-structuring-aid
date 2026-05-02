@@ -123,7 +123,6 @@ export function useDossierSummary(
   const prompt = useMemo(() => (input ? buildUserPrompt(input) : ""), [input]);
 
   const generate = useCallback(async () => {
-    console.log("clé API:", import.meta.env.VITE_ANTHROPIC_API_KEY);
     setError(null);
     if (!input) {
       setError("Dossier indisponible.");
@@ -132,20 +131,9 @@ export function useDossierSummary(
 
     setLoading(true);
     try {
-      const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
-      if (!apiKey) {
-        throw new Error("Clé Anthropic manquante (VITE_ANTHROPIC_API_KEY).");
-      }
-
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/.netlify/functions/anthropic", {
         method: "POST",
-        mode: "cors",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: ANTHROPIC_MODEL,
           max_tokens: 450,

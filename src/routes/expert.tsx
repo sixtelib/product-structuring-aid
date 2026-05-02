@@ -5,6 +5,7 @@ import { ImpersonationBanner } from "@/components/expert/ImpersonationBanner";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { clearImpersonation, getImpersonatedExpertDisplayName, getImpersonatedExpertId } from "@/lib/expertImpersonation";
+import { expertMisfitRedirectPath } from "@/lib/expertRoleRouting";
 
 export const Route = createFileRoute("/expert")({
   component: ExpertLayout,
@@ -15,6 +16,7 @@ function ExpertLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [impersonationName, setImpersonationName] = useState<string | null>(null);
+  const [expertAccessChecking, setExpertAccessChecking] = useState(false);
 
   useEffect(() => {
     setImpersonationName(getImpersonatedExpertDisplayName());
@@ -23,18 +25,33 @@ function ExpertLayout() {
   useEffect(() => {
     if (loading) return;
     if (!user) {
+      setExpertAccessChecking(false);
       void navigate({ to: "/login", replace: true });
       return;
     }
     const imp = getImpersonatedExpertId();
     if (isAdmin && !imp) {
+      setExpertAccessChecking(false);
       void navigate({ to: "/admin", replace: true });
       return;
     }
-    if (!isAdmin && !isExpert) {
-      void navigate({ to: "/dashboard", replace: true });
+    if (isAdmin || isExpert) {
+      setExpertAccessChecking(false);
       return;
     }
+
+    setExpertAccessChecking(true);
+    let cancelled = false;
+    void (async () => {
+      const path = await expertMisfitRedirectPath(supabase, user, false);
+      if (cancelled) return;
+      setExpertAccessChecking(false);
+      if (path) void navigate({ to: path, replace: true });
+      else void navigate({ to: "/dashboard", replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [loading, user, isAdmin, isExpert, navigate]);
 
   useEffect(() => {
@@ -73,7 +90,7 @@ function ExpertLayout() {
     void navigate({ to: "/login", replace: true });
   }
 
-  if (loading) {
+  if (loading || expertAccessChecking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F9FF]">
         <div className="h-9 w-9 animate-spin rounded-full border-2 border-[#E5E7EB] border-t-[#5B50F0]" />
@@ -84,16 +101,6 @@ function ExpertLayout() {
   if (!user) return null;
   if (isAdmin && !getImpersonatedExpertId()) return null;
   if (!isAdmin && !isExpert) return null;
-
-  const isExpertOnboarding =
-    pathname === "/expert/onboarding" || pathname.startsWith("/expert/onboarding/");
-  if (isExpertOnboarding) {
-    return (
-      <div className="min-h-screen bg-[#F8F9FF]">
-        <Outlet />
-      </div>
-    );
-  }
 
   const Sidebar = (
     <aside className="flex h-full w-[240px] flex-col bg-[#111827] text-white">

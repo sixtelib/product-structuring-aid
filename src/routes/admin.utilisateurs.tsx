@@ -129,6 +129,13 @@ function specialiteBadgeClass(sp: string) {
   return "bg-[#F3F4F6] text-[#6B7280]";
 }
 
+function inviteSpecialitePillClass(label: string, selected: boolean) {
+  if (!selected) {
+    return "border border-[#E5E7EB] bg-white text-[#6B7280] hover:border-[#D1D5DB] hover:bg-[#F9FAFB]";
+  }
+  return `border-2 border-[#5B50F0] ring-1 ring-[#5B50F0]/20 ${specialiteBadgeClass(label)}`;
+}
+
 function progressTone(pct: number) {
   if (pct >= 80) return "bg-green-500";
   if (pct >= 50) return "bg-orange-500";
@@ -153,7 +160,7 @@ function AdminUtilisateursPage() {
   const [createSubmitting, setCreateSubmitting] = useState(false);
   const [createForm, setCreateForm] = useState({
     email: "",
-    specialite: DEFAULT_INVITE_SPECIALITE,
+    specialites: [DEFAULT_INVITE_SPECIALITE] as string[],
   });
 
   const [perfExpert, setPerfExpert] = useState<ExpertTableRow | null>(null);
@@ -324,9 +331,13 @@ function AdminUtilisateursPage() {
   async function submitInviteExpert(e: React.FormEvent) {
     e.preventDefault();
     const email = createForm.email.trim();
-    const specialite = createForm.specialite.trim();
+    const specialite = createForm.specialites.filter((s) => s.trim());
     if (!email) {
       toast.error("L'email est obligatoire.");
+      return;
+    }
+    if (specialite.length === 0) {
+      toast.error("Sélectionnez au moins une spécialité.");
       return;
     }
 
@@ -351,7 +362,7 @@ function AdminUtilisateursPage() {
       setCreateModalOpen(false);
       setCreateForm({
         email: "",
-        specialite: DEFAULT_INVITE_SPECIALITE,
+        specialites: [DEFAULT_INVITE_SPECIALITE],
       });
       await loadAll();
     } catch (err: unknown) {
@@ -665,18 +676,31 @@ function AdminUtilisateursPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#6B7280]">Spécialité</label>
-                <select
-                  value={createForm.specialite}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, specialite: e.target.value }))}
-                  className="mt-1 h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-                >
-                  {INVITE_EXPERT_SPECIALITES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                <p className="text-xs font-semibold text-[#6B7280]">Spécialités</p>
+                <p className="mt-0.5 text-xs text-[#9CA3AF]">Sélectionnez une ou plusieurs options.</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {INVITE_EXPERT_SPECIALITES.map((s) => {
+                    const selected = createForm.specialites.includes(s);
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() =>
+                          setCreateForm((f) => {
+                            const next = new Set(f.specialites);
+                            if (next.has(s)) next.delete(s);
+                            else next.add(s);
+                            const ordered = INVITE_EXPERT_SPECIALITES.filter((x) => next.has(x));
+                            return { ...f, specialites: ordered };
+                          })
+                        }
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${inviteSpecialitePillClass(s, selected)}`}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex flex-wrap justify-end gap-3 pt-2">
@@ -690,7 +714,7 @@ function AdminUtilisateursPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={createSubmitting}
+                  disabled={createSubmitting || createForm.specialites.length === 0}
                   className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                   style={{ backgroundColor: "#5B50F0" }}
                 >

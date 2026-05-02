@@ -427,7 +427,6 @@ export type Database = {
           assureur_principal: string | null
           created_at: string
           email: string | null
-          email_contact: string | null
           full_name: string | null
           id: string
           mandat_email: string | null
@@ -448,7 +447,6 @@ export type Database = {
           assureur_principal?: string | null
           created_at?: string
           email?: string | null
-          email_contact?: string | null
           full_name?: string | null
           id: string
           mandat_email?: string | null
@@ -469,7 +467,6 @@ export type Database = {
           assureur_principal?: string | null
           created_at?: string
           email?: string | null
-          email_contact?: string | null
           full_name?: string | null
           id?: string
           mandat_email?: string | null

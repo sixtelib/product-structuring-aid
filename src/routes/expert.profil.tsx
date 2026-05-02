@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { getImpersonatedExpertId } from "@/lib/expertImpersonation";
+import { expertMisfitRedirectPath } from "@/lib/expertRoleRouting";
 
 export const Route = createFileRoute("/expert/profil")({
   component: ExpertProfilPage,
@@ -14,7 +15,7 @@ type ProfileForm = {
   nom: string;
   telephone: string;
   specialite: string;
-  email_contact: string;
+  email: string;
 };
 
 function ExpertProfilPage() {
@@ -27,7 +28,7 @@ function ExpertProfilPage() {
     nom: "",
     telephone: "",
     specialite: "",
-    email_contact: "",
+    email: "",
   });
 
   const profileId = isAdmin ? getImpersonatedExpertId() : user?.id ?? null;
@@ -43,8 +44,16 @@ function ExpertProfilPage() {
       return;
     }
     if (!isAdmin && !isExpert) {
-      void navigate({ to: "/dashboard", replace: true });
-      return;
+      let cancelledGate = false;
+      void (async () => {
+        const path = user ? await expertMisfitRedirectPath(supabase, user, false) : null;
+        if (cancelledGate) return;
+        if (path) void navigate({ to: path, replace: true });
+        else void navigate({ to: "/dashboard", replace: true });
+      })();
+      return () => {
+        cancelledGate = true;
+      };
     }
     if (!profileId) {
       void navigate({ to: "/admin", replace: true });
@@ -56,7 +65,7 @@ function ExpertProfilPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("profiles")
-        .select("prenom, nom, telephone, phone, specialite, email_contact")
+        .select("prenom, nom, telephone, phone, specialite, email")
         .eq("id", profileId)
         .maybeSingle();
       if (cancelled) return;
@@ -71,7 +80,7 @@ function ExpertProfilPage() {
         telephone?: string | null;
         phone?: string | null;
         specialite?: string | null;
-        email_contact?: string | null;
+        email?: string | null;
       } | null;
       if (row) {
         setForm({
@@ -79,7 +88,7 @@ function ExpertProfilPage() {
           nom: row.nom ?? "",
           telephone: (row.telephone ?? row.phone ?? "") ?? "",
           specialite: row.specialite ?? "",
-          email_contact: row.email_contact ?? "",
+          email: row.email ?? "",
         });
       }
       setLoading(false);
@@ -103,7 +112,7 @@ function ExpertProfilPage() {
           prenom: prenom || null,
           telephone: form.telephone.trim() || null,
           specialite: form.specialite.trim() || null,
-          email_contact: form.email_contact.trim() || null,
+          email: form.email.trim() || null,
         })
         .eq("id", profileId);
       if (error) throw error;
@@ -169,11 +178,11 @@ function ExpertProfilPage() {
           />
         </div>
         <div>
-          <label className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Email contact</label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Email</label>
           <input
             type="email"
-            value={form.email_contact}
-            onChange={(e) => setForm((f) => ({ ...f, email_contact: e.target.value }))}
+            value={form.email}
+            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             className="mt-1 w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm"
           />
         </div>

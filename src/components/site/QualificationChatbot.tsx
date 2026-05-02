@@ -250,23 +250,14 @@ export function QualificationChatbot() {
   }
 
   async function askClaude(next: Msg[]) {
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
-    if (!apiKey) throw new Error("Clé API Anthropic manquante (VITE_ANTHROPIC_API_KEY).");
-
     const anthropicMessages = next.map((m) => ({
       role: m.role === "user" ? ("user" as const) : ("assistant" as const),
       content: m.role === "user" ? m.text : cleanMessageText(m.text),
     }));
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch("/.netlify/functions/anthropic", {
       method: "POST",
-      mode: "cors",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 500,
@@ -287,18 +278,9 @@ export function QualificationChatbot() {
   }
 
   async function callAnthropicExtraction(payload: any) {
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
-    if (!apiKey) throw new Error("Clé API Anthropic manquante (VITE_ANTHROPIC_API_KEY).");
-
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch("/.netlify/functions/anthropic", {
       method: "POST",
-      mode: "cors",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
@@ -419,7 +401,7 @@ export function QualificationChatbot() {
       const { data: row, error: selErr } = await supabase
         .from("profiles")
         .select(
-          "nom, prenom, adresse, telephone, email_contact, numero_contrat, assureur_principal",
+          "nom, prenom, adresse, telephone, email, numero_contrat, assureur_principal",
         )
         .eq("id", user.id)
         .maybeSingle();
@@ -447,7 +429,7 @@ export function QualificationChatbot() {
       maybeSet("prenom", data.prenom_assure);
       maybeSet("adresse", data.adresse_assure);
       maybeSet("telephone", data.telephone_assure);
-      maybeSet("email_contact", data.email_assure);
+      maybeSet("email", data.email_assure);
       maybeSet("numero_contrat", data.numero_contrat);
       maybeSet("assureur_principal", data.nom_assureur);
 

@@ -81,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const next = (data ?? [])
       .map((r) => String((r as { role?: unknown }).role ?? "").trim())
       .filter(Boolean) as AppRole[];
-    console.log("roles chargés:", next);
     setRoles(next);
   }
 

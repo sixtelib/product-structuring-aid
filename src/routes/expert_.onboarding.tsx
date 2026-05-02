@@ -2,9 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
 
-export const Route = createFileRoute("/expert/onboarding")({
+export const Route = createFileRoute("/expert_/onboarding")({
   head: () => ({
     meta: [
       { title: "Bienvenue expert — Vertual" },
@@ -14,22 +13,69 @@ export const Route = createFileRoute("/expert/onboarding")({
   component: ExpertOnboardingPage,
 });
 
+/** `user_metadata.specialite` : string[] ou string — colonne profiles.specialite (texte) en liste séparée par virgules. */
+function specialitesProfileStringFromMetadata(meta: { specialite?: unknown } | undefined): string | null {
+  const raw = meta?.specialite;
+  if (raw == null) return null;
+  if (Array.isArray(raw)) {
+    const list = raw
+      .filter((x): x is string => typeof x === "string")
+      .map((x) => x.trim())
+      .filter(Boolean);
+    return list.length ? list.join(", ") : null;
+  }
+  if (typeof raw === "string") {
+    const t = raw.trim();
+    if (!t) return null;
+    if (t.startsWith("[")) {
+      try {
+        const p = JSON.parse(t) as unknown;
+        if (Array.isArray(p)) {
+          const list = p
+            .filter((x): x is string => typeof x === "string")
+            .map((x) => x.trim())
+            .filter(Boolean);
+          return list.length ? list.join(", ") : null;
+        }
+      } catch {
+        return t;
+      }
+    }
+    return t;
+  }
+  return null;
+}
+
 function ExpertOnboardingPage() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const [sessionReady, setSessionReady] = useState(false);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
   const [telephone, setTelephone] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) void navigate({ to: "/login", replace: true });
-  }, [authLoading, user, navigate]);
+    let cancelled = false;
+    (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (!session?.user) {
+        void navigate({ to: "/login", replace: true });
+        return;
+      }
+      setSessionEmail(session.user.email ?? null);
+      setSessionReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!user) return;
     const p = prenom.trim();
     const n = nom.trim();
     if (!p || !n) {
@@ -37,12 +83,23 @@ function ExpertOnboardingPage() {
       return;
     }
 
-    const meta = user.user_metadata as { specialite?: string } | undefined;
-    const specialite = typeof meta?.specialite === "string" ? meta.specialite.trim() : "";
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+    if (sessionError || !session?.user) {
+      toast.error("Session expirée. Reconnectez-vous.");
+      return;
+    }
+
+    const userId = session.user.id;
+    const meta = session.user.user_metadata as { specialite?: unknown } | undefined;
+    const specialite = specialitesProfileStringFromMetadata(meta);
 
     setSubmitting(true);
     try {
       const full_name = `${p} ${n}`.trim();
+      const authEmail = (session.user.email ?? "").trim() || null;
       const { error: upErr } = await supabase
         .from("profiles")
         .update({
@@ -51,10 +108,13 @@ function ExpertOnboardingPage() {
           full_name,
           telephone: telephone.trim() || null,
           role: "expert",
-          specialite: specialite || null,
+          specialite,
+          email: authEmail,
         })
-        .eq("id", user.id);
+        .eq("id", userId);
       if (upErr) throw new Error(upErr.message);
+
+      await supabase.auth.refreshSession();
 
       toast.success("Profil enregistré.");
       void navigate({ to: "/expert/dossiers", replace: true });
@@ -65,7 +125,7 @@ function ExpertOnboardingPage() {
     }
   }
 
-  if (authLoading || !user) {
+  if (!sessionReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F9FF]">
         <div className="h-9 w-9 animate-spin rounded-full border-2 border-[#E5E7EB] border-t-[#5B50F0]" />
@@ -80,7 +140,7 @@ function ExpertOnboardingPage() {
         <p className="mt-6 text-center text-lg font-semibold text-[#111827]">
           Bienvenue sur Vertual — complétez votre profil
         </p>
-        <p className="mt-2 text-center text-sm text-[#6B7280]">{user.email}</p>
+        <p className="mt-2 text-center text-sm text-[#6B7280]">{sessionEmail ?? ""}</p>
 
         <form className="mt-8 space-y-4" onSubmit={(e) => void onSubmit(e)}>
           <div>
