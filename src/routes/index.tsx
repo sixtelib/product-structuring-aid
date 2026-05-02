@@ -50,6 +50,8 @@ const claims = [
   { icon: Home, label: "Habitation", to: "/sinistres" as const },
 ];
 
+const claimsCarouselTrack = [...claims, ...claims, ...claims];
+
 const stats = [
   { value: "+27%", label: "Indemnisation moyenne récupérée", icon: TrendingUp },
   { value: "48h", label: "Pour analyser votre dossier", icon: Clock },
@@ -418,20 +420,21 @@ function HomePage() {
               </Link>
             </div>
           </FadeInUp>
-          <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {claims.map(({ icon: Icon, label, to }, idx) => (
-              <FadeInUp key={label} delay={0.1 * idx}>
+          <div className="mt-6 overflow-hidden">
+            <div className="animate-scroll flex w-max gap-4">
+              {claimsCarouselTrack.map(({ icon: Icon, label, to }, idx) => (
                 <Link
+                  key={`${label}-${idx}`}
                   to={to}
-                  className="flex flex-col items-center gap-3 rounded-xl border border-border bg-white px-4 py-6 text-center shadow-[var(--shadow-soft)] transition-shadow hover:shadow-[var(--shadow-elegant)]"
+                  className="flex w-48 shrink-0 flex-col items-center gap-3 rounded-xl border border-border bg-white px-4 py-6 text-center shadow-[var(--shadow-soft)] transition-shadow hover:shadow-[var(--shadow-elegant)]"
                 >
                   <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-[#F8F9FF] text-primary">
                     <Icon className="h-5 w-5" aria-hidden />
                   </span>
                   <p className="text-sm font-medium text-foreground">{label}</p>
                 </Link>
-              </FadeInUp>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -520,7 +523,7 @@ function HomePage() {
               </Link>
             </div>
           </FadeInUp>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-3 gap-4 items-stretch">
             {[
               {
                 to: "/guides/expert-assure",
@@ -535,12 +538,12 @@ function HomePage() {
                 label: "Sous-indemnisation : comment le détecter ?",
               },
             ].map((g, idx) => (
-              <FadeInUp key={g.to} delay={0.1 * idx}>
+              <FadeInUp key={g.to} delay={0.1 * idx} className="h-full">
                 <Link
                   to={g.to as any}
-                  className="flex items-center justify-between gap-4 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] px-5 py-5 transition-colors hover:border-[#5B50F0]/30 hover:bg-[#F0F2FF] sm:px-6 sm:py-6"
+                  className="h-full flex items-center justify-between gap-4 rounded-[12px] border border-[#E5E7EB] bg-[#F8F9FF] px-5 py-5 transition-colors hover:border-[#5B50F0]/30 hover:bg-[#F0F2FF] sm:px-6 sm:py-6"
                 >
-                  <span className="text-left text-base font-semibold leading-snug text-[#5B50F0] sm:text-lg">
+                  <span className="min-w-0 flex-1 text-left text-base font-semibold leading-snug text-[#5B50F0] sm:text-lg">
                     {g.label}
                   </span>
                   <ChevronRight className="h-5 w-5 shrink-0 text-[#5B50F0]" aria-hidden />

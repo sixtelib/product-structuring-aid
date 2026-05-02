@@ -15,6 +15,7 @@ import { setImpersonationFromProfile } from "@/lib/expertImpersonation";
 import { useAuth } from "@/lib/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
+import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
@@ -203,7 +204,7 @@ function AdminLayout() {
   const Sidebar = (
     <aside className="flex h-full w-[240px] flex-col bg-[#111827] text-white">
       <div className="p-6">
-        <img src="/logo-vertual.png" alt="Vertual" className="h-8 w-auto" />
+        <Logo variant="light" className="h-8 w-auto" />
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3">

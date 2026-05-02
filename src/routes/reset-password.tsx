@@ -53,7 +53,7 @@ function ResetPasswordPage() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-4 py-8">
         <Link to="/" className="mb-12 inline-block">
-          <Logo />
+          <Logo variant="dark" className="h-8 w-auto" />
         </Link>
 
         <div className="flex-1">

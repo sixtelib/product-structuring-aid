@@ -106,7 +106,7 @@ function ExpertSignupPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-4 py-10">
         <Link to="/" className="mb-10 inline-flex items-center">
-          <Logo />
+          <Logo variant="dark" className="h-8 w-auto" />
         </Link>
 
         <div className="rounded-xl border border-border bg-white p-6 shadow-[var(--shadow-soft)]">

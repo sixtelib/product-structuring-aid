@@ -7,7 +7,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="grid gap-12 lg:grid-cols-4 lg:gap-10">
           <div className="lg:col-span-1">
-            <Logo />
+            <Logo variant="dark" className="h-8 w-auto" />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
               La première plateforme française qui défend l'assuré, pas l'assureur. Indemnisation maximale, rémunération
               au succès.

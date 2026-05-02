@@ -19,7 +19,10 @@ const asyncCssActivationScript = `(function(){
 
 export function RootErrorFallback({ error: _error }: { error: Error }) {
   useEffect(() => {
-    window.location.reload();
+    const timer = window.setTimeout(() => {
+      window.location.reload();
+    }, 500);
+    return () => window.clearTimeout(timer);
   }, []);
 
   return (
@@ -83,6 +86,8 @@ export const Route = createRootRoute({
       },
     ],
     links: [
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "shortcut icon", href: "/favicon.svg" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "preload", href: appCss, as: "style" },

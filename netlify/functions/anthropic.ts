@@ -1,8 +1,23 @@
 import type { Handler } from "@netlify/functions";
 
+const allowedOrigins = [
+  "https://vertual.fr",
+  "https://www.vertual.fr",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "http://localhost:5176",
+  "http://localhost:5177",
+];
+
 const handler: Handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
+  }
+
+  const origin = event.headers.origin || "";
+  if (!allowedOrigins.includes(origin)) {
+    return { statusCode: 403, body: "Forbidden" };
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

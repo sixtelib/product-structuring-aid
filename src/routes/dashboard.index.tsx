@@ -321,7 +321,7 @@ function DashboardContent() {
       <header className="sticky top-0 z-40 border-b border-border bg-white">
         <div className="mx-auto flex h-[4.25rem] max-w-5xl items-center justify-between gap-6 px-5 sm:px-8">
           <Link to="/" className="inline-flex shrink-0 items-center gap-2 opacity-90 hover:opacity-100">
-            <Logo />
+            <Logo variant="dark" className="h-8 w-auto" />
           </Link>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-5">
             <button

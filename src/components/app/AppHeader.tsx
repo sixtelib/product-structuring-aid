@@ -16,7 +16,7 @@ export function AppHeader() {
     <header className="sticky top-0 z-40 w-full border-b border-border bg-white">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
-          <Logo />
+          <Logo variant="dark" className="h-8 w-auto" />
           <nav className="hidden items-center gap-1 md:flex">
             <Link
               to="/dashboard"

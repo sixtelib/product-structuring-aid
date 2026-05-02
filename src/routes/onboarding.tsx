@@ -263,7 +263,7 @@ function OnboardingContent() {
     <div className="min-h-screen bg-[#F8F9FF] px-5 py-8 sm:px-8 sm:py-12">
       <header className="flex justify-center">
         <Link to="/" className="inline-block" aria-label="Accueil Vertual">
-          <Logo />
+          <Logo variant="dark" className="h-8 w-auto" />
         </Link>
       </header>
 

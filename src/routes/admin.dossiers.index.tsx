@@ -1,17 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Copy, Eye, Search, UserPlus, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
-import { assignExpertSelectOptionLabel, nomPrenomExpertFromFullName } from "@/lib/expertFullNameSplit";
+import { AssignModal } from "@/components/admin/AssignModal";
+import { DossierRechercheBar, FILTRES_VIDES, type FiltresDossiers, type TypeFilter } from "@/components/admin/DossierRechercheBar";
+import { DossierTableau } from "@/components/admin/DossierTableau";
+import { nomPrenomExpertFromFullName } from "@/lib/expertFullNameSplit";
+import type { Dossier, Expert } from "@/types";
 
 export const Route = createFileRoute("/admin/dossiers/")({
   component: AdminDossiersIndexPage,
 });
 
-type DossierRow = Tables<"dossiers">;
-
-/** Champs chargés pour la liste admin (certaines colonnes peuvent ne pas être dans le client types généré). */
 type AdminDossierListRow = {
   id: string;
   user_id: string;
@@ -27,46 +26,6 @@ type AdminDossierListRow = {
   assureur_nom: string | null;
 };
 
-type StatusFilter = "all" | "en_cours" | "en_analyse" | "cloture" | "gagne" | "perdu";
-
-type TypeFilter =
-  | "all"
-  | "incendie"
-  | "degat_des_eaux"
-  | "tempete"
-  | "accident_auto"
-  | "multirisque"
-  | "autre";
-
-const STATUS_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
-  { value: "all", label: "Tous" },
-  { value: "en_cours", label: "En cours" },
-  { value: "en_analyse", label: "En analyse" },
-  { value: "cloture", label: "Clôturé" },
-  { value: "gagne", label: "Gagné" },
-  { value: "perdu", label: "Perdu" },
-];
-
-const TYPE_OPTIONS: Array<{ value: TypeFilter; label: string }> = [
-  { value: "all", label: "Tous types" },
-  { value: "incendie", label: "Incendie" },
-  { value: "degat_des_eaux", label: "Dégât des eaux" },
-  { value: "tempete", label: "Tempête" },
-  { value: "accident_auto", label: "Accident auto" },
-  { value: "multirisque", label: "Multirisque" },
-  { value: "autre", label: "Autre" },
-];
-
-type AppliedFilters = {
-  client: string;
-  expertIds: string[];
-  assureurs: string[];
-  type: TypeFilter;
-  statut: StatusFilter;
-  dateFrom: string;
-  dateTo: string;
-};
-
 function normalize(s: string | null | undefined) {
   return (s ?? "")
     .toString()
@@ -74,34 +33,6 @@ function normalize(s: string | null | undefined) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
-}
-
-function filterExpertDisplayName(p: { id: string; full_name: string | null }) {
-  const fn = (p.full_name ?? "").trim();
-  return fn || shortId(p.id);
-}
-
-function amountValue(v: unknown) {
-  const n = typeof v === "number" ? v : Number(v ?? 0);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function eur(n: unknown) {
-  const v = amountValue(n);
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
-}
-
-function dateLabel(d: string | null | undefined) {
-  if (!d) return "Non renseigné";
-  const t = new Date(d);
-  if (Number.isNaN(t.getTime())) return "Non renseigné";
-  return t.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function shortId(id: string | null | undefined) {
-  if (!id) return "Non renseigné";
-  const s = String(id);
-  return s.length <= 8 ? s : s.slice(0, 8);
 }
 
 function typeKey(raw: string | null | undefined): TypeFilter {
@@ -116,43 +47,7 @@ function typeKey(raw: string | null | undefined): TypeFilter {
   return "autre";
 }
 
-function typeBadgeClass(t: TypeFilter) {
-  if (t === "incendie") return "bg-orange-50 text-orange-700";
-  if (t === "degat_des_eaux") return "bg-blue-50 text-blue-700";
-  if (t === "tempete") return "bg-[#F3F4F6] text-[#6B7280]";
-  if (t === "accident_auto") return "bg-red-50 text-red-700";
-  return "bg-[#EDE9FE] text-[#5B50F0]";
-}
-
-/** Libellé + classes Tailwind pour le badge statut (liste admin). */
-function formatStatut(statut: string | null | undefined): { label: string; badgeClass: string } {
-  const s = normalize(statut);
-  if (!s) {
-    return { label: "Non renseigné", badgeClass: "bg-[#F3F4F6] text-[#6B7280]" };
-  }
-  if (s.includes("qualif")) {
-    return { label: "Qualification", badgeClass: "bg-yellow-50 text-yellow-800" };
-  }
-  if (s.includes("analyse")) {
-    return { label: "En analyse", badgeClass: "bg-orange-50 text-orange-700" };
-  }
-  if (s === "en_cours" || s === "en cours" || s.includes("en_cours")) {
-    return { label: "En cours", badgeClass: "bg-blue-50 text-blue-700" };
-  }
-  if (s.includes("gagn")) {
-    return { label: "Gagné", badgeClass: "bg-green-50 text-green-700" };
-  }
-  if (s.includes("perdu") || s.includes("refus") || s.includes("echec")) {
-    return { label: "Perdu", badgeClass: "bg-red-50 text-red-700" };
-  }
-  if (s.includes("clotur") || s.includes("clos")) {
-    return { label: "Clôturé", badgeClass: "bg-[#F3F4F6] text-[#6B7280]" };
-  }
-  const raw = String(statut).trim();
-  return { label: raw || "Non renseigné", badgeClass: "bg-[#F3F4F6] text-[#6B7280]" };
-}
-
-function statusMatchesFilter(statut: string | null | undefined, filter: StatusFilter) {
+function statusMatchesFilter(statut: string | null | undefined, filter: FiltresDossiers["statut"]) {
   if (filter === "all") return true;
   const s = normalize(statut);
   if (filter === "en_cours") return s === "en_cours" || s === "en cours" || s.includes("en_cours");
@@ -163,36 +58,14 @@ function statusMatchesFilter(statut: string | null | undefined, filter: StatusFi
   return true;
 }
 
-function Select({
-  value,
-  onChange,
-  options,
-  ariaLabel,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: Array<{ value: string; label: string }>;
-  ariaLabel: string;
-}) {
-  return (
-    <div className="relative" onClick={(e) => e.stopPropagation()}>
-      <select
-        aria-label={ariaLabel}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        className="h-10 w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] pr-9 text-[0.875rem] font-medium text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7280]" aria-hidden />
-    </div>
-  );
+function amountValue(v: unknown) {
+  const n = typeof v === "number" ? v : Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function eur(n: unknown) {
+  const v = amountValue(n);
+  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
 }
 
 function AdminDossiersIndexPage() {
@@ -202,51 +75,17 @@ function AdminDossiersIndexPage() {
   const [error, setError] = useState<string | null>(null);
   const [dossiers, setDossiers] = useState<AdminDossierListRow[]>([]);
 
-  const [clientQuery, setClientQuery] = useState("");
-  const [selectedExperts, setSelectedExperts] = useState<string[]>([]);
-  const [selectedAssureurs, setSelectedAssureurs] = useState<string[]>([]);
-  const [showExpertDropdown, setShowExpertDropdown] = useState(false);
-  const [showAssureurDropdown, setShowAssureurDropdown] = useState(false);
   const [filterExpertProfiles, setFilterExpertProfiles] = useState<
     Array<{ id: string; full_name: string | null; specialite: string | null }>
   >([]);
-  const [typeDraft, setTypeDraft] = useState<TypeFilter>("all");
-  const [statusDraft, setStatusDraft] = useState<StatusFilter>("all");
-  const [dateFromDraft, setDateFromDraft] = useState("");
-  const [dateToDraft, setDateToDraft] = useState("");
 
-  const [applied, setApplied] = useState<AppliedFilters>({
-    client: "",
-    expertIds: [],
-    assureurs: [],
-    type: "all",
-    statut: "all",
-    dateFrom: "",
-    dateTo: "",
-  });
+  const [applied, setApplied] = useState<FiltresDossiers>(FILTRES_VIDES);
 
   const [page, setPage] = useState(1);
 
-  const [assignOpen, setAssignOpen] = useState(false);
-  const [assigning, setAssigning] = useState<
-    Pick<
-      AdminDossierListRow,
-      "id" | "type_sinistre" | "user_id" | "expert_id" | "nom_assure" | "prenom_assure" | "nom_expert" | "prenom_expert"
-    > | null
-  >(null);
-  const [selectedExpertId, setSelectedExpertId] = useState("");
-  const [savingAssign, setSavingAssign] = useState(false);
+  const [assigning, setAssigning] = useState<AdminDossierListRow | null>(null);
 
-  useEffect(() => {
-    const handleClick = () => {
-      setShowExpertDropdown(false);
-      setShowAssureurDropdown(false);
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -275,19 +114,18 @@ function AdminDossiersIndexPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       await load();
       if (cancelled) return;
     })();
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [load]);
 
   const hasActiveFilters = useMemo(() => {
     return (
@@ -310,6 +148,11 @@ function AdminDossiersIndexPage() {
     return Array.from(s).sort((a, b) => a.localeCompare(b, "fr"));
   }, [dossiers]);
 
+  const expertsPourBar = useMemo<Expert[]>(
+    () => filterExpertProfiles.map((p) => ({ id: p.id, full_name: p.full_name, specialite: p.specialite, role: "expert" })),
+    [filterExpertProfiles],
+  );
+
   const filtered = useMemo(() => {
     const out = dossiers.filter((d) => {
       const clientQ = normalize(applied.client);
@@ -321,8 +164,7 @@ function AdminDossiersIndexPage() {
       }
 
       const expertMatch =
-        applied.expertIds.length === 0 ||
-        (d.expert_id != null && applied.expertIds.includes(String(d.expert_id)));
+        applied.expertIds.length === 0 || (d.expert_id != null && applied.expertIds.includes(String(d.expert_id)));
 
       const assureurMatch =
         applied.assureurs.length === 0 ||
@@ -372,32 +214,23 @@ function AdminDossiersIndexPage() {
     setPage(1);
   }, [applied]);
 
-  async function copy(text: string) {
+  function goToDossier(dossierId: string) {
+    void navigate({ to: "/admin/dossiers/$dossierId", params: { dossierId } });
+  }
+
+  const handleChangerStatut = useCallback(async (id: string, statut: string) => {
     try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      window.alert("Impossible de copier.");
+      const { error } = await supabase.from("dossiers").update({ statut }).eq("id", id);
+      if (error) throw error;
+      setDossiers((prev) => prev.map((d) => (d.id === id ? { ...d, statut } : d)));
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Mise à jour du statut impossible.");
     }
-  }
+  }, []);
 
-  function openAssign(
-    d: Pick<
-      AdminDossierListRow,
-      "id" | "type_sinistre" | "user_id" | "expert_id" | "nom_assure" | "prenom_assure" | "nom_expert" | "prenom_expert"
-    >,
-  ) {
-    setAssigning(d);
-    setSelectedExpertId("");
-    setAssignOpen(true);
-  }
-
-  async function confirmAssign() {
-    if (!assigning?.id) return;
-    const expertId = selectedExpertId.trim();
-    if (!expertId) return;
-
-    setSavingAssign(true);
-    try {
+  const handleConfirmerAssign = useCallback(
+    async (expertId: string) => {
+      if (!assigning?.id) return;
       const profile = filterExpertProfiles.find((p) => p.id === expertId);
       const { nom_expert, prenom_expert } = nomPrenomExpertFromFullName(profile?.full_name ?? null);
       const { error: uErr } = await supabase
@@ -405,21 +238,10 @@ function AdminDossiersIndexPage() {
         .update({ expert_id: expertId, nom_expert, prenom_expert })
         .eq("id", assigning.id);
       if (uErr) throw uErr;
-      setAssignOpen(false);
-      setAssigning(null);
-      setSelectedExpertId("");
       await load();
-    } catch (e) {
-      console.error(e);
-      window.alert(e instanceof Error ? e.message : "Impossible d'assigner l'expert.");
-    } finally {
-      setSavingAssign(false);
-    }
-  }
-
-  function goToDossier(dossierId: string) {
-    void navigate({ to: "/admin/dossiers/$dossierId", params: { dossierId } });
-  }
+    },
+    [assigning, filterExpertProfiles, load],
+  );
 
   return (
     <div className="min-h-[60vh] bg-[#F8F9FF]">
@@ -433,238 +255,14 @@ function AdminDossiersIndexPage() {
         </span>
       </div>
 
-      <section className="mt-5 rounded-xl bg-white p-4 shadow-[0_1px_4px_rgba(0,0,0,0.08)]">
-        <div className="border-b border-[#E5E7EB] pb-3">
-          <div className="mb-3 flex items-center gap-2.5">
-            <Search className="h-5 w-5 shrink-0 text-[#5B50F0]" aria-hidden />
-            <h2 className="text-[0.95rem] font-semibold text-[#111827]">Recherche</h2>
-          </div>
-        </div>
+      <DossierRechercheBar
+        experts={expertsPourBar}
+        assureurs={assureursUniques}
+        onFiltrer={setApplied}
+        onReinitialiser={() => setApplied(FILTRES_VIDES)}
+      />
 
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">Client</label>
-            <input
-              value={clientQuery}
-              onChange={(e) => setClientQuery(e.target.value)}
-              placeholder="Nom, prénom ou numéro de dossier"
-              className="mt-2 h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] text-[0.875rem] text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">Expert</label>
-            <div className="relative mt-2">
-              <button
-                type="button"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  setShowExpertDropdown((v) => !v);
-                  setShowAssureurDropdown(false);
-                }}
-                className="flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] text-left text-[0.875rem] font-medium text-[#111827] outline-none hover:bg-[#FAFAFA] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-                aria-expanded={showExpertDropdown}
-                aria-haspopup="listbox"
-              >
-                <span>
-                  Expert :{" "}
-                  {selectedExperts.length === 0
-                    ? "Tous"
-                    : `${selectedExperts.length} sélectionné${selectedExperts.length > 1 ? "s" : ""}`}
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden />
-              </button>
-              {showExpertDropdown ? (
-                <div
-                  role="listbox"
-                  className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-                  onMouseDown={(e) => e.stopPropagation()}
-                >
-                  {filterExpertProfiles.length === 0 ? (
-                    <p className="px-4 py-3 text-[0.875rem] text-[#6B7280]">Aucun expert</p>
-                  ) : (
-                    filterExpertProfiles.map((ex) => {
-                      const checked = selectedExperts.includes(ex.id);
-                      return (
-                        <label
-                          key={ex.id}
-                          className="flex cursor-pointer items-center gap-3 text-[0.875rem] text-[#111827] hover:bg-[#F9FAFB]"
-                          style={{ padding: "10px 16px" }}
-                        >
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 shrink-0 rounded border-[#E5E7EB] text-[#5B50F0] focus:ring-[#5B50F0]"
-                            checked={checked}
-                            onChange={() =>
-                              setSelectedExperts((prev) =>
-                                prev.includes(ex.id) ? prev.filter((x) => x !== ex.id) : [...prev, ex.id],
-                              )
-                            }
-                          />
-                          <span className="min-w-0 flex-1">{filterExpertDisplayName(ex)}</span>
-                        </label>
-                      );
-                    })
-                  )}
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">Assureur</label>
-            <div className="relative mt-2">
-              <button
-                type="button"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  setShowAssureurDropdown((v) => !v);
-                  setShowExpertDropdown(false);
-                }}
-                className="flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] text-left text-[0.875rem] font-medium text-[#111827] outline-none hover:bg-[#FAFAFA] focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-                aria-expanded={showAssureurDropdown}
-                aria-haspopup="listbox"
-              >
-                <span>
-                  Assureur :{" "}
-                  {selectedAssureurs.length === 0
-                    ? "Tous"
-                    : `${selectedAssureurs.length} sélectionné${selectedAssureurs.length > 1 ? "s" : ""}`}
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden />
-              </button>
-              {showAssureurDropdown ? (
-                <div
-                  role="listbox"
-                  className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-                  onMouseDown={(e) => e.stopPropagation()}
-                >
-                  {assureursUniques.length === 0 ? (
-                    <p className="px-4 py-3 text-[0.875rem] text-[#6B7280]">Aucun assureur</p>
-                  ) : (
-                    assureursUniques.map((nom) => {
-                      const checked = selectedAssureurs.includes(nom);
-                      return (
-                        <label
-                          key={nom}
-                          className="flex cursor-pointer items-center gap-3 text-[0.875rem] text-[#111827] hover:bg-[#F9FAFB]"
-                          style={{ padding: "10px 16px" }}
-                        >
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 shrink-0 rounded border-[#E5E7EB] text-[#5B50F0] focus:ring-[#5B50F0]"
-                            checked={checked}
-                            onChange={() =>
-                              setSelectedAssureurs((prev) =>
-                                prev.includes(nom) ? prev.filter((x) => x !== nom) : [...prev, nom],
-                              )
-                            }
-                          />
-                          <span className="min-w-0 flex-1">{nom}</span>
-                        </label>
-                      );
-                    })
-                  )}
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">Type de sinistre</label>
-            <div className="mt-2">
-              <Select
-                ariaLabel="Type de sinistre"
-                value={typeDraft}
-                onChange={(v) => setTypeDraft(v as TypeFilter)}
-                options={[{ value: "all", label: "Tous" }, ...TYPE_OPTIONS.filter((o) => o.value !== "all")]}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">Statut</label>
-            <div className="mt-2">
-              <Select
-                ariaLabel="Statut"
-                value={statusDraft}
-                onChange={(v) => setStatusDraft(v as StatusFilter)}
-                options={STATUS_OPTIONS}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">Période de dépôt</label>
-            <div className="mt-2 grid grid-cols-2 gap-3">
-              <input
-                type="date"
-                value={dateFromDraft}
-                onChange={(e) => setDateFromDraft(e.target.value)}
-                className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] text-[0.875rem] text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-                aria-label="Du"
-              />
-              <input
-                type="date"
-                value={dateToDraft}
-                onChange={(e) => setDateToDraft(e.target.value)}
-                className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-[12px] py-[8px] text-[0.875rem] text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-                aria-label="Au"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              setClientQuery("");
-              setSelectedExperts([]);
-              setSelectedAssureurs([]);
-              setShowExpertDropdown(false);
-              setShowAssureurDropdown(false);
-              setTypeDraft("all");
-              setStatusDraft("all");
-              setDateFromDraft("");
-              setDateToDraft("");
-              setApplied({
-                client: "",
-                expertIds: [],
-                assureurs: [],
-                type: "all",
-                statut: "all",
-                dateFrom: "",
-                dateTo: "",
-              });
-            }}
-            className="rounded-lg bg-[#F3F4F6] px-6 py-2.5 text-sm font-semibold text-[#111827] hover:bg-[#E5E7EB]"
-          >
-            Réinitialiser
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              setApplied({
-                client: clientQuery,
-                expertIds: [...selectedExperts],
-                assureurs: [...selectedAssureurs],
-                type: typeDraft,
-                statut: statusDraft,
-                dateFrom: dateFromDraft,
-                dateTo: dateToDraft,
-              })
-            }
-            className="rounded-lg bg-[#5B50F0] px-6 py-2.5 text-sm font-semibold text-white hover:opacity-95"
-          >
-            Rechercher
-          </button>
-        </div>
-      </section>
-
-      {hasActiveFilters && (
-        <p className="mt-3 text-sm text-[#6B7280]">{filtered.length} dossier(s) trouvé(s)</p>
-      )}
+      {hasActiveFilters ? <p className="mt-3 text-sm text-[#6B7280]">{filtered.length} dossier(s) trouvé(s)</p> : null}
 
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <div className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E7EB] bg-white px-5 py-3">
@@ -691,263 +289,27 @@ function AdminDossiersIndexPage() {
         ) : filtered.length === 0 ? (
           <div className="p-6 text-sm text-[#6B7280]">Aucun dossier ne correspond à vos filtres</div>
         ) : (
-          <>
-            <div className="w-full overflow-x-auto">
-              <table className="min-w-full border-collapse">
-                <thead className="bg-[#F9FAFB]">
-                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    <th className="px-5 py-4">ID</th>
-                    <th className="px-5 py-4">Type</th>
-                    <th className="px-5 py-4">Assureur</th>
-                    <th className="px-5 py-4">Statut</th>
-                    <th className="px-5 py-4">Montant</th>
-                    <th className="px-5 py-4">Commission</th>
-                    <th className="px-5 py-4">Date</th>
-                    <th className="px-5 py-4">Assuré</th>
-                    <th className="px-5 py-4">Expert</th>
-                    <th className="px-5 py-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pagination.items.map((d) => {
-                    const t = typeKey(d.type_sinistre);
-                    const typeLabel = TYPE_OPTIONS.find((o) => o.value === t)?.label ?? (d.type_sinistre ?? "Non renseigné");
-                    const amt = d.montant_estime == null ? null : amountValue(d.montant_estime);
-                    const commission = amt == null ? null : amt * 0.1;
-                    const statutBadge = formatStatut(d.statut);
-                    return (
-                      <tr
-                        key={d.id}
-                        role="button"
-                        tabIndex={0}
-                        className="cursor-pointer border-b border-[#F3F4F6] hover:bg-[#F8F9FF]"
-                        onClick={() => goToDossier(d.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            goToDossier(d.id);
-                          }
-                        }}
-                      >
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-[#111827]">{shortId(d.id)}</span>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                void copy(String(d.id));
-                              }}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#F3F4F6] text-[#111827] hover:bg-[#E5E7EB]"
-                              aria-label="Copier l'ID"
-                              title="Copier"
-                            >
-                              <Copy className="h-4 w-4 text-[#6B7280]" aria-hidden />
-                            </button>
-                          </div>
-                        </td>
-
-                        <td className="px-5 py-4">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${typeBadgeClass(t)}`}>
-                            {typeLabel}
-                          </span>
-                        </td>
-
-                        <td className="px-5 py-4 text-sm text-[#111827]">
-                          {d.assureur_nom?.trim() ? (
-                            <span className="font-semibold">{d.assureur_nom}</span>
-                          ) : (
-                            <span className="italic text-[#9CA3AF]">Non renseigné</span>
-                          )}
-                        </td>
-
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statutBadge.badgeClass}`}
-                          >
-                            {statutBadge.label}
-                          </span>
-                        </td>
-
-                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">{amt == null ? "Non renseigné" : eur(amt)}</td>
-                        <td className="px-5 py-4 text-sm font-semibold text-[#5B50F0]">{commission == null ? "Non renseigné" : eur(commission)}</td>
-                        <td className="px-5 py-4 text-sm text-[#111827]">{dateLabel(d.date_ouverture)}</td>
-                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
-                          {d.nom_assure || d.prenom_assure
-                            ? `${d.nom_assure ?? ""} ${d.prenom_assure ?? ""}`.trim()
-                            : "Assuré inconnu"}
-                        </td>
-
-                        <td className="px-5 py-4">
-                          {d.nom_expert || d.prenom_expert ? (
-                            <span className="text-sm font-semibold text-[#111827]">{`${d.nom_expert ?? ""} ${d.prenom_expert ?? ""}`.trim()}</span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
-                              Non assigné
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "8px",
-                              alignItems: "center",
-                              justifyContent: "flex-end",
-                            }}
-                          >
-                            {!d.expert_id && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openAssign({
-                                    id: d.id,
-                                    type_sinistre: d.type_sinistre,
-                                    user_id: d.user_id,
-                                    expert_id: d.expert_id,
-                                    nom_assure: d.nom_assure,
-                                    prenom_assure: d.prenom_assure,
-                                    nom_expert: d.nom_expert,
-                                    prenom_expert: d.prenom_expert,
-                                  });
-                                }}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow"
-                              >
-                                <UserPlus className="h-4 w-4" aria-hidden />
-                                Assigner
-                              </button>
-                            )}
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                goToDossier(d.id);
-                              }}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-2 rounded-lg bg-[#F3F4F6] px-3 py-2 text-sm font-semibold text-[#111827] hover:bg-[#E5E7EB]"
-                            >
-                              <Eye className="h-4 w-4 text-[#6B7280]" aria-hidden />
-                              Voir
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {pagination.pageCount > 1 && (
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E5E7EB] px-6 py-4">
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={pagination.page <= 1}
-                  className="rounded-lg bg-[#F3F4F6] px-3 py-2 text-sm font-semibold text-[#111827] hover:bg-[#E5E7EB] disabled:opacity-50"
-                >
-                  ← Précédent
-                </button>
-
-                <p className="text-sm font-medium text-[#6B7280]">
-                  Page <span className="font-semibold text-[#111827]">{pagination.page}</span> sur{" "}
-                  <span className="font-semibold text-[#111827]">{pagination.pageCount}</span>
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.min(pagination.pageCount, p + 1))}
-                  disabled={pagination.page >= pagination.pageCount}
-                  className="rounded-lg bg-[#F3F4F6] px-3 py-2 text-sm font-semibold text-[#111827] hover:bg-[#E5E7EB] disabled:opacity-50"
-                >
-                  Suivant →
-                </button>
-              </div>
-            )}
-          </>
+          <DossierTableau
+            dossiers={pagination.items as Dossier[]}
+            page={pagination.page}
+            pageCount={pagination.pageCount}
+            onVoir={goToDossier}
+            onAssigner={(d) => setAssigning(d as AdminDossierListRow)}
+            onChangerStatut={handleChangerStatut}
+            onPagePrev={() => setPage((p) => Math.max(1, p - 1))}
+            onPageNext={() => setPage((p) => Math.min(pagination.pageCount, p + 1))}
+          />
         )}
       </div>
 
-      {assignOpen && assigning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-[0_18px_60px_rgba(0,0,0,0.25)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-lg font-semibold text-[#111827]">Assigner un expert</p>
-                <p className="mt-1 text-sm text-[#6B7280]">
-                  Dossier {shortId(assigning.id)} · {assigning.type_sinistre ?? "Non renseigné"} · Assuré{" "}
-                  {assigning.nom_assure || assigning.prenom_assure
-                    ? `${assigning.nom_assure ?? ""} ${assigning.prenom_assure ?? ""}`.trim()
-                    : "Assuré inconnu"}
-                </p>
-              </div>
-              <button
-                type="button"
-                aria-label="Fermer"
-                onClick={() => {
-                  setAssignOpen(false);
-                  setAssigning(null);
-                  setSelectedExpertId("");
-                }}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#F3F4F6] hover:bg-[#E5E7EB]"
-              >
-                <X className="h-5 w-5 text-[#6B7280]" aria-hidden />
-              </button>
-            </div>
-
-            <div className="mt-6" onMouseDown={(e) => e.stopPropagation()}>
-              <label htmlFor="assign-expert-select" className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">
-                Expert
-              </label>
-              <div className="relative mt-2">
-                <select
-                  id="assign-expert-select"
-                  value={selectedExpertId}
-                  onChange={(e) => setSelectedExpertId(e.target.value)}
-                  className="h-10 w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 pr-9 text-[0.875rem] font-medium text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-                >
-                  <option value="">Sélectionner un expert…</option>
-                  {filterExpertProfiles.map((ex) => (
-                    <option key={ex.id} value={ex.id}>
-                      {assignExpertSelectOptionLabel(ex)}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7280]" aria-hidden />
-              </div>
-              {filterExpertProfiles.length === 0 ? (
-                <p className="mt-2 text-xs text-[#6B7280]">Aucun expert dans la base. Vérifiez les profils (rôle expert).</p>
-              ) : null}
-            </div>
-
-            <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setAssignOpen(false);
-                  setAssigning(null);
-                  setSelectedExpertId("");
-                }}
-                className="rounded-xl bg-[#F3F4F6] px-4 py-2.5 text-sm font-semibold text-[#111827] hover:bg-[#E5E7EB]"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                disabled={!selectedExpertId.trim() || savingAssign}
-                onClick={() => void confirmAssign()}
-                className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow disabled:opacity-60"
-              >
-                {savingAssign ? "Assignation…" : "Confirmer"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {assigning ? (
+        <AssignModal
+          dossier={assigning as Dossier}
+          experts={expertsPourBar}
+          onConfirmer={handleConfirmerAssign}
+          onFermer={() => setAssigning(null)}
+        />
+      ) : null}
     </div>
   );
 }

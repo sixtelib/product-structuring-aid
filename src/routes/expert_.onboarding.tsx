@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/expert_/onboarding")({
   head: () => ({
@@ -136,7 +137,7 @@ function ExpertOnboardingPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#F8F9FF] px-4 py-12">
       <div className="w-full max-w-md rounded-2xl border border-[#E5E7EB] bg-white p-8 shadow-[0_18px_60px_rgba(0,0,0,0.08)]">
-        <img src="/logo-vertual.png" alt="Vertual" className="mx-auto h-9 w-auto" />
+        <Logo variant="dark" className="mx-auto h-9 w-auto" />
         <p className="mt-6 text-center text-lg font-semibold text-[#111827]">
           Bienvenue sur Vertual — complétez votre profil
         </p>

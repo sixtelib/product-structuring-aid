@@ -27,14 +27,30 @@ function DossiersPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("cases")
-      .select("id,reference,title,claim_type,status,estimated_amount,created_at")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
+
+    let cancelled = false;
+    async function load() {
+      try {
+        const { data, error } = await supabase
+          .from("cases")
+          .select("id,reference,title,claim_type,status,estimated_amount,created_at")
+          .order("created_at", { ascending: false });
+        if (cancelled) return;
+        if (error) throw error;
         setCases((data as CaseRow[]) ?? []);
-        setLoading(false);
-      });
+      } catch (_err: unknown) {
+        if (cancelled) return;
+        setCases([]);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   return (
@@ -63,7 +79,9 @@ function DossiersPage() {
         ) : cases.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-background p-12 text-center">
             <Inbox className="mx-auto h-10 w-10 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold text-foreground">Aucun dossier pour le moment</h3>
+            <h3 className="mt-4 text-lg font-semibold text-foreground">
+              Aucun dossier pour le moment
+            </h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Créez votre premier dossier pour démarrer la qualification.
             </p>

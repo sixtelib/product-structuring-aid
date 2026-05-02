@@ -1,6 +1,15 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Upload, Send, FileText, Trash2, Download, MessageSquare, Clock } from "lucide-react";
+import {
+  ArrowLeft,
+  Upload,
+  Send,
+  FileText,
+  Trash2,
+  Download,
+  MessageSquare,
+  Clock,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -15,7 +24,10 @@ export const Route = createFileRoute("/espace/dossiers/$caseId")({
       <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6">
         <p className="font-medium text-destructive">Erreur : {error.message}</p>
         <button
-          onClick={() => { router.invalidate(); reset(); }}
+          onClick={() => {
+            router.invalidate();
+            reset();
+          }}
           className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
           Réessayer
@@ -26,7 +38,10 @@ export const Route = createFileRoute("/espace/dossiers/$caseId")({
   notFoundComponent: () => (
     <div className="rounded-lg border border-border bg-background p-6 text-center">
       <p className="text-muted-foreground">Dossier introuvable.</p>
-      <Link to="/dashboard" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
+      <Link
+        to="/dashboard"
+        className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+      >
         Retour au dashboard
       </Link>
     </div>
@@ -94,34 +109,88 @@ function CaseDetailPage() {
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function loadAll() {
-    const [{ data: caseData }, { data: docData }, { data: eventData }, { data: msgData }] = await Promise.all([
+  async function fetchCaseRows() {
+    return Promise.all([
       supabase.from("cases").select("*").eq("id", caseId).maybeSingle(),
-      supabase.from("case_documents").select("*").eq("case_id", caseId).order("created_at", { ascending: false }),
-      supabase.from("case_events").select("*").eq("case_id", caseId).order("created_at", { ascending: false }),
-      supabase.from("case_messages").select("*").eq("case_id", caseId).order("created_at", { ascending: true }),
+      supabase
+        .from("case_documents")
+        .select("*")
+        .eq("case_id", caseId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("case_events")
+        .select("*")
+        .eq("case_id", caseId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("case_messages")
+        .select("*")
+        .eq("case_id", caseId)
+        .order("created_at", { ascending: true }),
     ]);
+  }
+
+  function applyCaseRows(rows: Awaited<ReturnType<typeof fetchCaseRows>>) {
+    const [{ data: caseData }, { data: docData }, { data: eventData }, { data: msgData }] = rows;
     setC(caseData as CaseFull | null);
     setDocs((docData as DocRow[]) ?? []);
     setEvents((eventData as EventRow[]) ?? []);
     setMessages((msgData as MessageRow[]) ?? []);
+  }
+
+  async function loadAll() {
+    const rows = await fetchCaseRows();
+    applyCaseRows(rows);
     setLoading(false);
   }
 
   useEffect(() => {
-    loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let cancelled = false;
+    async function load() {
+      try {
+        const rows = await fetchCaseRows();
+        if (cancelled) return;
+        const [cRes, dRes, eRes, mRes] = rows;
+        if (cRes.error) throw cRes.error;
+        if (dRes.error) throw dRes.error;
+        if (eRes.error) throw eRes.error;
+        if (mRes.error) throw mRes.error;
+        applyCaseRows(rows);
+      } catch (_err: unknown) {
+        if (cancelled) return;
+        setC(null);
+        setDocs([]);
+        setEvents([]);
+        setMessages([]);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchCaseRows / applyCaseRows : closure sur caseId
   }, [caseId]);
 
   if (loading) {
-    return <div className="rounded-lg border border-border bg-background p-12 text-center text-sm text-muted-foreground">Chargement...</div>;
+    return (
+      <div className="rounded-lg border border-border bg-background p-12 text-center text-sm text-muted-foreground">
+        Chargement...
+      </div>
+    );
   }
 
   if (!c) {
     return (
       <div className="rounded-lg border border-border bg-background p-6 text-center">
         <p className="text-muted-foreground">Dossier introuvable.</p>
-        <Link to="/dashboard" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
+        <Link
+          to="/dashboard"
+          className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+        >
           Retour au dashboard
         </Link>
       </div>
@@ -130,18 +199,25 @@ function CaseDetailPage() {
 
   return (
     <div>
-      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
+      <Link
+        to="/dashboard"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
+      >
         <ArrowLeft className="h-4 w-4" /> Retour au dashboard
       </Link>
 
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-mono text-muted-foreground">Réf. {c.reference}</p>
-          <h1 className="mt-1 font-sans tracking-tight text-3xl font-semibold text-foreground">{c.title}</h1>
+          <h1 className="mt-1 font-sans tracking-tight text-3xl font-semibold text-foreground">
+            {c.title}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {claimTypeLabel(c.claim_type)}
             {c.insurer_name ? ` · ${c.insurer_name}` : ""}
-            {c.incident_date ? ` · sinistre du ${new Date(c.incident_date).toLocaleDateString("fr-FR")}` : ""}
+            {c.incident_date
+              ? ` · sinistre du ${new Date(c.incident_date).toLocaleDateString("fr-FR")}`
+              : ""}
           </p>
         </div>
         <StatusBadge status={c.status} />
@@ -151,19 +227,25 @@ function CaseDetailPage() {
         <div className="rounded-lg border border-border bg-background p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Préjudice estimé</p>
           <p className="mt-1 font-sans tracking-tight text-2xl font-semibold text-foreground">
-            {c.estimated_amount != null ? `${Number(c.estimated_amount).toLocaleString("fr-FR")} €` : ", "}
+            {c.estimated_amount != null
+              ? `${Number(c.estimated_amount).toLocaleString("fr-FR")} €`
+              : ", "}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-background p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Offre assureur</p>
           <p className="mt-1 font-sans tracking-tight text-2xl font-semibold text-foreground">
-            {c.insurer_offer != null ? `${Number(c.insurer_offer).toLocaleString("fr-FR")} €` : ", "}
+            {c.insurer_offer != null
+              ? `${Number(c.insurer_offer).toLocaleString("fr-FR")} €`
+              : ", "}
           </p>
         </div>
         <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
           <p className="text-xs uppercase tracking-wide text-accent-foreground/70">Obtenu</p>
           <p className="mt-1 font-sans tracking-tight text-2xl font-semibold text-foreground">
-            {c.obtained_amount != null ? `${Number(c.obtained_amount).toLocaleString("fr-FR")} €` : "En cours"}
+            {c.obtained_amount != null
+              ? `${Number(c.obtained_amount).toLocaleString("fr-FR")} €`
+              : "En cours"}
           </p>
         </div>
       </div>
@@ -177,11 +259,13 @@ function CaseDetailPage() {
 
       <div className="mt-8 border-b border-border">
         <nav className="flex gap-1">
-          {([
-            { id: "timeline", label: "Suivi", icon: Clock },
-            { id: "documents", label: `Documents (${docs.length})`, icon: FileText },
-            { id: "messages", label: `Messages (${messages.length})`, icon: MessageSquare },
-          ] as const).map((t) => (
+          {(
+            [
+              { id: "timeline", label: "Suivi", icon: Clock },
+              { id: "documents", label: `Documents (${docs.length})`, icon: FileText },
+              { id: "messages", label: `Messages (${messages.length})`, icon: MessageSquare },
+            ] as const
+          ).map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
@@ -225,7 +309,10 @@ function TimelineTab({ events }: { events: EventRow[] }) {
         <li key={e.id} className="relative">
           <span className="absolute -left-[31px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-primary bg-background" />
           <p className="text-xs text-muted-foreground">
-            {new Date(e.created_at).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}
+            {new Date(e.created_at).toLocaleString("fr-FR", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
           </p>
           <h4 className="mt-0.5 font-medium text-foreground">{e.title}</h4>
           {e.description && <p className="mt-1 text-sm text-muted-foreground">{e.description}</p>}
@@ -235,7 +322,17 @@ function TimelineTab({ events }: { events: EventRow[] }) {
   );
 }
 
-function DocumentsTab({ caseId, userId, docs, onChange }: { caseId: string; userId: string; docs: DocRow[]; onChange: () => void }) {
+function DocumentsTab({
+  caseId,
+  userId,
+  docs,
+  onChange,
+}: {
+  caseId: string;
+  userId: string;
+  docs: DocRow[];
+  onChange: () => void;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -277,7 +374,9 @@ function DocumentsTab({ caseId, userId, docs, onChange }: { caseId: string; user
   }
 
   async function downloadDoc(doc: DocRow) {
-    const { data, error } = await supabase.storage.from("case-files").createSignedUrl(doc.storage_path, 60);
+    const { data, error } = await supabase.storage
+      .from("case-files")
+      .createSignedUrl(doc.storage_path, 60);
     if (error || !data) {
       toast.error("Lien indisponible");
       return;
@@ -298,7 +397,9 @@ function DocumentsTab({ caseId, userId, docs, onChange }: { caseId: string; user
       <div className="rounded-lg border border-dashed border-border bg-background p-6 text-center">
         <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
         <p className="mt-2 text-sm font-medium text-foreground">Ajouter un document</p>
-        <p className="text-xs text-muted-foreground">Police, devis, photos, courriers de l'assureur...</p>
+        <p className="text-xs text-muted-foreground">
+          Police, devis, photos, courriers de l'assureur...
+        </p>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -313,10 +414,15 @@ function DocumentsTab({ caseId, userId, docs, onChange }: { caseId: string; user
 
       <div className="mt-6 space-y-2">
         {docs.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground">Aucun document pour le moment.</p>
+          <p className="text-center text-sm text-muted-foreground">
+            Aucun document pour le moment.
+          </p>
         ) : (
           docs.map((d) => (
-            <div key={d.id} className="flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3">
+            <div
+              key={d.id}
+              className="flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3"
+            >
               <div className="flex items-center gap-3 min-w-0">
                 <FileText className="h-5 w-5 flex-shrink-0 text-primary" />
                 <div className="min-w-0">
@@ -328,10 +434,18 @@ function DocumentsTab({ caseId, userId, docs, onChange }: { caseId: string; user
                 </div>
               </div>
               <div className="flex flex-shrink-0 items-center gap-1">
-                <button onClick={() => downloadDoc(d)} className="rounded-md p-2 text-muted-foreground hover:bg-secondary hover:text-primary" aria-label="Télécharger">
+                <button
+                  onClick={() => downloadDoc(d)}
+                  className="rounded-md p-2 text-muted-foreground hover:bg-secondary hover:text-primary"
+                  aria-label="Télécharger"
+                >
                   <Download className="h-4 w-4" />
                 </button>
-                <button onClick={() => deleteDoc(d)} className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Supprimer">
+                <button
+                  onClick={() => deleteDoc(d)}
+                  className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  aria-label="Supprimer"
+                >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -343,7 +457,17 @@ function DocumentsTab({ caseId, userId, docs, onChange }: { caseId: string; user
   );
 }
 
-function MessagesTab({ caseId, userId, messages, onChange }: { caseId: string; userId: string; messages: MessageRow[]; onChange: () => void }) {
+function MessagesTab({
+  caseId,
+  userId,
+  messages,
+  onChange,
+}: {
+  caseId: string;
+  userId: string;
+  messages: MessageRow[];
+  onChange: () => void;
+}) {
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -385,8 +509,13 @@ function MessagesTab({ caseId, userId, messages, onChange }: { caseId: string; u
                   }`}
                 >
                   <p className="whitespace-pre-line text-sm">{m.content}</p>
-                  <p className={`mt-1 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                    {new Date(m.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                  <p
+                    className={`mt-1 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+                  >
+                    {new Date(m.created_at).toLocaleString("fr-FR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })}
                   </p>
                 </div>
               </div>
