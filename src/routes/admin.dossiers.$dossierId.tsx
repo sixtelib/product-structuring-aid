@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { formatDocumentStatusDb } from "@/lib/client-dashboard-ui";
+import { nomPrenomExpertFromFullName } from "@/lib/expertFullNameSplit";
 import { DossierAnalyseIA } from "@/components/DossierAnalyseIA";
 
 export const Route = createFileRoute("/admin/dossiers/$dossierId")({
@@ -167,7 +168,7 @@ function expertRowLabel(e: {
 }) {
   const fn = (e.full_name ?? "").trim();
   if (fn) return fn;
-  return `${String(e.prenom_expert ?? "").trim()} ${String(e.nom_expert ?? "").trim()}`.trim();
+  return `${String(e.nom_expert ?? "").trim()} ${String(e.prenom_expert ?? "").trim()}`.trim();
 }
 
 function AdminDossierDetailPage() {
@@ -334,7 +335,7 @@ function AdminDossierDetailPage() {
   const expertNom = useMemo(() => {
     const fromDossier =
       dossier?.nom_expert || dossier?.prenom_expert
-        ? `${dossier.prenom_expert ?? ""} ${dossier.nom_expert ?? ""}`.trim()
+        ? `${dossier.nom_expert ?? ""} ${dossier.prenom_expert ?? ""}`.trim()
         : "";
     if (fromDossier) return fromDossier;
     if (expertProfile?.full_name?.trim()) return expertProfile.full_name.trim();
@@ -387,7 +388,24 @@ function AdminDossierDetailPage() {
     if (!id || !dossier) return;
     setAssigningExpert(true);
     try {
-      const { error } = await supabase.from("dossiers").update({ expert_id: id }).eq("id", dossierId);
+      const expert = experts.find((ex) => String(ex.id ?? (ex as { expert_id?: string }).expert_id) === id);
+      let nom_expert = "";
+      let prenom_expert = "";
+      if (expert) {
+        const fn = String((expert as { full_name?: string | null }).full_name ?? "").trim();
+        if (fn) {
+          const split = nomPrenomExpertFromFullName(fn);
+          nom_expert = split.nom_expert;
+          prenom_expert = split.prenom_expert;
+        } else {
+          nom_expert = String((expert as { nom_expert?: string | null }).nom_expert ?? "").trim();
+          prenom_expert = String((expert as { prenom_expert?: string | null }).prenom_expert ?? "").trim();
+        }
+      }
+      const { error } = await supabase
+        .from("dossiers")
+        .update({ expert_id: id, nom_expert, prenom_expert })
+        .eq("id", dossierId);
       if (error) throw error;
       setSelectedExpertId("");
       setExpertSearch("");

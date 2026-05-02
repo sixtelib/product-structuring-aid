@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Shield, UserPlus } from "lucide-react";
+import { Check, ChevronDown, Shield, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { dossierStatusMeta } from "@/lib/client-dashboard-ui";
+import { assignExpertSelectOptionLabel, nomPrenomExpertFromFullName } from "@/lib/expertFullNameSplit";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/admin/")({
@@ -17,6 +18,8 @@ type DossierForList = DossierRow & {
   assured?: ProfileRow | null;
   expert?: ProfileRow | null;
 };
+
+type ExpertListRow = { id: string; full_name: string | null; specialite: string | null };
 
 type AdminStatus = "qualification" | "en_cours" | "en_attente" | "gagne" | "perdu";
 
@@ -40,7 +43,7 @@ function AdminIndexPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dossiers, setDossiers] = useState<DossierForList[]>([]);
-  const [experts, setExperts] = useState<any[]>([]);
+  const [experts, setExperts] = useState<ExpertListRow[]>([]);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assigningDossier, setAssigningDossier] = useState<DossierForList | null>(null);
   const [expertSearch, setExpertSearch] = useState("");
@@ -93,18 +96,30 @@ function AdminIndexPage() {
   }, []);
 
   useEffect(() => {
-    supabase
-      .from("profiles")
-      .select("id, full_name, prenom, nom, specialite")
-      .eq("role", "expert")
-      .then(({ data }) => setExperts(data ?? []));
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, specialite")
+        .eq("role", "expert");
+      if (cancelled) return;
+      if (error) {
+        console.error(error);
+        setExperts([]);
+        return;
+      }
+      setExperts((data ?? []) as ExpertListRow[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filteredAssignExperts = useMemo(() => {
     const q = expertSearch.trim().toLowerCase();
     if (!q) return experts;
-    return experts.filter((expert: any) => {
-      const name = expert.full_name || `${expert.prenom || ""} ${expert.nom || ""}`.trim() || "";
+    return experts.filter((expert) => {
+      const name = (expert.full_name ?? "").trim();
       return name.toLowerCase().includes(q);
     });
   }, [experts, expertSearch]);
@@ -127,7 +142,12 @@ function AdminIndexPage() {
     if (!assigningDossier?.id || !selectedExpertId) return;
     setSavingAssign(true);
     try {
-      const { error: uErr } = await supabase.from("dossiers").update({ expert_id: selectedExpertId }).eq("id", assigningDossier.id);
+      const profile = experts.find((p) => p.id === selectedExpertId);
+      const { nom_expert, prenom_expert } = nomPrenomExpertFromFullName(profile?.full_name ?? null);
+      const { error: uErr } = await supabase
+        .from("dossiers")
+        .update({ expert_id: selectedExpertId, nom_expert, prenom_expert })
+        .eq("id", assigningDossier.id);
       if (uErr) throw uErr;
       toast.success("Expert assigné.");
       setAssignOpen(false);
@@ -193,7 +213,7 @@ function AdminIndexPage() {
               const assuredName = `${String(d.prenom_assure ?? "").trim()} ${String(d.nom_assure ?? "").trim()}`.trim();
               const assuredLabel =
                 assuredName || (d.assured?.full_name && d.assured.full_name.trim()) || d.assured?.email || "Inconnu";
-              const expertName = `${String(d.prenom_expert ?? "").trim()} ${String(d.nom_expert ?? "").trim()}`.trim();
+              const expertName = `${String(d.nom_expert ?? "").trim()} ${String(d.prenom_expert ?? "").trim()}`.trim();
               const expertLabel =
                 expertName || (d.expert?.full_name && d.expert.full_name.trim()) || d.expert?.email || "Inconnu";
 
@@ -274,124 +294,65 @@ function AdminIndexPage() {
 
       {assignOpen && assigningDossier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="w-full max-w-xl rounded-xl border border-border bg-white shadow-[var(--shadow-elegant)]">
-            <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-5">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-[0_18px_60px_rgba(0,0,0,0.25)]">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-foreground">Assigner un expert</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Dossier : <span className="font-medium text-foreground">{assigningDossier.titre || assigningDossier.id}</span>
+                <p className="text-lg font-semibold text-[#111827]">Assigner un expert</p>
+                <p className="mt-1 text-sm text-[#6B7280]">
+                  Dossier :{" "}
+                  <span className="font-medium text-[#111827]">{assigningDossier.titre || assigningDossier.id}</span>
                 </p>
               </div>
               <button
                 type="button"
+                aria-label="Fermer"
                 onClick={() => {
                   setAssignOpen(false);
                   setAssigningDossier(null);
                   setExpertSearch("");
                   setSelectedExpertId("");
                 }}
-                className="rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-secondary"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#F3F4F6] hover:bg-[#E5E7EB]"
               >
-                Fermer
+                <X className="h-5 w-5 text-[#6B7280]" aria-hidden />
               </button>
             </div>
 
-            <div className="max-h-[60vh] overflow-auto px-6 py-5">
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: "#6B7280",
-                    textTransform: "uppercase",
-                    display: "block",
-                    marginBottom: "8px",
-                  }}
+            <div className="mt-6" onMouseDown={(e) => e.stopPropagation()}>
+              <label htmlFor="admin-index-assign-expert" className="text-xs font-semibold uppercase tracking-[0.1em] text-[#6B7280]">
+                Expert
+              </label>
+              <div className="relative mt-2">
+                <select
+                  id="admin-index-assign-expert"
+                  value={selectedExpertId}
+                  onChange={(e) => setSelectedExpertId(e.target.value)}
+                  className="h-10 w-full appearance-none rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 pr-9 text-[0.875rem] font-medium text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
                 >
-                  SÉLECTIONNER UN EXPERT
-                </label>
-
-                <div
-                  style={{
-                    border: "1px solid #E5E7EB",
-                    borderRadius: "8px",
-                    maxHeight: "200px",
-                    overflowY: "auto",
-                  }}
-                >
-                  {experts.length === 0 ? (
-                    <div style={{ padding: "16px", color: "#9CA3AF", textAlign: "center" }}>Aucun expert disponible</div>
-                  ) : filteredAssignExperts.length === 0 ? (
-                    <div style={{ padding: "16px", color: "#9CA3AF", textAlign: "center" }}>Aucun expert trouvé</div>
-                  ) : (
-                    filteredAssignExperts.map((expert: any) => {
-                      const name =
-                        expert.full_name ||
-                        `${expert.prenom || ""} ${expert.nom || ""}`.trim() ||
-                        "Expert sans nom";
-                      return (
-                        <div
-                          key={expert.id}
-                          onClick={() => setSelectedExpertId(expert.id)}
-                          style={{
-                            padding: "12px 16px",
-                            cursor: "pointer",
-                            borderBottom: "1px solid #F3F4F6",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            background: selectedExpertId === expert.id ? "#EEE9FF" : "white",
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <div
-                              style={{
-                                width: "8px",
-                                height: "8px",
-                                borderRadius: "50%",
-                                background: selectedExpertId === expert.id ? "#5B50F0" : "#E5E7EB",
-                              }}
-                            />
-                            <span style={{ fontWeight: selectedExpertId === expert.id ? 600 : 400 }}>{name}</span>
-                          </div>
-                          {expert.specialite && (
-                            <span
-                              style={{
-                                fontSize: "0.75rem",
-                                background: "#EEE9FF",
-                                color: "#5B50F0",
-                                padding: "2px 8px",
-                                borderRadius: "999px",
-                              }}
-                            >
-                              {expert.specialite}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                <input
-                  type="text"
-                  placeholder="Filtrer par nom..."
-                  value={expertSearch}
-                  onChange={(e) => setExpertSearch(e.target.value)}
-                  style={{
-                    width: "100%",
-                    marginTop: "8px",
-                    border: "1px solid #E5E7EB",
-                    borderRadius: "8px",
-                    padding: "8px 12px",
-                    fontSize: "0.875rem",
-                    boxSizing: "border-box",
-                  }}
-                />
+                  <option value="">Sélectionner un expert…</option>
+                  {filteredAssignExperts.map((ex) => (
+                    <option key={ex.id} value={ex.id}>
+                      {assignExpertSelectOptionLabel(ex)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B7280]" aria-hidden />
               </div>
+              {experts.length === 0 ? (
+                <p className="mt-2 text-xs text-[#6B7280]">Aucun expert dans la base. Vérifiez les profils (rôle expert).</p>
+              ) : filteredAssignExperts.length === 0 ? (
+                <p className="mt-2 text-xs text-[#6B7280]">Aucun expert ne correspond au filtre.</p>
+              ) : null}
+              <input
+                type="text"
+                placeholder="Filtrer par nom affiché…"
+                value={expertSearch}
+                onChange={(e) => setExpertSearch(e.target.value)}
+                className="mt-3 w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
+              />
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-border px-6 py-5">
+            <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -400,17 +361,17 @@ function AdminIndexPage() {
                   setExpertSearch("");
                   setSelectedExpertId("");
                 }}
-                className="inline-flex items-center rounded-lg border-2 border-border bg-white px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-secondary"
+                className="rounded-xl bg-[#F3F4F6] px-4 py-2.5 text-sm font-semibold text-[#111827] hover:bg-[#E5E7EB]"
               >
                 Annuler
               </button>
               <button
                 type="button"
-                disabled={!selectedExpertId || savingAssign}
+                disabled={!selectedExpertId.trim() || savingAssign}
                 onClick={() => void confirmAssign()}
-                className="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow disabled:opacity-60"
+                className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-glow disabled:opacity-60"
               >
-                {savingAssign ? "Assignation..." : "Assigner"}
+                {savingAssign ? "Assignation…" : "Confirmer"}
               </button>
             </div>
           </div>

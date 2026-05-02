@@ -52,6 +52,7 @@ import { Route as GuidesDelaiPrescriptionAssuranceRouteImport } from './routes/g
 import { Route as GuidesDeclarerSinistreAssuranceRouteImport } from './routes/guides.declarer-sinistre-assurance'
 import { Route as GuidesAssureurRefusePayerRouteImport } from './routes/guides.assureur-refuse-payer'
 import { Route as ExpertProfilRouteImport } from './routes/expert.profil'
+import { Route as ExpertOnboardingRouteImport } from './routes/expert.onboarding'
 import { Route as ExpertDossiersRouteImport } from './routes/expert.dossiers'
 import { Route as EspaceNouveauRouteImport } from './routes/espace.nouveau'
 import { Route as EspaceDossiersRouteImport } from './routes/espace.dossiers'
@@ -291,6 +292,11 @@ const ExpertProfilRoute = ExpertProfilRouteImport.update({
   path: '/profil',
   getParentRoute: () => ExpertRoute,
 } as any)
+const ExpertOnboardingRoute = ExpertOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => ExpertRoute,
+} as any)
 const ExpertDossiersRoute = ExpertDossiersRouteImport.update({
   id: '/dossiers',
   path: '/dossiers',
@@ -406,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/expert/dossiers': typeof ExpertDossiersRouteWithChildren
+  '/expert/onboarding': typeof ExpertOnboardingRoute
   '/expert/profil': typeof ExpertProfilRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/declarer-sinistre-assurance': typeof GuidesDeclarerSinistreAssuranceRoute
@@ -460,6 +467,7 @@ export interface FileRoutesByTo {
   '/dashboard/nouveau': typeof DashboardNouveauRoute
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
+  '/expert/onboarding': typeof ExpertOnboardingRoute
   '/expert/profil': typeof ExpertProfilRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/declarer-sinistre-assurance': typeof GuidesDeclarerSinistreAssuranceRoute
@@ -522,6 +530,7 @@ export interface FileRoutesById {
   '/espace/dossiers': typeof EspaceDossiersRouteWithChildren
   '/espace/nouveau': typeof EspaceNouveauRoute
   '/expert/dossiers': typeof ExpertDossiersRouteWithChildren
+  '/expert/onboarding': typeof ExpertOnboardingRoute
   '/expert/profil': typeof ExpertProfilRoute
   '/guides/assureur-refuse-payer': typeof GuidesAssureurRefusePayerRoute
   '/guides/declarer-sinistre-assurance': typeof GuidesDeclarerSinistreAssuranceRoute
@@ -585,6 +594,7 @@ export interface FileRouteTypes {
     | '/espace/dossiers'
     | '/espace/nouveau'
     | '/expert/dossiers'
+    | '/expert/onboarding'
     | '/expert/profil'
     | '/guides/assureur-refuse-payer'
     | '/guides/declarer-sinistre-assurance'
@@ -639,6 +649,7 @@ export interface FileRouteTypes {
     | '/dashboard/nouveau'
     | '/espace/dossiers'
     | '/espace/nouveau'
+    | '/expert/onboarding'
     | '/expert/profil'
     | '/guides/assureur-refuse-payer'
     | '/guides/declarer-sinistre-assurance'
@@ -700,6 +711,7 @@ export interface FileRouteTypes {
     | '/espace/dossiers'
     | '/espace/nouveau'
     | '/expert/dossiers'
+    | '/expert/onboarding'
     | '/expert/profil'
     | '/guides/assureur-refuse-payer'
     | '/guides/declarer-sinistre-assurance'
@@ -1059,6 +1071,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExpertProfilRouteImport
       parentRoute: typeof ExpertRoute
     }
+    '/expert/onboarding': {
+      id: '/expert/onboarding'
+      path: '/onboarding'
+      fullPath: '/expert/onboarding'
+      preLoaderRoute: typeof ExpertOnboardingRouteImport
+      parentRoute: typeof ExpertRoute
+    }
     '/expert/dossiers': {
       id: '/expert/dossiers'
       path: '/dossiers'
@@ -1265,12 +1284,14 @@ const ExpertDossiersRouteWithChildren = ExpertDossiersRoute._addFileChildren(
 
 interface ExpertRouteChildren {
   ExpertDossiersRoute: typeof ExpertDossiersRouteWithChildren
+  ExpertOnboardingRoute: typeof ExpertOnboardingRoute
   ExpertProfilRoute: typeof ExpertProfilRoute
   ExpertIndexRoute: typeof ExpertIndexRoute
 }
 
 const ExpertRouteChildren: ExpertRouteChildren = {
   ExpertDossiersRoute: ExpertDossiersRouteWithChildren,
+  ExpertOnboardingRoute: ExpertOnboardingRoute,
   ExpertProfilRoute: ExpertProfilRoute,
   ExpertIndexRoute: ExpertIndexRoute,
 }

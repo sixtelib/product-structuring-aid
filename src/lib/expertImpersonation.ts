@@ -1,3 +1,5 @@
+import { nomPrenomExpertFromFullName } from "./expertFullNameSplit";
+
 /** Session keys for admin → expert preview (same tab). */
 export const IMPERSONATED_EXPERT_ID = "impersonated_expert_id";
 export const IMPERSONATED_EXPERT_NAME = "impersonated_expert_name";
@@ -24,13 +26,11 @@ export function getImpersonatedExpertFullName(): string {
   );
 }
 
-/** prenom_expert = premier mot, nom_expert = deuxième mot (cf. spec filtre dossiers). */
+/** Aligné sur dossiers : prenom_expert = dernier mot du full_name, nom_expert = le reste. */
 export function getImpersonatedExpertNomPrenomForDossierFilter(): { prenom: string; nom: string } {
   const full = getImpersonatedExpertFullName().trim();
-  const parts = full.split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return { prenom: "", nom: "" };
-  if (parts.length === 1) return { prenom: parts[0] ?? "", nom: "" };
-  return { prenom: parts[0] ?? "", nom: parts[1] ?? "" };
+  const { nom_expert, prenom_expert } = nomPrenomExpertFromFullName(full);
+  return { nom: nom_expert, prenom: prenom_expert };
 }
 
 export function setImpersonationFromProfile(expert: { id: string; full_name?: string | null }) {

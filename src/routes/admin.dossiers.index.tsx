@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Copy, Eye, Search, UserPlus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { assignExpertSelectOptionLabel, nomPrenomExpertFromFullName } from "@/lib/expertFullNameSplit";
 
 export const Route = createFileRoute("/admin/dossiers/")({
   component: AdminDossiersIndexPage,
@@ -78,23 +79,6 @@ function normalize(s: string | null | undefined) {
 function filterExpertDisplayName(p: { id: string; full_name: string | null }) {
   const fn = (p.full_name ?? "").trim();
   return fn || shortId(p.id);
-}
-
-/** Libellé dans le <select> d'assignation : "Prénom Nom (spécialité)" ou full_name seul si pas de spécialité. */
-function assignExpertSelectLabel(ex: { full_name: string | null; specialite: string | null }) {
-  const full = (ex.full_name ?? "").trim();
-  const sp = (ex.specialite ?? "").trim();
-  if (!sp) return full || "Sans nom";
-  const parts = full.split(/\s+/).filter(Boolean);
-  const prenom = parts[0] ?? "";
-  const nom = parts.slice(1).join(" ").trim();
-  const pn = `${prenom} ${nom}`.trim() || full || "Sans nom";
-  return `${pn} (${sp})`;
-}
-
-function expertNomPrenomFromFullName(fullName: string | null | undefined): { nom_expert: string; prenom_expert: string } {
-  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
-  return { prenom_expert: parts[0] ?? "", nom_expert: parts[1] ?? "" };
 }
 
 function amountValue(v: unknown) {
@@ -415,7 +399,7 @@ function AdminDossiersIndexPage() {
     setSavingAssign(true);
     try {
       const profile = filterExpertProfiles.find((p) => p.id === expertId);
-      const { nom_expert, prenom_expert } = expertNomPrenomFromFullName(profile?.full_name ?? null);
+      const { nom_expert, prenom_expert } = nomPrenomExpertFromFullName(profile?.full_name ?? null);
       const { error: uErr } = await supabase
         .from("dossiers")
         .update({ expert_id: expertId, nom_expert, prenom_expert })
@@ -929,7 +913,7 @@ function AdminDossiersIndexPage() {
                   <option value="">Sélectionner un expert…</option>
                   {filterExpertProfiles.map((ex) => (
                     <option key={ex.id} value={ex.id}>
-                      {assignExpertSelectLabel(ex)}
+                      {assignExpertSelectOptionLabel(ex)}
                     </option>
                   ))}
                 </select>

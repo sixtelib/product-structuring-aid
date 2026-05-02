@@ -85,6 +85,16 @@ function ExpertLayout() {
   if (isAdmin && !getImpersonatedExpertId()) return null;
   if (!isAdmin && !isExpert) return null;
 
+  const isExpertOnboarding =
+    pathname === "/expert/onboarding" || pathname.startsWith("/expert/onboarding/");
+  if (isExpertOnboarding) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FF]">
+        <Outlet />
+      </div>
+    );
+  }
+
   const Sidebar = (
     <aside className="flex h-full w-[240px] flex-col bg-[#111827] text-white">
       <div className="p-6">

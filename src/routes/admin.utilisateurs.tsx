@@ -1,10 +1,9 @@
 import { createFileRoute, useNavigate, Outlet, useRouterState } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Award, Target, TrendingUp, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database, Tables } from "@/integrations/supabase/types";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/admin/utilisateurs")({
   component: AdminUtilisateursPage,
@@ -50,6 +49,9 @@ const SPECIALITES = [
   "Multirisque",
   "Cyber",
 ] as const;
+
+const INVITE_EXPERT_SPECIALITES = SPECIALITES.filter((s) => s !== "Tous types");
+const DEFAULT_INVITE_SPECIALITE = INVITE_EXPERT_SPECIALITES[0] ?? "Incendie";
 
 function normalizeStatut(s: string | null | undefined) {
   return (s ?? "")
@@ -116,24 +118,6 @@ function dossierInPeriod(d: DossierMetricRow, p: PerfPeriod) {
   return t >= start && t <= Date.now();
 }
 
-function createEphemeralAuthClient() {
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
-  if (!url || !key)
-    throw new Error("Variables VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY manquantes.");
-  return createClient<Database>(url, key, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      storage: {
-        getItem: () => null,
-        setItem: () => {},
-        removeItem: () => {},
-      },
-    },
-  });
-}
-
 function specialiteBadgeClass(sp: string) {
   const s = sp.toLowerCase();
   if (s.includes("incend")) return "bg-orange-50 text-orange-800";
@@ -168,12 +152,8 @@ function AdminUtilisateursPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createSubmitting, setCreateSubmitting] = useState(false);
   const [createForm, setCreateForm] = useState({
-    prenom: "",
-    nom: "",
     email: "",
-    password: "",
-    specialite: SPECIALITES[0],
-    telephone: "",
+    specialite: DEFAULT_INVITE_SPECIALITE,
   });
 
   const [perfExpert, setPerfExpert] = useState<ExpertTableRow | null>(null);
@@ -341,101 +321,37 @@ function AdminUtilisateursPage() {
     return "bg-green-50 text-green-700";
   }
 
-  async function submitCreateExpert(e: React.FormEvent) {
+  async function submitInviteExpert(e: React.FormEvent) {
     e.preventDefault();
-    const { prenom, nom, email, password, specialite, telephone } = createForm;
-    if (!prenom.trim() || !nom.trim() || !email.trim() || !password.trim()) {
-      toast.error("Prénom, nom, email et mot de passe sont obligatoires.");
+    const email = createForm.email.trim();
+    const specialite = createForm.specialite.trim();
+    if (!email) {
+      toast.error("L'email est obligatoire.");
       return;
     }
 
     setCreateSubmitting(true);
     try {
-      const full_name = `${prenom.trim()} ${nom.trim()}`.trim();
-      const meta = {
-        role: "expert" as const,
-        full_name,
-        phone: telephone.trim(),
-        specialite: specialite.trim(),
-      };
-
-      let userId: string | null = null;
-
-      const authAdmin = (
-        supabase.auth as unknown as {
-          admin?: {
-            createUser: (
-              args: Record<string, unknown>,
-            ) => Promise<{
-              data: { user: { id: string } | null };
-              error: { message: string } | null;
-            }>;
-          };
-        }
-      ).admin;
-
-      if (authAdmin?.createUser) {
-        try {
-          const { data: authData, error: authError } = await authAdmin.createUser({
-            email: email.trim(),
-            password,
-            email_confirm: true,
-            user_metadata: {
-              role: "expert",
-              prenom: prenom.trim(),
-              nom: nom.trim(),
-              full_name,
-              specialite: specialite.trim(),
-              telephone: telephone.trim(),
-              phone: telephone.trim(),
-            },
-          });
-          if (!authError && authData?.user?.id) userId = authData.user.id;
-        } catch {
-          /* client sans droits admin : fallback signUp */
-        }
-      }
-
-      if (!userId) {
-        const ephemeral = createEphemeralAuthClient();
-        const { data: authData, error: authError } = await ephemeral.auth.signUp({
-          email: email.trim(),
-          password,
-          options: {
-            data: {
-              ...meta,
-              prenom: prenom.trim(),
-              nom: nom.trim(),
-            },
-          },
-        });
-        if (authError) throw new Error(authError.message);
-        userId = authData.user?.id ?? null;
-        if (!userId) throw new Error("Aucun utilisateur retourné après inscription.");
-      }
-
-      if (!userId) throw new Error("Impossible de créer le profil : utilisateur introuvable.");
-
-      const { error: upErr } = await supabase.from("profiles").upsert({
-        id: userId,
-        full_name: `${prenom} ${nom}`,
-        prenom,
-        nom,
-        role: "expert",
-        telephone,
-        specialite,
+      const res = await fetch("/.netlify/functions/invite-expert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, specialite }),
       });
-      if (upErr) throw new Error(upErr.message);
+      let data: { success?: boolean; error?: string } = {};
+      try {
+        data = (await res.json()) as { success?: boolean; error?: string };
+      } catch {
+        throw new Error("Réponse invalide du serveur.");
+      }
+      if (!res.ok || data.error) {
+        throw new Error(data.error ?? `Erreur ${res.status}`);
+      }
 
-      toast.success("Expert créé avec succès");
+      toast.success(`Invitation envoyée à ${email}`);
       setCreateModalOpen(false);
       setCreateForm({
-        prenom: "",
-        nom: "",
         email: "",
-        password: "",
-        specialite: SPECIALITES[0],
-        telephone: "",
+        specialite: DEFAULT_INVITE_SPECIALITE,
       });
       await loadAll();
     } catch (err: unknown) {
@@ -733,29 +649,11 @@ function AdminUtilisateursPage() {
               <X className="h-5 w-5" />
             </button>
             <h2 className="pr-10 text-xl font-bold text-[#111827]" style={{ fontWeight: 700 }}>
-              Nouvel expert
+              Inviter un expert
             </h2>
-            <p className="mt-1 text-sm text-[#6B7280]">Créer un compte expert</p>
+            <p className="mt-1 text-sm text-[#6B7280]">Envoi d&apos;un lien d&apos;inscription par e-mail</p>
 
-            <form className="mt-6 space-y-4" onSubmit={(e) => void submitCreateExpert(e)}>
-              <div>
-                <label className="text-xs font-semibold text-[#6B7280]">Prénom *</label>
-                <input
-                  required
-                  value={createForm.prenom}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, prenom: e.target.value }))}
-                  className="mt-1 h-11 w-full rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-[#6B7280]">Nom *</label>
-                <input
-                  required
-                  value={createForm.nom}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, nom: e.target.value }))}
-                  className="mt-1 h-11 w-full rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-                />
-              </div>
+            <form className="mt-6 space-y-4" onSubmit={(e) => void submitInviteExpert(e)}>
               <div>
                 <label className="text-xs font-semibold text-[#6B7280]">Email *</label>
                 <input
@@ -767,38 +665,18 @@ function AdminUtilisateursPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#6B7280]">
-                  Mot de passe temporaire *
-                </label>
-                <input
-                  required
-                  type="password"
-                  value={createForm.password}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
-                  className="mt-1 h-11 w-full rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-                />
-              </div>
-              <div>
                 <label className="text-xs font-semibold text-[#6B7280]">Spécialité</label>
                 <select
                   value={createForm.specialite}
                   onChange={(e) => setCreateForm((f) => ({ ...f, specialite: e.target.value }))}
                   className="mt-1 h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
                 >
-                  {SPECIALITES.map((s) => (
+                  {INVITE_EXPERT_SPECIALITES.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
                   ))}
                 </select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-[#6B7280]">Téléphone</label>
-                <input
-                  value={createForm.telephone}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, telephone: e.target.value }))}
-                  className="mt-1 h-11 w-full rounded-lg border border-[#E5E7EB] px-3 text-sm outline-none focus:border-[#5B50F0] focus:ring-1 focus:ring-[#5B50F0]/20"
-                />
               </div>
 
               <div className="flex flex-wrap justify-end gap-3 pt-2">
@@ -816,7 +694,7 @@ function AdminUtilisateursPage() {
                   className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                   style={{ backgroundColor: "#5B50F0" }}
                 >
-                  {createSubmitting ? "…" : "Créer le compte →"}
+                  {createSubmitting ? "…" : "Envoyer l'invitation"}
                 </button>
               </div>
             </form>
