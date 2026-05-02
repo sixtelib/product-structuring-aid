@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Send, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ChatInput } from "@/components/chat/ChatInput";
+import { ChatMessages, type Msg } from "@/components/chat/ChatMessages";
+import { ChatSuggestions } from "@/components/chat/ChatSuggestions";
+import { ChatUploadZone } from "@/components/chat/ChatUploadZone";
 import {
   migrateLegacyQualificationLocalStorage,
   QUALIFICATION_STORAGE_KEYS,
 } from "@/lib/qualificationLocalStorage";
-
-type Msg = { id: string; role: "claude" | "user"; text: string };
 
 type CollectedData = {
   type_sinistre: string;
@@ -173,32 +174,6 @@ function cleanMessageText(text: string): string {
     .trim();
 }
 
-function renderInlineBold(text: string) {
-  const parts: Array<string | JSX.Element> = [];
-  const re = /\*\*(.+?)\*\*/g;
-  let last = 0;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text))) {
-    if (m.index > last) parts.push(text.slice(last, m.index));
-    parts.push(<strong key={`b-${m.index}`}>{m[1]}</strong>);
-    last = m.index + m[0].length;
-  }
-  if (last < text.length) parts.push(text.slice(last));
-  return parts;
-}
-
-function renderTextBubble(text: string) {
-  return text.split(/\r?\n/).map((line, idx) => {
-    const t = line.trimEnd();
-    if (!t.trim()) return null;
-    return (
-      <p key={idx} className="mt-1 text-sm leading-relaxed first:mt-0">
-        {renderInlineBold(t)}
-      </p>
-    );
-  });
-}
-
 export function QualificationChatbot() {
   const [messages, setMessages] = useState<Msg[]>(() => [
     { id: uid(), role: "claude", text: WELCOME },
@@ -208,8 +183,6 @@ export function QualificationChatbot() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [collectedData, setCollectedData] = useState<CollectedData>(EMPTY_DATA);
   const [evaluationPreview, setEvaluationPreview] = useState<string | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [dismissedUploadForClaudeMsgId, setDismissedUploadForClaudeMsgId] = useState<string | null>(
     null,
   );
@@ -217,7 +190,6 @@ export function QualificationChatbot() {
   const [extractedData, setExtractedData] = useState<Record<string, any>>({});
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     migrateLegacyQualificationLocalStorage();
@@ -522,8 +494,6 @@ export function QualificationChatbot() {
     }
   }
 
-  const evaluationBlurPct = evaluationPreview?.match(/\b\d{1,3}\s?%/)?.[0] ?? "??%";
-
   const onlyWelcome =
     messages.length === 1 && messages[0]?.role === "claude" && messages[0]?.text === WELCOME;
 
@@ -537,50 +507,11 @@ export function QualificationChatbot() {
     claudeAsksForDocuments(lastClaudeVisibleText) &&
     dismissedUploadForClaudeMsgId !== lastClaude.id;
 
-  function addFiles(incoming: File[]) {
-    const acceptedExt = [".pdf", ".jpg", ".jpeg", ".png"];
-    const maxBytes = 10 * 1024 * 1024;
-
-    const next: File[] = [];
-    for (const f of incoming) {
-      const nameLower = f.name.toLowerCase();
-      const okExt = acceptedExt.some((ext) => nameLower.endsWith(ext));
-      if (!okExt) continue;
-      if (f.size > maxBytes) continue;
-      next.push(f);
+  async function sendDocumentsFromFiles(filesSnapshot: File[]) {
+    if (!lastClaude || filesSnapshot.length === 0 || sendingDocs || isLoading) {
+      throw new Error("__abandon_envoi_documents");
     }
 
-    const rejectedCount = incoming.length - next.length;
-    if (rejectedCount > 0) {
-      setUploadError(
-        "Certains fichiers ont été ignorés (formats: PDF/JPG/PNG, 10 Mo max par fichier).",
-      );
-    } else {
-      setUploadError(null);
-    }
-
-    setSelectedFiles((prev) => {
-      const merged = [...prev];
-      for (const f of next) {
-        const exists = merged.some(
-          (m) => m.name === f.name && m.size === f.size && m.lastModified === f.lastModified,
-        );
-        if (!exists) merged.push(f);
-      }
-      return merged;
-    });
-  }
-
-  function removeSelectedFile(idx: number) {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
-  }
-
-  async function sendDocuments() {
-    if (!lastClaude) return;
-    if (selectedFiles.length === 0) return;
-    if (sendingDocs || isLoading) return;
-
-    const filesSnapshot = [...selectedFiles];
     const names = filesSnapshot.map((f) => f.name).join(", ");
     const msg = `📎 ${filesSnapshot.length} document(s) envoyé(s) : ${names}`;
 
@@ -588,8 +519,6 @@ export function QualificationChatbot() {
     const next = [...messages, userMsg];
     setMessages(next);
     setDismissedUploadForClaudeMsgId(lastClaude.id);
-    setSelectedFiles([]);
-    setUploadError(null);
 
     setSendingDocs(true);
     setIsLoading(true);
@@ -616,7 +545,6 @@ export function QualificationChatbot() {
         }
       } catch (e) {
         console.error("Upload failed:", e);
-        setUploadError("Erreur lors de l'envoi d'un fichier");
       }
     }
 
@@ -663,142 +591,20 @@ export function QualificationChatbot() {
       className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 font-['Inter'] shadow-md"
     >
       <div className="min-h-[120px] max-h-[320px] space-y-3 overflow-y-auto bg-transparent">
-        {messages.map((m) => (
-          <div key={m.id} className="space-y-3">
-            <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`max-w-[85%] rounded-[12px] px-4 py-2.5 ${
-                  m.role === "user"
-                    ? "bg-[#5B50F0] text-white"
-                    : "bg-white text-foreground shadow-sm"
-                }`}
-              >
-                {renderTextBubble(m.role === "claude" ? cleanMessageText(m.text) : m.text)}
-              </div>
-            </div>
-
-            {m.role === "claude" && lastClaude?.id === m.id && wantsDocumentsUpload && (
-              <div className="flex justify-start">
-                <div className="w-full max-w-[85%]">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => fileInputRef.current?.click()}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const dropped = Array.from(e.dataTransfer.files ?? []);
-                      addFiles(dropped);
-                    }}
-                    className="cursor-pointer rounded-[12px] border-2 border-dashed border-[#5B50F0]/60 bg-[#F8F9FF] p-4 text-left shadow-sm"
-                  >
-                    <p className="text-sm font-semibold text-foreground">
-                      Glissez vos documents ici ou cliquez pour parcourir
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      PDF, JPG, PNG, 10 Mo max par fichier
-                    </p>
-                    {uploadError && (
-                      <p className="mt-2 text-xs font-medium text-red-600">{uploadError}</p>
-                    )}
-
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="hidden"
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files ?? []);
-                        addFiles(files);
-                        // permettre de resélectionner le même fichier
-                        e.currentTarget.value = "";
-                      }}
-                    />
-                  </div>
-
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-3 rounded-[12px] border border-border bg-white p-3 shadow-sm">
-                      <ul className="space-y-2">
-                        {selectedFiles.map((f, idx) => (
-                          <li
-                            key={`${f.name}-${f.size}-${f.lastModified}`}
-                            className="flex items-center justify-between"
-                          >
-                            <span className="truncate text-sm text-foreground">{f.name}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeSelectedFile(idx)}
-                              className="ml-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-gray-100 hover:text-foreground"
-                              aria-label={`Retirer ${f.name}`}
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => void sendDocuments()}
-                          disabled={sendingDocs}
-                          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#5B50F0] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5] disabled:opacity-60"
-                        >
-                          {sendingDocs ? (
-                            <>
-                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                              Envoi en cours...
-                            </>
-                          ) : (
-                            "Envoyer les documents →"
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="rounded-[12px] bg-white px-4 py-3 text-sm shadow-sm text-foreground">
-              En cours…
-            </div>
-          </div>
-        )}
-
-        {evaluationPreview && (
-          <div className="relative mt-4 overflow-hidden rounded-xl border-2 border-dashed border-[#5B50F0]/40 bg-white p-5">
-            <p className="text-sm font-semibold text-foreground">Votre évaluation est prête ✨</p>
-            <div className="pointer-events-none mt-3 select-none">
-              <div className="inline-flex items-center rounded-full bg-[#5B50F0]/15 px-3 py-1 text-xs font-semibold text-[#5B50F0]">
-                Probabilité de succès: <span className="ml-1 blur-[3px]">{evaluationBlurPct}</span>
-              </div>
-              <div className="mt-3 text-sm text-muted-foreground [filter:blur(6px)]">
-                {renderTextBubble(evaluationPreview)}
-              </div>
-            </div>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-white" />
-            <div className="relative mt-4 flex flex-col items-center">
-              <Link
-                to="/auth"
-                search={{ mode: "signup" }}
-                onClick={goToSignup}
-                className="inline-flex items-center justify-center rounded-lg bg-[#5B50F0] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4B41D5]"
-              >
-                Révéler mon évaluation →
-              </Link>
-            </div>
-          </div>
-        )}
+        <ChatMessages
+          messages={messages}
+          isLoading={isLoading}
+          evaluationPreview={evaluationPreview}
+          onRevelerEvaluation={goToSignup}
+          bottomRef={bottomRef}
+          showDocumentsUpload={wantsDocumentsUpload}
+          documentsUpload={
+            <ChatUploadZone
+              onEnvoyer={(files) => sendDocumentsFromFiles(files)}
+              isUploading={sendingDocs || isLoading}
+            />
+          }
+        />
 
         {Object.keys(nonEmptyExtracted(extractedData)).length > 0 && (
           <div
@@ -867,47 +673,25 @@ export function QualificationChatbot() {
             </p>
           </div>
         )}
-
-        <div ref={bottomRef} />
       </div>
 
-      {!isLoading && !conversationEnded && onlyWelcome && (
-        <div className="mt-2 flex flex-wrap gap-2 px-1 pb-2">
-          {STARTUP_TYPE_SINISTRE_PILLS.map((p) => (
-            <button
-              key={p.label}
-              type="button"
-              onClick={() => void sendUserText(p.text)}
-              className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {!isLoading && !conversationEnded && onlyWelcome ? (
+        <ChatSuggestions
+          suggestions={STARTUP_TYPE_SINISTRE_PILLS.map((p) => p.text)}
+          getDisplayText={(s) => STARTUP_TYPE_SINISTRE_PILLS.find((p) => p.text === s)?.label ?? s}
+          onSelect={(s) => void sendUserText(s)}
+        />
+      ) : null}
 
-      {!isLoading && !conversationEnded && !onlyWelcome && suggestions.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2 px-1 pb-2">
-          {suggestions.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => void sendUserText(s)}
-              className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
+      {!isLoading && !conversationEnded && !onlyWelcome && suggestions.length > 0 ? (
+        <ChatSuggestions suggestions={suggestions} onSelect={(s) => void sendUserText(s)} />
+      ) : null}
 
       {conversationEnded ? (
         <div className="mt-3 border-t border-gray-100 pt-3">
           <div className="flex justify-start">
-            <div className="max-w-[85%] rounded-[12px] bg-white px-4 py-2.5 text-foreground shadow-sm">
-              {renderTextBubble(
-                "Votre dossier est qualifié. Créez votre compte pour continuer avec un expert.",
-              )}
+            <div className="max-w-[85%] rounded-[12px] bg-white px-4 py-2.5 text-sm leading-relaxed text-foreground shadow-sm">
+              <p>Votre dossier est qualifié. Créez votre compte pour continuer avec un expert.</p>
             </div>
           </div>
           <div className="mt-3 flex justify-center">
@@ -922,31 +706,12 @@ export function QualificationChatbot() {
           </div>
         </div>
       ) : (
-        <form
-          className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void sendUserText(input);
-          }}
-        >
-          <textarea
-            rows={1}
-            style={{ resize: "none" }}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Décrivez votre situation…"
-            autoComplete="off"
-            className="flex-1 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm outline-none placeholder:text-muted-foreground shadow-sm focus:border-[#5B50F0]/40 focus:ring-2 focus:ring-[#5B50F0]/10"
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#5B50F0] text-white transition-colors hover:bg-[#4B41D5] disabled:opacity-60"
-            aria-label="Envoyer"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </form>
+        <ChatInput
+          value={input}
+          onChange={setInput}
+          onEnvoyer={() => void sendUserText(input)}
+          isLoading={isLoading}
+        />
       )}
       <p className="mt-2 text-right text-[10px] text-muted-foreground">
         Vertual n'est pas un cabinet juridique.
