@@ -1,5 +1,10 @@
 import type { Handler } from "@netlify/functions";
 
+/** Délai d’exécution max côté Netlify (s) — évite l’erreur « Inactivity Timeout » sur les appels longs. */
+export const config = {
+  timeout: 30,
+};
+
 const allowedOrigins = [
   "https://vertual.fr",
   "https://www.vertual.fr",
