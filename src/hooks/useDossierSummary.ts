@@ -6,7 +6,7 @@ export type DossierSummaryInput = {
   statut: string;
   montant_estime: number | string | null | undefined;
   description?: string | null;
-  assureur_nom?: string | null;
+  assureur_compagnie_nom?: string | null;
   date_sinistre?: string | null;
   date_ouverture?: string | null;
   documents: Array<{
@@ -96,7 +96,7 @@ function buildUserPrompt(input: DossierSummaryInput) {
     `- Statut: ${input.statut}`,
     `- Date d'ouverture: ${opened}`,
     `- Date du sinistre: ${incident}`,
-    `- Assureur: ${input.assureur_nom ?? ", "}`,
+    `- Assureur: ${input.assureur_compagnie_nom ?? ""}`,
     `- Montant estimé: ${eur(input.montant_estime)}`,
     "",
     "Description (si disponible) :",

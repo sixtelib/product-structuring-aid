@@ -457,7 +457,7 @@ function DashboardContent() {
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-[12px] border border-[#F3F4F6] bg-white px-4 py-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Assureur</p>
-                  <p className="mt-1 text-sm font-medium text-foreground">{dossier.assureur_nom || "Non renseigné"}</p>
+                  <p className="mt-1 text-sm font-medium text-foreground">{dossier.assureur_compagnie_nom || "Non renseigné"}</p>
                 </div>
                 <div className="rounded-[12px] border border-[#F3F4F6] bg-white px-4 py-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Montant estimé</p>

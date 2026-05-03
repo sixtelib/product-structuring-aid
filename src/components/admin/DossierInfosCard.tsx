@@ -24,7 +24,9 @@ export function DossierInfosCard({ dossier }: { dossier: Dossier }) {
     return n * 0.1;
   }, [dossier.montant_estime]);
 
-  const assureurLabel = dossier.assureur_nom ?? dossier.assureur ?? "Non renseigné";
+  const assureurLabel = dossier.assureur_compagnie_nom?.trim()
+    ? dossier.assureur_compagnie_nom
+    : "Non renseigné";
   const statutFmt = formaterStatut(dossier.statut);
 
   async function copyId() {

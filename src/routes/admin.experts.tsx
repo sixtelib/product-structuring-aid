@@ -57,7 +57,7 @@ function AdminExpertsPage() {
           supabase
             .from("dossiers")
             .select(
-              "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur",
+              "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur_compagnie_nom",
             ),
           supabase.from("profiles").select("id, full_name, prenom, nom, specialite, telephone").eq("role", "expert"),
         ]);

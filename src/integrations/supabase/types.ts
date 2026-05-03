@@ -283,7 +283,7 @@ export type Database = {
         Row: {
           analyse_ia: string | null
           analyse_ia_date: string | null
-          assureur_nom: string | null
+          assureur_compagnie_nom: string | null
           created_at: string
           date_sinistre: string | null
           date_ouverture: string
@@ -305,7 +305,7 @@ export type Database = {
         Insert: {
           analyse_ia?: string | null
           analyse_ia_date?: string | null
-          assureur_nom?: string | null
+          assureur_compagnie_nom?: string | null
           created_at?: string
           date_sinistre?: string | null
           date_ouverture?: string
@@ -327,7 +327,7 @@ export type Database = {
         Update: {
           analyse_ia?: string | null
           analyse_ia_date?: string | null
-          assureur_nom?: string | null
+          assureur_compagnie_nom?: string | null
           created_at?: string
           date_sinistre?: string | null
           date_ouverture?: string

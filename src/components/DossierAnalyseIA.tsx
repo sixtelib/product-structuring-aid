@@ -61,7 +61,7 @@ export interface DossierAnalyseIAProps {
     type_sinistre: string;
     montant_estime: number;
     statut: string;
-    assureur?: string;
+    assureur_compagnie_nom?: string;
     description?: string;
     nom_assure?: string;
     prenom_assure?: string;
@@ -200,7 +200,7 @@ function normalizeAnalyse(parsed: unknown): AnalyseSinistreResult | null {
 
 function buildAnalyseUserMessage(dossier: DossierAnalyseIAProps["dossier"], documents: DossierAnalyseIAProps["documents"]) {
   const nom = [dossier.prenom_assure, dossier.nom_assure].filter(Boolean).join(" ").trim() || "Non renseigné";
-  const assureur = dossier.assureur?.trim() || "Non renseigné";
+  const assureur = dossier.assureur_compagnie_nom?.trim() || "Non renseigné";
   const description = dossier.description?.trim() || "Non renseignée";
   const docNames = documents.length ? documents.map((d) => d.nom).join(", ") : "Aucun";
 
@@ -429,7 +429,7 @@ export function DossierAnalyseIA({ dossier, documents }: DossierAnalyseIAProps) 
 
   const chatSystemPrompt = useMemo(() => {
     if (!analyseResult) return "";
-    const assureur = dossier.assureur?.trim() || "Non renseigné";
+    const assureur = dossier.assureur_compagnie_nom?.trim() || "Non renseigné";
     return `Tu es un expert en droit des assurances français qui aide 
 un expert d'assuré à construire un dossier contradictoire.
 
@@ -447,7 +447,7 @@ Tu peux :
 5. Citer la jurisprudence pertinente
 
 Sois précis, factuel et orienté résultat pour l'expert.`;
-  }, [analyseResult, dossier.assureur, dossier.montant_estime, dossier.type_sinistre]);
+  }, [analyseResult, dossier.assureur_compagnie_nom, dossier.montant_estime, dossier.type_sinistre]);
 
   async function sendChat() {
     const text = chatInput.trim();

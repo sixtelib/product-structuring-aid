@@ -209,8 +209,8 @@ export function DossierTableau({
                   </td>
 
                   <td className="px-5 py-4 text-sm text-[#111827]">
-                    {d.assureur_nom?.trim() ? (
-                      <span className="font-semibold">{d.assureur_nom}</span>
+                    {d.assureur_compagnie_nom?.trim() ? (
+                      <span className="font-semibold">{d.assureur_compagnie_nom}</span>
                     ) : (
                       <span className="italic text-[#9CA3AF]">Non renseigné</span>
                     )}

@@ -22,7 +22,7 @@ type Row = {
   prenom_assure: string | null;
   type_sinistre: string | null;
   statut: string | null;
-  assureur_nom: string | null;
+  assureur_compagnie_nom: string | null;
   date_ouverture: string | null;
 };
 
@@ -109,7 +109,7 @@ function ExpertDossiersListPage() {
           const { nom, prenom } = getImpersonatedExpertNomPrenomForDossierFilter();
           const { data: byExpert, error: e1 } = await supabase
             .from("dossiers")
-            .select("id, nom_assure, prenom_assure, type_sinistre, statut, assureur_nom, date_ouverture")
+            .select("id, nom_assure, prenom_assure, type_sinistre, statut, assureur_compagnie_nom, date_ouverture")
             .eq("expert_id", imp)
             .order("date_ouverture", { ascending: false });
           if (e1) throw e1;
@@ -117,7 +117,7 @@ function ExpertDossiersListPage() {
           if (nom !== "" || prenom !== "") {
             const { data: byName, error: e2 } = await supabase
               .from("dossiers")
-              .select("id, nom_assure, prenom_assure, type_sinistre, statut, assureur_nom, date_ouverture")
+              .select("id, nom_assure, prenom_assure, type_sinistre, statut, assureur_compagnie_nom, date_ouverture")
               .eq("nom_expert", nom)
               .eq("prenom_expert", prenom)
               .order("date_ouverture", { ascending: false });
@@ -135,7 +135,7 @@ function ExpertDossiersListPage() {
         } else if (isExpert && user.id) {
           const { data, error } = await supabase
             .from("dossiers")
-            .select("id, nom_assure, prenom_assure, type_sinistre, statut, assureur_nom, date_ouverture")
+            .select("id, nom_assure, prenom_assure, type_sinistre, statut, assureur_compagnie_nom, date_ouverture")
             .eq("expert_id", user.id)
             .order("date_ouverture", { ascending: false });
           if (error) throw error;
@@ -214,8 +214,8 @@ function ExpertDossiersListPage() {
                       <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${st.cls}`}>{st.label}</span>
                     </td>
                     <td className="px-4 py-3 text-sm text-[#374151]">
-                      {d.assureur_nom?.trim() ? (
-                        d.assureur_nom
+                      {d.assureur_compagnie_nom?.trim() ? (
+                        d.assureur_compagnie_nom
                       ) : (
                         <span className="italic text-[#9CA3AF]">Non renseigné</span>
                       )}

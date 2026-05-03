@@ -25,7 +25,7 @@ type DossierListRow = Pick<
   | "prenom_assure"
   | "nom_expert"
   | "prenom_expert"
-  | "assureur"
+  | "assureur_compagnie_nom"
 >;
 
 function AdminReportingPage() {
@@ -45,7 +45,7 @@ function AdminReportingPage() {
         const { data, error: err } = await supabase
           .from("dossiers")
           .select(
-            "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur",
+            "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur_compagnie_nom",
           )
           .order("date_ouverture", { ascending: false });
 

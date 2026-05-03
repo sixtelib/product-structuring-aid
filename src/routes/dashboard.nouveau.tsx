@@ -275,7 +275,7 @@ function DashboardNouveauContent() {
           type_sinistre: typeLabel,
           titre: form.title,
           description: form.description || null,
-          assureur_nom: form.insurer_name || null,
+          assureur_compagnie_nom: form.insurer_name || null,
           numero_contrat: form.policy_number || null,
           date_sinistre: form.incident_date || null,
           montant_estime: amount,

@@ -5,14 +5,12 @@ export type Dossier = Tables<"dossiers"> & {
   prenom_assure?: string | null;
   nom_expert?: string | null;
   prenom_expert?: string | null;
-  assureur?: string | null;
   sinistre_numero_dossier?: string | null;
   sinistre_adresse?: string | null;
   sinistre_code_postal?: string | null;
   sinistre_ville?: string | null;
   expertise_date_edition?: string | null;
   expertise_montant_propose?: number | string | null;
-  assureur_compagnie_nom?: string | null;
   assureur_contact_nom?: string | null;
   assureur_contact_prenom?: string | null;
   assureur_contact_email?: string | null;

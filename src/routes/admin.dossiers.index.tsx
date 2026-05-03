@@ -23,7 +23,7 @@ type AdminDossierListRow = {
   prenom_assure: string | null;
   nom_expert: string | null;
   prenom_expert: string | null;
-  assureur_nom: string | null;
+  assureur_compagnie_nom: string | null;
 };
 
 function normalize(s: string | null | undefined) {
@@ -93,7 +93,7 @@ function AdminDossiersIndexPage() {
         supabase
           .from("dossiers")
           .select(
-            "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur_nom",
+            "id, user_id, expert_id, statut, type_sinistre, date_ouverture, montant_estime, nom_assure, prenom_assure, nom_expert, prenom_expert, assureur_compagnie_nom",
           )
           .order("date_ouverture", { ascending: false }),
         supabase.from("profiles").select("id, full_name, specialite").eq("role", "expert"),
@@ -142,7 +142,7 @@ function AdminDossiersIndexPage() {
   const assureursUniques = useMemo(() => {
     const s = new Set<string>();
     dossiers.forEach((d) => {
-      const a = (d.assureur_nom ?? "").toString().trim();
+      const a = (d.assureur_compagnie_nom ?? "").toString().trim();
       if (a) s.add(a);
     });
     return Array.from(s).sort((a, b) => a.localeCompare(b, "fr"));
@@ -168,7 +168,8 @@ function AdminDossiersIndexPage() {
 
       const assureurMatch =
         applied.assureurs.length === 0 ||
-        (d.assureur_nom != null && applied.assureurs.includes(String(d.assureur_nom).trim()));
+        (d.assureur_compagnie_nom != null &&
+          applied.assureurs.includes(String(d.assureur_compagnie_nom).trim()));
 
       if (!expertMatch || !assureurMatch) return false;
 

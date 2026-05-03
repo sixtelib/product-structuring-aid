@@ -468,8 +468,9 @@ function ExpertDossierDetailPage() {
   }
 
   const statutFmt = formatStatut(dossier.statut);
-  const assureurLabel =
-    dossier.assureur_nom ?? (dossier as { assureur?: string | null }).assureur ?? "Non renseigné";
+  const assureurLabel = dossier.assureur_compagnie_nom?.trim()
+    ? dossier.assureur_compagnie_nom
+    : "Non renseigné";
   const assureNom =
     dossier.nom_assure || dossier.prenom_assure
       ? `${dossier.prenom_assure ?? ""} ${dossier.nom_assure ?? ""}`.trim()
@@ -842,8 +843,7 @@ function ExpertDossierDetailPage() {
               type_sinistre: dossier.type_sinistre,
               montant_estime: Number(dossier.montant_estime),
               statut: dossier.statut,
-              assureur:
-                dossier.assureur_nom ?? (dossier as { assureur?: string }).assureur ?? undefined,
+              assureur_compagnie_nom: dossier.assureur_compagnie_nom ?? undefined,
               description: dossier.description ?? undefined,
               nom_assure: dossier.nom_assure ?? undefined,
               prenom_assure: dossier.prenom_assure ?? undefined,

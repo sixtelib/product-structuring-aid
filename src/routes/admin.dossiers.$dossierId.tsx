@@ -435,7 +435,7 @@ function AdminDossierDetailPage() {
               type_sinistre: dossier.type_sinistre,
               montant_estime: Number(dossier.montant_estime),
               statut: dossier.statut,
-              assureur: (dossier.assureur_nom ?? dossier.assureur) ?? undefined,
+              assureur_compagnie_nom: dossier.assureur_compagnie_nom ?? undefined,
               description: dossier.description ?? undefined,
               nom_assure: dossier.nom_assure ?? undefined,
               prenom_assure: dossier.prenom_assure ?? undefined,

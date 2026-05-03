@@ -145,7 +145,7 @@ function ClientDossierDetailContent() {
       statut: dossier.statut,
       montant_estime: dossier.montant_estime,
       description: dossier.description,
-      assureur_nom: dossier.assureur_nom,
+      assureur_compagnie_nom: dossier.assureur_compagnie_nom,
       date_sinistre: dossier.date_sinistre,
       date_ouverture: dossier.date_ouverture,
       documents: documents.map((d) => ({ nom: d.nom, statut: d.statut, created_at: d.created_at })),
