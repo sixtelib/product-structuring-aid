@@ -1,0 +1,27 @@
+-- Champs détail dossier (admin / expert UI, qualification)
+
+alter table public.dossiers
+  add column if not exists sinistre_numero_dossier text,
+  add column if not exists sinistre_adresse text,
+  add column if not exists sinistre_code_postal text,
+  add column if not exists sinistre_ville text,
+  add column if not exists expertise_date_edition date,
+  add column if not exists expertise_montant_propose numeric(14, 2),
+  add column if not exists assureur_compagnie_nom text,
+  add column if not exists assureur_contact_nom text,
+  add column if not exists assureur_contact_prenom text,
+  add column if not exists assureur_contact_email text,
+  add column if not exists assureur_contact_telephone text,
+  add column if not exists assureur_adresse text,
+  add column if not exists assureur_code_postal text,
+  add column if not exists assureur_ville text,
+  add column if not exists expert_email text,
+  add column if not exists expert_telephone text,
+  add column if not exists expert_adresse text,
+  add column if not exists expert_code_postal text,
+  add column if not exists expert_ville text,
+  add column if not exists email_assure text,
+  add column if not exists telephone_assure text,
+  add column if not exists adresse_assure text,
+  add column if not exists code_postal_assure text,
+  add column if not exists ville_assure text;

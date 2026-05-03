@@ -372,7 +372,9 @@ function HomePage() {
             <div>
               <p className="text-[0.75rem] font-semibold uppercase tracking-[0.15em] text-[#5B50F0]">Notre méthode</p>
               <h2 className="mt-3 text-[clamp(2.2rem,4vw,3.5rem)] font-extrabold leading-[1.1] tracking-tight text-foreground">
-                4 étapes, zéro paperasse.
+                4 étapes,
+                <br />
+                zéro paperasse.
               </h2>
               <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
                 Vous nous confiez le dossier, nous gérons toutes les interactions avec l'assureur. Vous suivez

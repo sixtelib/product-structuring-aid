@@ -2,6 +2,11 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Users } from "lucide-react";
 import type { Dossier, Expert, ProfileShort } from "@/types";
+import {
+  dossierAdresseUneLigne,
+  dossierContactNomPrenom,
+  dossierTexteOuDash,
+} from "@/utils/calculs";
 
 function cardClass() {
   return "rounded-[12px] border border-[#E5E7EB] bg-white p-6 shadow-[0_1px_8px_rgba(0,0,0,0.06)]";
@@ -95,7 +100,36 @@ export function DossierPartiesCard({
         <div>
           <h3 className="text-sm font-semibold text-[#111827]">Assuré</h3>
           <p className="mt-2 text-sm text-[#374151]">{assureNom}</p>
-          {assureProfile?.email ? <p className="mt-1 text-sm text-[#6B7280]">{assureProfile.email}</p> : null}
+          <dl className="mt-4 grid grid-cols-1 gap-3">
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Email
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierTexteOuDash(dossier.email_assure)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Téléphone
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierTexteOuDash(dossier.telephone_assure)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Adresse
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierAdresseUneLigne(
+                  dossier.adresse_assure,
+                  dossier.code_postal_assure,
+                  dossier.ville_assure,
+                )}
+              </dd>
+            </div>
+          </dl>
           <Link
             to="/admin/utilisateurs/$userId"
             params={{ userId: dossier.user_id }}
@@ -106,11 +140,108 @@ export function DossierPartiesCard({
         </div>
 
         <div className="border-t border-[#F3F4F6] pt-6">
+          <h3 className="text-sm font-semibold text-[#111827]">Assureur</h3>
+          <dl className="mt-4 grid grid-cols-1 gap-3">
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Compagnie
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierTexteOuDash(dossier.assureur_compagnie_nom)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Contact
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierContactNomPrenom(
+                  dossier.assureur_contact_nom,
+                  dossier.assureur_contact_prenom,
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Email contact
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierTexteOuDash(dossier.assureur_contact_email)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Téléphone contact
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierTexteOuDash(dossier.assureur_contact_telephone)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Adresse agence
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierAdresseUneLigne(
+                  dossier.assureur_adresse,
+                  dossier.assureur_code_postal,
+                  dossier.assureur_ville,
+                )}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <div className="border-t border-[#F3F4F6] pt-6">
+          <h3 className="text-sm font-semibold text-[#111827]">Expert assurance</h3>
+          <dl className="mt-4 grid grid-cols-1 gap-3">
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Nom</dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossier.nom_expert || dossier.prenom_expert
+                  ? `${String(dossier.nom_expert ?? "").trim()} ${String(dossier.prenom_expert ?? "").trim()}`.trim()
+                  : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Email
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierTexteOuDash(dossier.expert_email)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Téléphone
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierTexteOuDash(dossier.expert_telephone)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                Adresse
+              </dt>
+              <dd className="mt-1 text-sm font-medium text-[#111827]">
+                {dossierAdresseUneLigne(
+                  dossier.expert_adresse,
+                  dossier.expert_code_postal,
+                  dossier.expert_ville,
+                )}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <div className="border-t border-[#F3F4F6] pt-6">
           <h3 className="text-sm font-semibold text-[#111827]">Expert</h3>
           {dossier.expert_id ? (
             <>
               <p className="mt-2 text-sm text-[#374151]">{expertNom || "Non renseigné"}</p>
-              {expertProfile?.email ? <p className="mt-1 text-sm text-[#6B7280]">{expertProfile.email}</p> : null}
+              {expertProfile?.email ? (
+                <p className="mt-1 text-sm text-[#6B7280]">{expertProfile.email}</p>
+              ) : null}
               <Link
                 to="/admin/utilisateurs/$userId"
                 params={{ userId: dossier.expert_id }}
@@ -126,7 +257,11 @@ export function DossierPartiesCard({
               </span>
               <p className="text-sm font-semibold text-[#111827]">Assigner un expert</p>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div ref={expertPickerRef} className="w-full sm:max-w-md" style={{ position: "relative" }}>
+                <div
+                  ref={expertPickerRef}
+                  className="w-full sm:max-w-md"
+                  style={{ position: "relative" }}
+                >
                   <input
                     type="text"
                     placeholder="Rechercher un expert..."

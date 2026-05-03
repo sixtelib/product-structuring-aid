@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import { X } from "lucide-react";
 
 export type ChatUploadZoneProps = {
@@ -6,27 +6,46 @@ export type ChatUploadZoneProps = {
   isUploading: boolean;
 };
 
+const allowedMimeTypes = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
+
+const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"];
+
+const maxBytes = 10 * 1024 * 1024;
+
+function isFileAccepted(f: File): boolean {
+  if (f.size > maxBytes) return false;
+  const nameLower = f.name.toLowerCase();
+  const extOk = allowedExtensions.some((ext) => nameLower.endsWith(ext));
+  const mime = (f.type || "").toLowerCase();
+  const mimeOk = allowedMimeTypes.has(mime);
+  return extOk || mimeOk;
+}
+
 export function ChatUploadZone({ onEnvoyer, isUploading }: ChatUploadZoneProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   function addFiles(incoming: File[]) {
-    const acceptedExt = [".pdf", ".jpg", ".jpeg", ".png"];
-    const maxBytes = 10 * 1024 * 1024;
-
     const next: File[] = [];
     for (const f of incoming) {
-      const nameLower = f.name.toLowerCase();
-      const okExt = acceptedExt.some((ext) => nameLower.endsWith(ext));
-      if (!okExt) continue;
-      if (f.size > maxBytes) continue;
+      if (!isFileAccepted(f)) continue;
       next.push(f);
     }
 
     const rejectedCount = incoming.length - next.length;
     if (rejectedCount > 0) {
-      setUploadError("Certains fichiers ont été ignorés (formats: PDF/JPG/PNG, 10 Mo max par fichier).");
+      setUploadError("Certains fichiers ont été ignorés (formats: PDF, JPG, PNG, HEIC · 10 Mo max).");
     } else {
       setUploadError(null);
     }
@@ -41,6 +60,12 @@ export function ChatUploadZone({ onEnvoyer, isUploading }: ChatUploadZoneProps) 
       }
       return merged;
     });
+  }
+
+  function handleFileSelect(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    addFiles(files);
+    e.currentTarget.value = "";
   }
 
   function removeSelectedFile(idx: number) {
@@ -63,13 +88,34 @@ export function ChatUploadZone({ onEnvoyer, isUploading }: ChatUploadZoneProps) 
 
   return (
     <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
+        multiple
+        onChange={handleFileSelect}
+        style={{ display: "none" }}
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileSelect}
+        style={{ display: "none" }}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileSelect}
+        style={{ display: "none" }}
+      />
+
       <div
-        role="button"
-        tabIndex={0}
-        onClick={() => fileInputRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
-        }}
+        role="region"
+        aria-label="Zone de dépôt des documents"
         onDragOver={(e) => {
           e.preventDefault();
         }}
@@ -78,24 +124,81 @@ export function ChatUploadZone({ onEnvoyer, isUploading }: ChatUploadZoneProps) 
           const dropped = Array.from(e.dataTransfer.files ?? []);
           addFiles(dropped);
         }}
-        className="cursor-pointer rounded-[12px] border-2 border-dashed border-[#5B50F0]/60 bg-[#F8F9FF] p-4 text-left shadow-sm"
+        className="rounded-[12px] border-2 border-dashed border-[#5B50F0]/60 bg-[#F8F9FF] p-4 text-left shadow-sm"
       >
-        <p className="text-sm font-semibold text-foreground">Glissez vos documents ici ou cliquez pour parcourir</p>
-        <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG, 10 Mo max par fichier</p>
+        <p className="text-sm font-semibold text-foreground">Glissez vos documents ici</p>
+        <p className="mt-1 text-xs text-muted-foreground">PDF, JPG, PNG, HEIC · 10 Mo max</p>
         {uploadError ? <p className="mt-2 text-xs font-medium text-red-600">{uploadError}</p> : null}
+      </div>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept=".pdf,.jpg,.jpeg,.png"
-          className="hidden"
-          onChange={(e) => {
-            const files = Array.from(e.target.files ?? []);
-            addFiles(files);
-            e.currentTarget.value = "";
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          marginTop: "12px",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "10px 16px",
+            background: "white",
+            border: "1px solid #5B50F0",
+            borderRadius: "8px",
+            color: "#5B50F0",
+            fontWeight: 500,
+            cursor: "pointer",
+            fontSize: "0.875rem",
           }}
-        />
+        >
+          📄 Parcourir mes fichiers
+        </button>
+
+        <button
+          type="button"
+          onClick={() => galleryInputRef.current?.click()}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "10px 16px",
+            background: "white",
+            border: "1px solid #5B50F0",
+            borderRadius: "8px",
+            color: "#5B50F0",
+            fontWeight: 500,
+            cursor: "pointer",
+            fontSize: "0.875rem",
+          }}
+        >
+          🖼️ Ma galerie
+        </button>
+
+        <button
+          type="button"
+          onClick={() => cameraInputRef.current?.click()}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "10px 16px",
+            background: "white",
+            border: "1px solid #5B50F0",
+            borderRadius: "8px",
+            color: "#5B50F0",
+            fontWeight: 500,
+            cursor: "pointer",
+            fontSize: "0.875rem",
+          }}
+        >
+          📷 Prendre une photo
+        </button>
       </div>
 
       {selectedFiles.length > 0 ? (

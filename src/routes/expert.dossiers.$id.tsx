@@ -1,6 +1,17 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, Download, Eye, FileText, Image as ImageIcon, MessageSquare, Send, Shield, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  Eye,
+  FileText,
+  Image as ImageIcon,
+  MessageSquare,
+  Send,
+  Shield,
+  Users,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -13,6 +24,13 @@ import {
   getImpersonatedExpertId,
   getImpersonatedExpertNomPrenomForDossierFilter,
 } from "@/lib/expertImpersonation";
+import {
+  dossierAdresseUneLigne,
+  dossierContactNomPrenom,
+  dossierDateOuDash,
+  dossierExpertiseMontantPropose,
+  dossierTexteOuDash,
+} from "@/utils/calculs";
 
 export const Route = createFileRoute("/expert/dossiers/$id")({
   component: ExpertDossierDetailPage,
@@ -23,6 +41,30 @@ type DossierRow = Tables<"dossiers"> & {
   prenom_assure?: string | null;
   nom_expert?: string | null;
   prenom_expert?: string | null;
+  sinistre_numero_dossier?: string | null;
+  sinistre_adresse?: string | null;
+  sinistre_code_postal?: string | null;
+  sinistre_ville?: string | null;
+  expertise_date_edition?: string | null;
+  expertise_montant_propose?: number | string | null;
+  assureur_compagnie_nom?: string | null;
+  assureur_contact_nom?: string | null;
+  assureur_contact_prenom?: string | null;
+  assureur_contact_email?: string | null;
+  assureur_contact_telephone?: string | null;
+  assureur_adresse?: string | null;
+  assureur_code_postal?: string | null;
+  assureur_ville?: string | null;
+  expert_email?: string | null;
+  expert_telephone?: string | null;
+  expert_adresse?: string | null;
+  expert_code_postal?: string | null;
+  expert_ville?: string | null;
+  email_assure?: string | null;
+  telephone_assure?: string | null;
+  adresse_assure?: string | null;
+  code_postal_assure?: string | null;
+  ville_assure?: string | null;
 };
 
 type DocumentRow = Tables<"documents"> & { chemin?: string | null; storage_path?: string | null };
@@ -42,22 +84,27 @@ function formatStatut(statut: string): { label: string; bg: string; color: strin
   const s = normalize(statut);
   if (s.includes("qualif")) return { label: "Qualification", bg: "#FEF3C7", color: "#92400E" };
   if (s.includes("analyse")) return { label: "En analyse", bg: "#FFF3CD", color: "#856404" };
-  if (s.includes("en_cours") || s === "en cours") return { label: "En cours", bg: "#D1ECF1", color: "#0C5460" };
+  if (s.includes("en_cours") || s === "en cours")
+    return { label: "En cours", bg: "#D1ECF1", color: "#0C5460" };
   if (s.includes("gagn")) return { label: "Gagné", bg: "#D4EDDA", color: "#155724" };
-  if (s.includes("perdu") || s.includes("refus")) return { label: "Perdu", bg: "#F8D7DA", color: "#721C24" };
-  if (s.includes("clotur") || s.includes("clos")) return { label: "Clôturé", bg: "#E2E3E5", color: "#383D41" };
+  if (s.includes("perdu") || s.includes("refus"))
+    return { label: "Perdu", bg: "#F8D7DA", color: "#721C24" };
+  if (s.includes("clotur") || s.includes("clos"))
+    return { label: "Clôturé", bg: "#E2E3E5", color: "#383D41" };
   const map: Record<string, { label: string; bg: string; color: string }> = {
     negociation: { label: "Négociation", bg: "#EEE9FF", color: "#5B50F0" },
-    "négociation": { label: "Négociation", bg: "#EEE9FF", color: "#5B50F0" },
+    négociation: { label: "Négociation", bg: "#EEE9FF", color: "#5B50F0" },
   };
   return map[statut] ?? { label: statut, bg: "#E2E3E5", color: "#383D41" };
 }
 
 function eur(n: number | null | undefined) {
   const v = n == null ? 0 : Number(n);
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(
-    Number.isFinite(v) ? v : 0,
-  );
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(Number.isFinite(v) ? v : 0);
 }
 
 function dateFr(d: string | null | undefined) {
@@ -93,8 +140,10 @@ function isStaffMessage(auteur: string) {
 
 function docIcon(nom: string) {
   const lower = nom.toLowerCase();
-  if (lower.endsWith(".pdf")) return <FileText className="h-5 w-5 shrink-0 text-red-600" aria-hidden />;
-  if (/\.(png|jpg|jpeg|webp|gif)$/i.test(lower)) return <ImageIcon className="h-5 w-5 shrink-0 text-[#5B50F0]" aria-hidden />;
+  if (lower.endsWith(".pdf"))
+    return <FileText className="h-5 w-5 shrink-0 text-red-600" aria-hidden />;
+  if (/\.(png|jpg|jpeg|webp|gif)$/i.test(lower))
+    return <ImageIcon className="h-5 w-5 shrink-0 text-[#5B50F0]" aria-hidden />;
   return <FileText className="h-5 w-5 shrink-0 text-[#6B7280]" aria-hidden />;
 }
 
@@ -115,7 +164,10 @@ function cardClass() {
   return "rounded-[12px] border border-[#E5E7EB] bg-white p-6 shadow-[0_1px_8px_rgba(0,0,0,0.06)]";
 }
 
-class DossierAnalyseIAErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+class DossierAnalyseIAErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
   state = { hasError: false };
 
   static getDerivedStateFromError() {
@@ -213,7 +265,8 @@ function ExpertDossierDetailPage() {
         const matchId = imp && d.expert_id === imp;
         const matchName =
           nom.trim() !== "" || prenom.trim() !== ""
-            ? String(d.nom_expert ?? "").trim() === nom.trim() && String(d.prenom_expert ?? "").trim() === prenom.trim()
+            ? String(d.nom_expert ?? "").trim() === nom.trim() &&
+              String(d.prenom_expert ?? "").trim() === prenom.trim()
             : false;
         if (imp && !matchId && !matchName) {
           toast.error("Ce dossier n'est pas accessible pour cet aperçu expert.");
@@ -227,7 +280,11 @@ function ExpertDossierDetailPage() {
 
       const [docRes, msgRes] = await Promise.all([
         supabase.from("documents").select("*").eq("dossier_id", dossierId),
-        supabase.from("messages").select("*").eq("dossier_id", dossierId).order("created_at", { ascending: true }),
+        supabase
+          .from("messages")
+          .select("*")
+          .eq("dossier_id", dossierId)
+          .order("created_at", { ascending: true }),
       ]);
       setDocuments((docRes.data as DocumentRow[]) ?? []);
       setMessages((msgRes.data as MessageRow[]) ?? []);
@@ -239,12 +296,24 @@ function ExpertDossierDetailPage() {
         .eq("type", "mandat");
       setMandatDocuments((mandatRows as DocumentRow[]) ?? []);
 
-      const aRes = await supabase.from("profiles").select("full_name, email").eq("id", d.user_id).maybeSingle();
+      const aRes = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", d.user_id)
+        .maybeSingle();
       setAssureProfile((aRes.data as ProfileRow) ?? null);
 
       if (user?.id && isExpert && !isAdmin) {
-        const pr = await supabase.from("profiles").select("full_name, prenom, nom").eq("id", user.id).maybeSingle();
-        const row = pr.data as { full_name?: string | null; prenom?: string | null; nom?: string | null } | null;
+        const pr = await supabase
+          .from("profiles")
+          .select("full_name, prenom, nom")
+          .eq("id", user.id)
+          .maybeSingle();
+        const row = pr.data as {
+          full_name?: string | null;
+          prenom?: string | null;
+          nom?: string | null;
+        } | null;
         if (row) {
           const nm = (row.full_name ?? "").trim() || `${row.prenom ?? ""} ${row.nom ?? ""}`.trim();
           setSelfExpertName(nm);
@@ -268,7 +337,12 @@ function ExpertDossierDetailPage() {
       .channel(`expert-messages-${dossierId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `dossier_id=eq.${dossierId}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `dossier_id=eq.${dossierId}`,
+        },
         (payload) => {
           const row = payload.new as MessageRow;
           setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
@@ -394,7 +468,8 @@ function ExpertDossierDetailPage() {
   }
 
   const statutFmt = formatStatut(dossier.statut);
-  const assureurLabel = dossier.assureur_nom ?? (dossier as { assureur?: string | null }).assureur ?? "Non renseigné";
+  const assureurLabel =
+    dossier.assureur_nom ?? (dossier as { assureur?: string | null }).assureur ?? "Non renseigné";
   const assureNom =
     dossier.nom_assure || dossier.prenom_assure
       ? `${dossier.prenom_assure ?? ""} ${dossier.nom_assure ?? ""}`.trim()
@@ -404,11 +479,22 @@ function ExpertDossierDetailPage() {
     <div className="bg-[#F8F9FF] pb-12">
       {previewDoc ? (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div role="presentation" className="absolute inset-0 bg-[rgba(0,0,0,0.7)]" onClick={closePreview} />
+          <div
+            role="presentation"
+            className="absolute inset-0 bg-[rgba(0,0,0,0.7)]"
+            onClick={closePreview}
+          />
           <div className="relative z-10 flex max-h-[90vh] w-[90vw] max-w-[900px] flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#E5E7EB] px-6 py-5">
-              <h2 className="min-w-0 flex-1 break-words pr-2 text-base font-semibold text-[#111827]">{previewDoc.nom}</h2>
-              <button type="button" onClick={closePreview} className="shrink-0 rounded-lg p-2 text-[#6B7280] hover:bg-[#F3F4F6]" aria-label="Fermer">
+              <h2 className="min-w-0 flex-1 break-words pr-2 text-base font-semibold text-[#111827]">
+                {previewDoc.nom}
+              </h2>
+              <button
+                type="button"
+                onClick={closePreview}
+                className="shrink-0 rounded-lg p-2 text-[#6B7280] hover:bg-[#F3F4F6]"
+                aria-label="Fermer"
+              >
                 <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
@@ -420,7 +506,9 @@ function ExpertDossierDetailPage() {
                 </div>
               ) : previewError || !previewSignedUrl ? (
                 <div className="flex flex-col items-center justify-center gap-6 py-8 text-center">
-                  <p className="max-w-md text-sm text-[#374151]">Impossible de charger l&apos;aperçu.</p>
+                  <p className="max-w-md text-sm text-[#374151]">
+                    Impossible de charger l&apos;aperçu.
+                  </p>
                   <button
                     type="button"
                     onClick={() => void downloadDoc(previewDoc)}
@@ -433,9 +521,19 @@ function ExpertDossierDetailPage() {
                   </button>
                 </div>
               ) : previewKindFromNom(previewDoc.nom) === "pdf" ? (
-                <iframe title={previewDoc.nom} src={previewSignedUrl} className="w-full rounded-lg border-0" style={{ height: "70vh" }} />
+                <iframe
+                  title={previewDoc.nom}
+                  src={previewSignedUrl}
+                  className="w-full rounded-lg border-0"
+                  style={{ height: "70vh" }}
+                />
               ) : previewKindFromNom(previewDoc.nom) === "image" ? (
-                <img src={previewSignedUrl} alt={previewDoc.nom} className="mx-auto rounded-lg" style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain" }} />
+                <img
+                  src={previewSignedUrl}
+                  alt={previewDoc.nom}
+                  className="mx-auto rounded-lg"
+                  style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain" }}
+                />
               ) : (
                 <div className="flex flex-col items-center justify-center gap-6 py-8 text-center">
                   <p className="text-sm text-[#374151]">Aperçu non disponible pour ce type.</p>
@@ -463,13 +561,14 @@ function ExpertDossierDetailPage() {
           className="inline-flex items-center gap-2 font-medium text-[#5B50F0] hover:underline"
           style={{ fontSize: "0.875rem" }}
         >
-          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
-          ← Dossiers
+          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />← Dossiers
         </button>
 
         <header className="mt-6 flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-bold tracking-tight text-[#111827] sm:text-3xl">{assureNom}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-[#111827] sm:text-3xl">
+              {assureNom}
+            </h1>
             <p className="mt-2 text-sm text-[#6B7280]">
               {dossier.type_sinistre} · Ouvert le {dateFr(dossier.date_ouverture)}
             </p>
@@ -503,41 +602,236 @@ function ExpertDossierDetailPage() {
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Date d&apos;ouverture</dt>
-                <dd className="mt-1 text-sm font-medium text-[#111827]">{dateFr(dossier.date_ouverture)}</dd>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Date d&apos;ouverture
+                </dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">
+                  {dateFr(dossier.date_ouverture)}
+                </dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Type de sinistre</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Type de sinistre
+                </dt>
                 <dd className="mt-1 text-sm font-medium text-[#111827]">{dossier.type_sinistre}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Montant estimé</dt>
-                <dd className="mt-1 text-sm font-medium text-[#111827]">{eur(dossier.montant_estime)}</dd>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Montant estimé
+                </dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">
+                  {eur(dossier.montant_estime)}
+                </dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Commission Vertual</dt>
-                <dd className="mt-1 text-sm font-semibold text-[#5B50F0]">{commission == null ? "—" : eur(commission)}</dd>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Commission Vertual
+                </dt>
+                <dd className="mt-1 text-sm font-semibold text-[#5B50F0]">
+                  {commission == null ? "—" : eur(commission)}
+                </dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Assureur</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Assureur
+                </dt>
                 <dd className="mt-1 text-sm font-medium text-[#111827]">{assureurLabel}</dd>
               </div>
               {dossier.description ? (
                 <div className="sm:col-span-2">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Description</dt>
-                  <dd className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[#374151]">{dossier.description}</dd>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                    Description
+                  </dt>
+                  <dd className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[#374151]">
+                    {dossier.description}
+                  </dd>
                 </div>
               ) : null}
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Date du sinistre
+                </dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">
+                  {dossierDateOuDash(dossier.date_sinistre)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  N° dossier assureur
+                </dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">
+                  {dossierTexteOuDash(dossier.sinistre_numero_dossier)}
+                </dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Lieu du sinistre
+                </dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">
+                  {dossierAdresseUneLigne(
+                    dossier.sinistre_adresse,
+                    dossier.sinistre_code_postal,
+                    dossier.sinistre_ville,
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Date du rapport d&apos;expertise
+                </dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">
+                  {dossierDateOuDash(dossier.expertise_date_edition)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                  Montant proposé par l&apos;assureur
+                </dt>
+                <dd className="mt-1 text-sm font-medium text-[#111827]">
+                  {dossierExpertiseMontantPropose(dossier.expertise_montant_propose)}
+                </dd>
+              </div>
             </dl>
           </section>
 
           <section className={cardClass()}>
             <div className="mb-6 flex items-center gap-2 border-b border-[#F3F4F6] pb-4">
-              <Shield className="h-5 w-5 text-[#5B50F0]" aria-hidden />
-              <h2 className="text-lg font-semibold text-[#111827]">Assuré</h2>
+              <Users className="h-5 w-5 text-[#5B50F0]" aria-hidden />
+              <h2 className="text-lg font-semibold text-[#111827]">Parties prenantes</h2>
             </div>
-            <p className="text-sm font-medium text-[#111827]">{assureNom}</p>
-            {assureProfile?.email ? <p className="mt-2 text-sm text-[#6B7280]">{assureProfile.email}</p> : null}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold text-[#111827]">Assuré</h3>
+                <p className="mt-2 text-sm text-[#374151]">{assureNom}</p>
+                <dl className="mt-4 grid grid-cols-1 gap-3">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Email
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierTexteOuDash(dossier.email_assure)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Téléphone
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierTexteOuDash(dossier.telephone_assure)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Adresse
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierAdresseUneLigne(
+                        dossier.adresse_assure,
+                        dossier.code_postal_assure,
+                        dossier.ville_assure,
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="border-t border-[#F3F4F6] pt-6">
+                <h3 className="text-sm font-semibold text-[#111827]">Assureur</h3>
+                <dl className="mt-4 grid grid-cols-1 gap-3">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Compagnie
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierTexteOuDash(dossier.assureur_compagnie_nom)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Contact
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierContactNomPrenom(
+                        dossier.assureur_contact_nom,
+                        dossier.assureur_contact_prenom,
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Email contact
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierTexteOuDash(dossier.assureur_contact_email)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Téléphone contact
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierTexteOuDash(dossier.assureur_contact_telephone)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Adresse agence
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierAdresseUneLigne(
+                        dossier.assureur_adresse,
+                        dossier.assureur_code_postal,
+                        dossier.assureur_ville,
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="border-t border-[#F3F4F6] pt-6">
+                <h3 className="text-sm font-semibold text-[#111827]">Expert assurance</h3>
+                <dl className="mt-4 grid grid-cols-1 gap-3">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Nom
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossier.nom_expert || dossier.prenom_expert
+                        ? `${String(dossier.nom_expert ?? "").trim()} ${String(dossier.prenom_expert ?? "").trim()}`.trim()
+                        : "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Email
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierTexteOuDash(dossier.expert_email)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Téléphone
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierTexteOuDash(dossier.expert_telephone)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+                      Adresse
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-[#111827]">
+                      {dossierAdresseUneLigne(
+                        dossier.expert_adresse,
+                        dossier.expert_code_postal,
+                        dossier.expert_ville,
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
           </section>
         </div>
 
@@ -548,12 +842,14 @@ function ExpertDossierDetailPage() {
               type_sinistre: dossier.type_sinistre,
               montant_estime: Number(dossier.montant_estime),
               statut: dossier.statut,
-              assureur: (dossier.assureur_nom ?? (dossier as { assureur?: string }).assureur) ?? undefined,
+              assureur:
+                dossier.assureur_nom ?? (dossier as { assureur?: string }).assureur ?? undefined,
               description: dossier.description ?? undefined,
               nom_assure: dossier.nom_assure ?? undefined,
               prenom_assure: dossier.prenom_assure ?? undefined,
               analyse_ia: (dossier as { analyse_ia?: string | null }).analyse_ia ?? null,
-              analyse_ia_date: (dossier as { analyse_ia_date?: string | null }).analyse_ia_date ?? null,
+              analyse_ia_date:
+                (dossier as { analyse_ia_date?: string | null }).analyse_ia_date ?? null,
             }}
             documents={documents.map((d) => ({
               id: d.id,
@@ -581,7 +877,9 @@ function ExpertDossierDetailPage() {
                         staff ? "bg-[#F3F4F6] text-[#111827]" : "bg-[#EEE9FF] text-[#111827]"
                       }`}
                     >
-                      <p className="text-xs font-semibold text-[#6B7280]">{authorLabel(m.auteur, expertMessageLabel)}</p>
+                      <p className="text-xs font-semibold text-[#6B7280]">
+                        {authorLabel(m.auteur, expertMessageLabel)}
+                      </p>
                       <p className="mt-2 whitespace-pre-wrap leading-relaxed">{m.contenu}</p>
                       <p className="mt-2 text-[11px] text-[#6B7280]">{timeAgo(m.created_at)}</p>
                     </div>
@@ -619,11 +917,16 @@ function ExpertDossierDetailPage() {
             </div>
             <ul className="space-y-3">
               {mandatDocuments.map((doc) => (
-                <li key={doc.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3">
+                <li
+                  key={doc.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3"
+                >
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     {docIcon(doc.nom)}
                     <span className="truncate text-sm font-medium text-[#111827]">{doc.nom}</span>
-                    <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">Signé</span>
+                    <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                      Signé
+                    </span>
                   </div>
                   <button
                     type="button"
@@ -652,13 +955,26 @@ function ExpertDossierDetailPage() {
               {documents.map((doc) => {
                 const st = formatDocumentStatusDb(doc.statut);
                 return (
-                  <li key={doc.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3">
+                  <li
+                    key={doc.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#F3F4F6] bg-[#FAFBFF] px-4 py-3"
+                  >
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <button type="button" onClick={() => void openPreview(doc)} className="flex min-w-0 flex-1 items-center gap-3 text-left hover:opacity-80">
+                      <button
+                        type="button"
+                        onClick={() => void openPreview(doc)}
+                        className="flex min-w-0 flex-1 items-center gap-3 text-left hover:opacity-80"
+                      >
                         {docIcon(doc.nom)}
-                        <span className="truncate text-sm font-medium text-[#111827]">{doc.nom}</span>
+                        <span className="truncate text-sm font-medium text-[#111827]">
+                          {doc.nom}
+                        </span>
                       </button>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${st.className}`}>{st.label}</span>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${st.className}`}
+                      >
+                        {st.label}
+                      </span>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
                       <button

@@ -29,6 +29,7 @@ import { Route as EspaceRouteImport } from './routes/espace'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CommentCaMarcheRouteImport } from './routes/comment-ca-marche'
+import { Route as CguRouteImport } from './routes/cgu'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AProposRouteImport } from './routes/a-propos'
@@ -168,6 +169,11 @@ const ContactRoute = ContactRouteImport.update({
 const CommentCaMarcheRoute = CommentCaMarcheRouteImport.update({
   id: '/comment-ca-marche',
   path: '/comment-ca-marche',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CguRoute = CguRouteImport.update({
+  id: '/cgu',
+  path: '/cgu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -383,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/cgu': typeof CguRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
@@ -444,6 +451,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
+  '/cgu': typeof CguRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/contact': typeof ContactRoute
   '/espace': typeof EspaceRouteWithChildren
@@ -501,6 +509,7 @@ export interface FileRoutesById {
   '/a-propos': typeof AProposRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/cgu': typeof CguRoute
   '/comment-ca-marche': typeof CommentCaMarcheRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
@@ -565,6 +574,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/admin'
     | '/auth'
+    | '/cgu'
     | '/comment-ca-marche'
     | '/contact'
     | '/dashboard'
@@ -626,6 +636,7 @@ export interface FileRouteTypes {
     | '/'
     | '/a-propos'
     | '/auth'
+    | '/cgu'
     | '/comment-ca-marche'
     | '/contact'
     | '/espace'
@@ -682,6 +693,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/admin'
     | '/auth'
+    | '/cgu'
     | '/comment-ca-marche'
     | '/contact'
     | '/dashboard'
@@ -745,6 +757,7 @@ export interface RootRouteChildren {
   AProposRoute: typeof AProposRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CguRoute: typeof CguRoute
   CommentCaMarcheRoute: typeof CommentCaMarcheRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
@@ -909,6 +922,13 @@ declare module '@tanstack/react-router' {
       path: '/comment-ca-marche'
       fullPath: '/comment-ca-marche'
       preLoaderRoute: typeof CommentCaMarcheRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cgu': {
+      id: '/cgu'
+      path: '/cgu'
+      fullPath: '/cgu'
+      preLoaderRoute: typeof CguRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1354,6 +1374,7 @@ const rootRouteChildren: RootRouteChildren = {
   AProposRoute: AProposRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  CguRoute: CguRoute,
   CommentCaMarcheRoute: CommentCaMarcheRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,

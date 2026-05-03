@@ -2,7 +2,15 @@ import { FileText } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import type { Dossier } from "@/types";
-import { formaterDate, formaterMontant, formaterStatut } from "@/utils/calculs";
+import {
+  dossierAdresseUneLigne,
+  dossierDateOuDash,
+  dossierExpertiseMontantPropose,
+  dossierTexteOuDash,
+  formaterDate,
+  formaterMontant,
+  formaterStatut,
+} from "@/utils/calculs";
 
 function cardClass() {
   return "rounded-[12px] border border-[#E5E7EB] bg-white p-6 shadow-[0_1px_8px_rgba(0,0,0,0.06)]";
@@ -50,11 +58,17 @@ export function DossierInfosCard({ dossier }: { dossier: Dossier }) {
           </dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Date d'ouverture</dt>
-          <dd className="mt-1 text-sm font-medium text-[#111827]">{formaterDate(dossier.date_ouverture)}</dd>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+            Date d'ouverture
+          </dt>
+          <dd className="mt-1 text-sm font-medium text-[#111827]">
+            {formaterDate(dossier.date_ouverture)}
+          </dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Type de sinistre</dt>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+            Type de sinistre
+          </dt>
           <dd className="mt-1 text-sm font-medium text-[#111827]">{dossier.type_sinistre}</dd>
         </div>
         <div>
@@ -69,11 +83,17 @@ export function DossierInfosCard({ dossier }: { dossier: Dossier }) {
           </dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Montant estimé</dt>
-          <dd className="mt-1 text-sm font-medium text-[#111827]">{formaterMontant(dossier.montant_estime)}</dd>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+            Montant estimé
+          </dt>
+          <dd className="mt-1 text-sm font-medium text-[#111827]">
+            {formaterMontant(dossier.montant_estime)}
+          </dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Commission Vertual</dt>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+            Commission Vertual
+          </dt>
           <dd className="mt-1 text-sm font-semibold text-[#5B50F0]">
             {commission == null ? "Non renseigné" : formaterMontant(commission)}
           </dd>
@@ -84,10 +104,58 @@ export function DossierInfosCard({ dossier }: { dossier: Dossier }) {
         </div>
         {dossier.description ? (
           <div className="sm:col-span-2">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">Description</dt>
-            <dd className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[#374151]">{dossier.description}</dd>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+              Description
+            </dt>
+            <dd className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[#374151]">
+              {dossier.description}
+            </dd>
           </div>
         ) : null}
+        <div>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+            Date du sinistre
+          </dt>
+          <dd className="mt-1 text-sm font-medium text-[#111827]">
+            {dossierDateOuDash(dossier.date_sinistre)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+            N° dossier assureur
+          </dt>
+          <dd className="mt-1 text-sm font-medium text-[#111827]">
+            {dossierTexteOuDash(dossier.sinistre_numero_dossier)}
+          </dd>
+        </div>
+        <div className="sm:col-span-2">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+            Lieu du sinistre
+          </dt>
+          <dd className="mt-1 text-sm font-medium text-[#111827]">
+            {dossierAdresseUneLigne(
+              dossier.sinistre_adresse,
+              dossier.sinistre_code_postal,
+              dossier.sinistre_ville,
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+            Date du rapport d&apos;expertise
+          </dt>
+          <dd className="mt-1 text-sm font-medium text-[#111827]">
+            {dossierDateOuDash(dossier.expertise_date_edition)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
+            Montant proposé par l&apos;assureur
+          </dt>
+          <dd className="mt-1 text-sm font-medium text-[#111827]">
+            {dossierExpertiseMontantPropose(dossier.expertise_montant_propose)}
+          </dd>
+        </div>
       </dl>
     </section>
   );

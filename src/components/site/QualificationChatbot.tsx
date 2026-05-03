@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatMessages, type Msg } from "@/components/chat/ChatMessages";
@@ -16,39 +17,58 @@ type CollectedData = {
   montant_propose: string;
   date_sinistre: string;
   description: string;
+  raison_contestation: string;
 };
 
-const EXTRACTION_PROMPT = `Tu es un assistant spécialisé dans 
-l'extraction d'informations depuis des documents d'assurance.
-
-Analyse ce document et extrais TOUTES les informations pertinentes 
-dans ce format JSON exact, sans aucun texte avant ou après :
+const EXTRACTION_PROMPT = `Tu es un assistant spécialisé dans l'extraction d'informations depuis des documents d'assurance.
+Analyse ce document et extrais TOUTES les informations pertinentes dans ce format JSON exact, sans aucun texte avant ou après :
 {
-  "numero_contrat": "",
-  "nom_assure": "",
-  "prenom_assure": "",
-  "adresse_assure": "",
-  "telephone_assure": "",
-  "email_assure": "",
-  "nom_assureur": "",
-  "adresse_assureur": "",
-  "telephone_assureur": "",
-  "contact_assureur": "",
-  "numero_sinistre": "",
-  "date_sinistre": "",
-  "type_sinistre": "",
-  "montant_expertise": "",
-  "nom_expert_assurance": "",
-  "telephone_expert_assurance": "",
-  "email_expert_assurance": "",
-  "conclusions_expert": "",
-  "reserves_expert": "",
+  "assuré": {
+    "nom": "",
+    "prenom": "",
+    "email": "",
+    "telephone": "",
+    "adresse": "",
+    "code_postal": "",
+    "ville": ""
+  },
+  "assureur": {
+    "compagnie_nom": "",
+    "contact_nom": "",
+    "contact_prenom": "",
+    "contact_email": "",
+    "contact_telephone": "",
+    "adresse": "",
+    "code_postal": "",
+    "ville": ""
+  },
+  "expert_assurance": {
+    "nom": "",
+    "prenom": "",
+    "email": "",
+    "telephone": "",
+    "adresse": "",
+    "code_postal": "",
+    "ville": ""
+  },
+  "sinistre": {
+    "numero_dossier": "",
+    "date": "",
+    "adresse": "",
+    "code_postal": "",
+    "ville": "",
+    "type": ""
+  },
+  "expertise": {
+    "date_edition": "",
+    "montant_propose": "",
+    "numero_contrat": ""
+  },
   "autres_informations": []
 }
-
 Si une information n'est pas trouvée, laisse le champ vide "".
-Pour autres_informations, liste toute info pertinente non couverte 
-par les champs ci-dessus.`;
+Pour date_sinistre et date_edition, utilise le format YYYY-MM-DD.
+Pour montant_propose, retourne uniquement le nombre sans symbole ni espace (ex: 15000.00).`;
 
 const EMPTY_DATA: CollectedData = {
   type_sinistre: "",
@@ -56,42 +76,84 @@ const EMPTY_DATA: CollectedData = {
   montant_propose: "",
   date_sinistre: "",
   description: "",
+  raison_contestation: "",
 };
 
-const WELCOME = "Bonjour 👋 Quel type de sinistre avez-vous subi ?";
+const WELCOME =
+  "Bonjour 👋 Qu'est-ce qui vous semble injuste dans la réponse de votre assureur ?";
 
-const SYSTEM_PROMPT = `Tu es un assistant de qualification pour Vertual, 
+const SYSTEM_PROMPT = `Tu es un assistant de qualification pour Vertual,
 plateforme française d'expert d'assuré.
 
-Ton rôle : qualifier le sinistre de l'assuré en 
-5-7 questions maximum pour créer son dossier.
+Ton objectif : comprendre pourquoi l'assuré conteste
+et l'encourager à uploader ses documents.
 
-Questions à poser dans l'ordre :
-1. Type de sinistre
-2. Ce que l'assureur a proposé
-3. Montant proposé
-4. Nom de l'assureur
-5. Date du sinistre
-6. Documents disponibles
+Flow en 3 étapes maximum :
 
-Règles :
-- Une question à la fois
-- Réponses courtes (max 2 phrases)
-- Quand tu as toutes les infos, génère l'évaluation
+ÉTAPE 1 — Première question uniquement :
+"Bonjour 👋 Qu'est-ce qui vous semble injuste
+dans la réponse de votre assureur ?"
 
-À la fin génère :
-<data>{"type_sinistre":"...","assureur":"...","montant_propose":"...","date_sinistre":"..."}</data>
-<evaluation>Score: X/10. [2 phrases max]</evaluation>
-<suggest>TYPE</suggest>`;
+ÉTAPE 2 — Après leur réponse :
+Reformule en 1 phrase ce que tu as compris,
+puis envoie ce message exact pour demander les documents (sans le modifier) :
 
-/** Pills initiales (type de sinistre), même jeu que type_sinistre ; codées en dur, sans balise suggest sur l'accueil. */
-const STARTUP_TYPE_SINISTRE_PILLS: { label: string; text: string }[] = [
-  { label: "Dégât des eaux", text: "Mon sinistre est de type : Dégât des eaux" },
-  { label: "Incendie", text: "Mon sinistre est de type : Incendie" },
-  { label: "Tempête", text: "Mon sinistre est de type : Tempête" },
-  { label: "Accident auto", text: "Mon sinistre est de type : Accident auto" },
-  { label: "Multirisque", text: "Mon sinistre est de type : Multirisque habitation" },
-  { label: "Autre", text: "Mon sinistre est de type : Autre" },
+"Pour analyser votre dossier, nous avons besoin
+de ces documents :
+
+📄 **Essentiels :**
+- Votre contrat d'assurance (la police concernée)
+- Le rapport d'expertise de votre assureur
+
+📎 **Utiles si vous les avez :**
+- Photos des dommages
+- Courriers échangés avec votre assureur
+- Devis de réparation
+
+Vous pouvez commencer avec juste les 2 essentiels.
+Les autres peuvent être ajoutés plus tard
+depuis votre espace personnel."
+
+Termine ce tour avec <suggest>upload</suggest> (la zone d'upload s'affiche côté interface — pas de pills).
+
+ÉTAPE 3 — Si documents uploadés :
+L'IA a extrait les informations automatiquement.
+Génère immédiatement l'évaluation.
+
+ÉTAPE 3 bis — Si pas de documents :
+Pose ces questions une par une :
+- Type de sinistre (<suggest>type_sinistre</suggest>)
+- Nom de l'assureur (<suggest>assureur</suggest>)
+- Montant proposé par l'assureur (<suggest>montant</suggest>)
+Puis génère l'évaluation.
+
+RÈGLES :
+- Maximum 4 échanges avant l'évaluation
+- Ne jamais demander le montant souhaité par l'assuré
+- Ne jamais promettre un montant de récupération
+- L'évaluation donne uniquement :
+  un score de contestabilité (Faible/Modéré/Élevé)
+  et les points identifiés pour contester
+- Si l'assuré dit ne pas avoir les documents :
+  répondre exactement "Pas de problème, vous pourrez les ajouter depuis votre espace personnel après la création de votre compte. Continuons l'évaluation."
+  puis poursuivre le flow (questions ÉTAPE 3 bis ou évaluation) sans insister pour les documents.
+- Ne jamais bloquer la conversation faute de documents.
+
+FORMAT évaluation finale :
+<data>{"type_sinistre":"...","assureur":"...","montant_propose":"...","raison_contestation":"..."}</data>
+<evaluation>
+Score : [Faible|Modéré|Élevé]
+[2 phrases max sur les points identifiés pour contester]
+</evaluation>
+<suggest>none</suggest>`;
+
+/** Pills initiales (première question — réponse assureur). */
+const STARTUP_INITIAL_PILLS: { label: string; text: string }[] = [
+  { label: "Refus total", text: "Refus total" },
+  { label: "Offre trop basse", text: "Offre trop basse" },
+  { label: "Pas encore de réponse", text: "Pas encore de réponse" },
+  { label: "Sinistre ignoré", text: "Sinistre ignoré" },
+  { label: "Offre partielle", text: "Offre partielle" },
 ];
 
 function uid() {
@@ -130,9 +192,13 @@ function parseClaudeResponse(text: string) {
   return { cleanText, parsedData, evaluation };
 }
 
-function suggestionsFromLastClaude(text: string): string[] {
+function getSuggestTypeFromText(text: string): string {
   const suggestMatch = text.match(/<suggest>([\s\S]*?)<\/suggest>/i);
-  const suggestType = suggestMatch ? suggestMatch[1].trim().toLowerCase() : "none";
+  return suggestMatch ? suggestMatch[1].trim().toLowerCase() : "none";
+}
+
+function suggestionsFromLastClaude(text: string): string[] {
+  const suggestType = getSuggestTypeFromText(text);
 
   const suggestionSets: Record<string, string[]> = {
     type_sinistre: [
@@ -160,6 +226,7 @@ function suggestionsFromLastClaude(text: string): string[] {
     assureur: ["AXA", "MAAF", "Allianz", "MMA", "Groupama", "Macif", "MAIF", "Autre assureur"],
     anciennete: ["Moins d'1 mois", "1 à 3 mois", "3 à 6 mois", "Plus de 6 mois"],
     oui_non: ["Oui", "Non"],
+    upload: [],
     none: [],
   };
 
@@ -188,8 +255,10 @@ export function QualificationChatbot() {
   );
   const [sendingDocs, setSendingDocs] = useState(false);
   const [extractedData, setExtractedData] = useState<Record<string, any>>({});
+  const [cguAccepted, setCguAccepted] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const noUserMessageYet = !messages.some((m) => m.role === "user");
 
   useEffect(() => {
     migrateLegacyQualificationLocalStorage();
@@ -203,7 +272,13 @@ export function QualificationChatbot() {
       setSuggestions([]);
       return;
     }
-    setSuggestions(suggestionsFromLastClaude(lastClaude?.text ?? ""));
+    const raw = lastClaude?.text ?? "";
+    const suggestType = getSuggestTypeFromText(raw);
+    if (suggestType === "upload") {
+      setSuggestions([]);
+      return;
+    }
+    setSuggestions(suggestionsFromLastClaude(raw));
   }, [messages]);
 
   useEffect(() => {
@@ -218,6 +293,7 @@ export function QualificationChatbot() {
       montant_propose: incoming.montant_propose?.trim() || prev.montant_propose,
       date_sinistre: incoming.date_sinistre?.trim() || prev.date_sinistre,
       description: incoming.description?.trim() || prev.description,
+      raison_contestation: incoming.raison_contestation?.trim() || prev.raison_contestation,
     }));
   }
 
@@ -418,20 +494,59 @@ export function QualificationChatbot() {
   }
 
   async function saveExtractionToDossier(dossierId: string, data: Record<string, any>) {
+    const a = data.assuré || {};
+    const assureur = data.assureur || {};
+    const expert = data.expert_assurance || {};
+    const sinistre = data.sinistre || {};
+    const expertise = data.expertise || {};
+
     const update: Record<string, any> = {
-      nom_assure: data.nom_assure || undefined,
-      prenom_assure: data.prenom_assure || undefined,
-      assureur: data.nom_assureur || undefined,
-      nom_expert: data.nom_expert_assurance || undefined,
-      montant_estime: data.montant_expertise
-        ? parseFloat(String(data.montant_expertise).replace(/[^0-9.]/g, ""))
+      // Assuré
+      nom_assure: a.nom || undefined,
+      prenom_assure: a.prenom || undefined,
+      email_assure: a.email || undefined,
+      telephone_assure: a.telephone || undefined,
+      adresse_assure: a.adresse || undefined,
+      code_postal_assure: a.code_postal || undefined,
+      ville_assure: a.ville || undefined,
+      // Assureur
+      assureur_compagnie_nom: assureur.compagnie_nom || undefined,
+      assureur_contact_nom: assureur.contact_nom || undefined,
+      assureur_contact_prenom: assureur.contact_prenom || undefined,
+      assureur_contact_email: assureur.contact_email || undefined,
+      assureur_contact_telephone: assureur.contact_telephone || undefined,
+      assureur_adresse: assureur.adresse || undefined,
+      assureur_code_postal: assureur.code_postal || undefined,
+      assureur_ville: assureur.ville || undefined,
+      // Expert assurance
+      nom_expert: expert.nom || undefined,
+      prenom_expert: expert.prenom || undefined,
+      expert_email: expert.email || undefined,
+      expert_telephone: expert.telephone || undefined,
+      expert_adresse: expert.adresse || undefined,
+      expert_code_postal: expert.code_postal || undefined,
+      expert_ville: expert.ville || undefined,
+      // Sinistre
+      sinistre_numero_dossier: sinistre.numero_dossier || undefined,
+      date_sinistre: sinistre.date || undefined,
+      sinistre_adresse: sinistre.adresse || undefined,
+      sinistre_code_postal: sinistre.code_postal || undefined,
+      sinistre_ville: sinistre.ville || undefined,
+      type_sinistre: sinistre.type || undefined,
+      // Expertise
+      expertise_date_edition: expertise.date_edition || undefined,
+      expertise_montant_propose: expertise.montant_propose
+        ? parseFloat(String(expertise.montant_propose).replace(/[^0-9.]/g, ""))
         : undefined,
+      numero_contrat: expertise.numero_contrat || undefined,
     };
+
     const cleaned: Record<string, any> = {};
     for (const [k, v] of Object.entries(update)) {
-      if (v !== undefined && v !== null && !(typeof v === "number" && Number.isNaN(v)))
+      if (v !== undefined && v !== null && v !== "" && !(typeof v === "number" && Number.isNaN(v)))
         cleaned[k] = v;
     }
+
     try {
       if (Object.keys(cleaned).length > 0) {
         const { error: upErr } = await supabase
@@ -454,6 +569,11 @@ export function QualificationChatbot() {
   async function sendUserText(text: string) {
     const t = text.trim();
     if (!t || isLoading || messages.length > 20) return;
+
+    if (noUserMessageYet && !cguAccepted) {
+      toast.error("Veuillez accepter les CGU avant de continuer.");
+      return;
+    }
 
     const userMsg: Msg = { id: uid(), role: "user", text: t };
     const next = [...messages, userMsg];
@@ -501,11 +621,12 @@ export function QualificationChatbot() {
 
   const lastClaude = messages.filter((m) => m.role === "claude").slice(-1)[0];
   const lastClaudeVisibleText = cleanMessageText(lastClaude?.text ?? "");
+  const lastSuggestType = lastClaude ? getSuggestTypeFromText(lastClaude.text) : "none";
   const wantsDocumentsUpload =
     !onlyWelcome &&
     !!lastClaude &&
-    claudeAsksForDocuments(lastClaudeVisibleText) &&
-    dismissedUploadForClaudeMsgId !== lastClaude.id;
+    dismissedUploadForClaudeMsgId !== lastClaude.id &&
+    (lastSuggestType === "upload" || claudeAsksForDocuments(lastClaudeVisibleText));
 
   async function sendDocumentsFromFiles(filesSnapshot: File[]) {
     if (!lastClaude || filesSnapshot.length === 0 || sendingDocs || isLoading) {
@@ -677,8 +798,8 @@ export function QualificationChatbot() {
 
       {!isLoading && !conversationEnded && onlyWelcome ? (
         <ChatSuggestions
-          suggestions={STARTUP_TYPE_SINISTRE_PILLS.map((p) => p.text)}
-          getDisplayText={(s) => STARTUP_TYPE_SINISTRE_PILLS.find((p) => p.text === s)?.label ?? s}
+          suggestions={STARTUP_INITIAL_PILLS.map((p) => p.text)}
+          getDisplayText={(s) => STARTUP_INITIAL_PILLS.find((p) => p.text === s)?.label ?? s}
           onSelect={(s) => void sendUserText(s)}
         />
       ) : null}
@@ -706,12 +827,31 @@ export function QualificationChatbot() {
           </div>
         </div>
       ) : (
-        <ChatInput
-          value={input}
-          onChange={setInput}
-          onEnvoyer={() => void sendUserText(input)}
-          isLoading={isLoading}
-        />
+        <>
+          {noUserMessageYet && (
+            <label className="mt-3 flex items-start gap-2 px-1 text-xs text-gray-500">
+              <input
+                type="checkbox"
+                checked={cguAccepted}
+                onChange={(e) => setCguAccepted(e.target.checked)}
+                className="mt-0.5 accent-[#5B50F0]"
+              />
+              <span>
+                J'accepte les{" "}
+                <a href="/cgu" target="_blank" rel="noreferrer" className="text-[#5B50F0] underline">
+                  Conditions Générales d'Utilisation
+                </a>{" "}
+                et la collecte de mes données pour le traitement de mon dossier.
+              </span>
+            </label>
+          )}
+          <ChatInput
+            value={input}
+            onChange={setInput}
+            onEnvoyer={() => void sendUserText(input)}
+            isLoading={isLoading}
+          />
+        </>
       )}
       <p className="mt-2 text-right text-[10px] text-muted-foreground">
         Vertual n'est pas un cabinet juridique.
