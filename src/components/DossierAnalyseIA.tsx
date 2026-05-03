@@ -10,6 +10,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { consumeAnthropicNetlifySse } from "@/lib/anthropicNetlifyStream";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-5";
 
@@ -215,11 +216,14 @@ function buildAnalyseUserMessage(dossier: DossierAnalyseIAProps["dossier"], docu
 Analyse ce dossier et identifie tous les points contestables.`;
 }
 
-async function callAnthropic(options: {
-  system: string;
-  messages: Array<{ role: "user" | "assistant"; content: string }>;
-  max_tokens: number;
-}): Promise<string> {
+async function callAnthropic(
+  options: {
+    system: string;
+    messages: Array<{ role: "user" | "assistant"; content: string }>;
+    max_tokens: number;
+  },
+  onAccumulatedText?: (fullText: string) => void,
+): Promise<string> {
   const res = await fetch("/.netlify/functions/anthropic", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -231,23 +235,7 @@ async function callAnthropic(options: {
     }),
   });
 
-  if (!res.ok) {
-    const bodyText = await res.text().catch(() => "");
-    const err = new Error(bodyText || `Erreur API Anthropic (${res.status}).`) as Error & { status?: number };
-    err.status = res.status;
-    throw err;
-  }
-
-  const data = (await res.json()) as {
-    content?: Array<{ type?: string; text?: string }>;
-    error?: { message?: string };
-  };
-
-  if (data.error?.message) throw new Error(data.error.message);
-
-  const text = data?.content?.find((c) => c?.type === "text")?.text?.trim() ?? "";
-  if (!text) throw new Error("Réponse IA vide.");
-  return text;
+  return consumeAnthropicNetlifySse(res, onAccumulatedText);
 }
 
 function getAnthropicErrorStatus(err: unknown): number | undefined {
@@ -332,6 +320,8 @@ export function DossierAnalyseIA({ dossier, documents }: DossierAnalyseIAProps) 
   const [analyseLoading, setAnalyseLoading] = useState(false);
   const [analyseError, setAnalyseError] = useState<string | null>(null);
   const [analyseDate, setAnalyseDate] = useState<string | null>(dossier.analyse_ia_date ?? null);
+  /** Texte brut reçu en streaming pendant l’analyse (aperçu + maintien de la connexion). */
+  const [analyseStreamingText, setAnalyseStreamingText] = useState("");
 
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -357,6 +347,7 @@ export function DossierAnalyseIA({ dossier, documents }: DossierAnalyseIAProps) 
     setReportOpen(false);
     setReportText("");
     setReportError(null);
+    setAnalyseStreamingText("");
 
     const raw = dossier.analyse_ia;
     if (raw) {
@@ -378,14 +369,18 @@ export function DossierAnalyseIA({ dossier, documents }: DossierAnalyseIAProps) 
   const handleLancerAnalyse = useCallback(async () => {
     setAnalyseError(null);
     setAnalyseLoading(true);
+    setAnalyseStreamingText("");
     try {
       const { dossier: d, documents: docs } = payloadRef.current;
       const userContent = buildAnalyseUserMessage(d, docs);
-      const raw = await callAnthropic({
-        system: ANALYSE_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userContent }],
-        max_tokens: 4000,
-      });
+      const raw = await callAnthropic(
+        {
+          system: ANALYSE_SYSTEM_PROMPT,
+          messages: [{ role: "user", content: userContent }],
+          max_tokens: 4000,
+        },
+        (fullText) => setAnalyseStreamingText(fullText),
+      );
       const jsonStr = extractJsonText(raw);
 
       let parsed: unknown;
@@ -417,8 +412,8 @@ export function DossierAnalyseIA({ dossier, documents }: DossierAnalyseIAProps) 
         const msg = err instanceof Error ? err.message : "Analyse impossible.";
         setAnalyseError("Erreur : " + msg);
       }
-      setAnalyseLoading(false);
     } finally {
+      setAnalyseStreamingText("");
       setAnalyseLoading(false);
     }
   }, []);
@@ -454,21 +449,28 @@ Sois précis, factuel et orienté résultat pour l'expert.`;
     if (!text || !analyseResult) return;
     setChatError(null);
     const userMsg: ChatMsg = { id: uid(), role: "expert", text };
-    const next = [...chatMessages, userMsg];
-    setChatMessages(next);
+    const assistantId = uid();
+    const assistantPlaceholder: ChatMsg = { id: assistantId, role: "assistant", text: "" };
+    const forApi = [...chatMessages, userMsg];
+    setChatMessages([...forApi, assistantPlaceholder]);
     setChatInput("");
     setChatLoading(true);
     try {
-      const anthropicMessages = next.map((m) => ({
+      const anthropicMessages = forApi.map((m) => ({
         role: m.role === "expert" ? ("user" as const) : ("assistant" as const),
         content: m.text,
       }));
-      const reply = await callAnthropic({
-        system: chatSystemPrompt,
-        messages: anthropicMessages,
-        max_tokens: 2000,
-      });
-      setChatMessages((prev) => [...prev, { id: uid(), role: "assistant", text: reply }]);
+      await callAnthropic(
+        {
+          system: chatSystemPrompt,
+          messages: anthropicMessages,
+          max_tokens: 2000,
+        },
+        (fullText) =>
+          setChatMessages((prev) =>
+            prev.map((m) => (m.id === assistantId ? { ...m, text: fullText } : m)),
+          ),
+      );
     } catch (err) {
       if (isAnthropicQuotaExceeded(err)) {
         setChatError("Crédit API insuffisant. Rechargez votre compte Anthropic.");
@@ -476,7 +478,7 @@ Sois précis, factuel et orienté résultat pour l'expert.`;
         const msg = err instanceof Error ? err.message : "Envoi impossible.";
         setChatError("Erreur : " + msg);
       }
-      setChatMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
+      setChatMessages((prev) => prev.filter((m) => m.id !== userMsg.id && m.id !== assistantId));
       setChatInput(text);
     } finally {
       setChatLoading(false);
@@ -507,12 +509,14 @@ Inclus : contestation point par point, références légales,
 nouvelle estimation chiffrée, délai de réponse demandé.`,
       ].join("\n");
 
-      const text = await callAnthropic({
-        system: "Tu rédiges des rapports contradictoires pour experts d'assurés en France. Style professionnel, précis.",
-        messages: [{ role: "user", content: userPrompt }],
-        max_tokens: 4000,
-      });
-      setReportText(text);
+      await callAnthropic(
+        {
+          system: "Tu rédiges des rapports contradictoires pour experts d'assurés en France. Style professionnel, précis.",
+          messages: [{ role: "user", content: userPrompt }],
+          max_tokens: 4000,
+        },
+        (fullText) => setReportText(fullText),
+      );
     } catch (err) {
       if (isAnthropicQuotaExceeded(err)) {
         setReportError("Crédit API insuffisant. Rechargez votre compte Anthropic.");
@@ -571,6 +575,14 @@ nouvelle estimation chiffrée, délai de réponse demandé.`,
             <div className="h-4 w-[83%] animate-pulse rounded bg-[#E5E7EB]" />
             <div className="h-4 w-[66%] animate-pulse rounded bg-[#E5E7EB]" />
           </div>
+          {analyseStreamingText ? (
+            <div className="mx-auto mt-2 max-w-2xl rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] p-3 text-left">
+              <p className="text-xs font-medium text-[#6B7280]">Réception du modèle (aperçu)</p>
+              <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words font-mono text-xs text-[#374151]">
+                {analyseStreamingText}
+              </pre>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

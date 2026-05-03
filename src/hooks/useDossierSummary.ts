@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { consumeAnthropicNetlifySse } from "@/lib/anthropicNetlifyStream";
 
 export type DossierSummaryInput = {
   id?: string;
@@ -142,20 +143,7 @@ export function useDossierSummary(
         }),
       });
 
-      if (!res.ok) {
-        const bodyText = await res.text().catch(() => "");
-        throw new Error(bodyText || `Erreur Anthropic (${res.status}).`);
-      }
-
-      const data = (await res.json()) as {
-        content?: Array<{ type?: string; text?: string }>;
-        error?: { message?: string };
-      };
-
-      const text = data?.content?.find((c) => c?.type === "text")?.text?.trim() ?? "";
-
-      if (!text) throw new Error("Réponse IA vide.");
-      setSummary(text);
+      await consumeAnthropicNetlifySse(res, setSummary);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Impossible de générer le résumé.");
     } finally {

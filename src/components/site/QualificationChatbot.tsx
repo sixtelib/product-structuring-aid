@@ -10,6 +10,7 @@ import {
   migrateLegacyQualificationLocalStorage,
   QUALIFICATION_STORAGE_KEYS,
 } from "@/lib/qualificationLocalStorage";
+import { consumeAnthropicNetlifySse } from "@/lib/anthropicNetlifyStream";
 
 type CollectedData = {
   type_sinistre: string;
@@ -314,13 +315,7 @@ export function QualificationChatbot() {
       }),
     });
 
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(txt || `Erreur Anthropic (${res.status})`);
-    }
-
-    const data = (await res.json()) as { content?: Array<{ type?: string; text?: string }> };
-    const text = data.content?.find((c) => c.type === "text")?.text?.trim() ?? "";
+    const text = (await consumeAnthropicNetlifySse(res)).trim();
     if (!text) throw new Error("Réponse Claude vide.");
     return text;
   }
@@ -332,13 +327,7 @@ export function QualificationChatbot() {
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(txt || `Erreur Anthropic (${res.status})`);
-    }
-
-    const data = (await res.json()) as { content?: Array<{ type?: string; text?: string }> };
-    const text = data.content?.find((c) => c.type === "text")?.text?.trim() ?? "";
+    const text = (await consumeAnthropicNetlifySse(res)).trim();
     if (!text) throw new Error("Réponse extraction vide.");
     return text;
   }
