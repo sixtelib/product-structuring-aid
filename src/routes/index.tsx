@@ -195,11 +195,6 @@ function HomePage() {
             </div>
 
             <div className="w-full">
-              <FadeInUp delay={0.2}>
-                <p className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <span aria-hidden>✨</span> Évaluez votre dossier gratuitement
-                </p>
-              </FadeInUp>
               <motion.div
                 initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}

@@ -30,7 +30,7 @@ function renderTextBubble(text: string) {
     const t = line.trimEnd();
     if (!t.trim()) return null;
     return (
-      <p key={idx} className="mt-1 text-sm leading-relaxed first:mt-0">
+      <p key={idx} className="mt-1 text-[14px] leading-relaxed first:mt-0">
         {renderInlineBold(t)}
       </p>
     );
@@ -64,32 +64,36 @@ export function ChatMessages({
     <>
       {messages.map((m) => (
         <div key={m.id} className="space-y-3">
-          <div className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div className={m.role === "user" ? "flex flex-col items-end" : "flex flex-col items-start"}>
             <div
-              className={`max-w-[85%] rounded-[12px] px-4 py-2.5 ${
-                m.role === "user" ? "bg-[#5B50F0] text-white" : "bg-white text-foreground shadow-sm"
-              }`}
+              className={
+                m.role === "user"
+                  ? "max-w-[55%] rounded-tl-[14px] rounded-tr-[14px] rounded-br-none rounded-bl-[14px] bg-[#5B50F0] px-4 py-[11px] text-[14px] leading-relaxed text-white"
+                  : "max-w-[85%] rounded-tl-none rounded-tr-[14px] rounded-br-[14px] rounded-bl-[14px] border border-solid border-[#E5E7EB] bg-[#F8F9FF] px-4 py-3 text-[14px] leading-relaxed text-foreground"
+              }
             >
               {renderTextBubble(m.role === "claude" ? cleanMessageText(m.text) : m.text)}
             </div>
           </div>
 
           {m.role === "claude" && lastClaude?.id === m.id && showDocumentsUpload && documentsUpload ? (
-            <div className="flex justify-start">
-              <div className="w-full max-w-[85%]">{documentsUpload}</div>
+            <div className="flex w-full max-w-[85%] flex-col items-start">
+              <div className="w-full">{documentsUpload}</div>
             </div>
           ) : null}
         </div>
       ))}
 
       {isLoading ? (
-        <div className="flex justify-start">
-          <div className="rounded-[12px] bg-white px-4 py-3 text-sm text-foreground shadow-sm">En cours…</div>
+        <div className="flex flex-col items-start">
+          <div className="max-w-[85%] rounded-tl-none rounded-tr-[14px] rounded-br-[14px] rounded-bl-[14px] border border-solid border-[#E5E7EB] bg-[#F8F9FF] px-4 py-3 text-[14px] text-foreground">
+            En cours…
+          </div>
         </div>
       ) : null}
 
       {evaluationPreview ? (
-        <div className="relative mt-4 overflow-hidden rounded-xl border-2 border-dashed border-[#5B50F0]/40 bg-white p-5">
+        <div className="relative mt-4 overflow-hidden rounded-xl border border-solid border-[#E5E7EB] bg-white p-5">
           <p className="text-sm font-semibold text-foreground">Votre évaluation est prête ✨</p>
           <div className="pointer-events-none mt-3 select-none">
             <div className="inline-flex items-center rounded-full bg-[#5B50F0]/15 px-3 py-1 text-xs font-semibold text-[#5B50F0]">

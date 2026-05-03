@@ -706,12 +706,19 @@ export function QualificationChatbot() {
     }
   }
 
+  const showStartupPills = !isLoading && !conversationEnded && onlyWelcome;
+  const showDynamicPills = !isLoading && !conversationEnded && !onlyWelcome && suggestions.length > 0;
+  const showPills = showStartupPills || showDynamicPills;
+
   return (
     <div
       id="chatbot"
-      className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 font-['Inter'] shadow-md"
+      className="flex flex-col rounded-[16px] border border-solid border-[#E5E7EB] bg-white p-[20px] font-['Inter']"
     >
-      <div className="min-h-[120px] max-h-[320px] space-y-3 overflow-y-auto bg-transparent">
+      <p className="mb-3 font-medium text-[#7F77DD]" style={{ fontSize: "11px", letterSpacing: "0.08em" }}>
+        ÉVALUEZ VOTRE DOSSIER
+      </p>
+      <div className="min-h-[120px] max-h-[320px] space-y-3 overflow-y-auto">
         <ChatMessages
           messages={messages}
           isLoading={isLoading}
@@ -729,17 +736,9 @@ export function QualificationChatbot() {
 
         {Object.keys(nonEmptyExtracted(extractedData)).length > 0 && (
           <div
-            style={{
-              background: "linear-gradient(135deg, #F0EFFE, #E8F5E9)",
-              border: "1px solid #5B50F0",
-              borderRadius: "12px",
-              padding: "16px",
-              marginTop: "8px",
-            }}
+            className="mt-2 rounded-[12px] border border-solid border-[#E5E7EB] bg-white p-4"
           >
-            <p style={{ fontWeight: 600, color: "#5B50F0", marginBottom: "8px" }}>
-              ✨ Informations extraites automatiquement
-            </p>
+            <p className="mb-2 text-sm font-semibold text-[#111827]">Informations extraites automatiquement</p>
             {(() => {
               const data = nonEmptyExtracted(extractedData);
               const lines: string[] = [];
@@ -789,29 +788,30 @@ export function QualificationChatbot() {
                 </ul>
               );
             })()}
-            <p style={{ fontSize: "0.75rem", color: "#6B7280", marginTop: "8px" }}>
-              Ces informations enrichiront votre dossier automatiquement.
-            </p>
+            <p className="mt-2 text-xs text-[#6B7280]">Ces informations enrichiront votre dossier automatiquement.</p>
           </div>
         )}
       </div>
 
-      {!isLoading && !conversationEnded && onlyWelcome ? (
+      {showStartupPills ? (
         <ChatSuggestions
+          variant="primary"
           suggestions={STARTUP_INITIAL_PILLS.map((p) => p.text)}
           getDisplayText={(s) => STARTUP_INITIAL_PILLS.find((p) => p.text === s)?.label ?? s}
           onSelect={(s) => void sendUserText(s)}
         />
       ) : null}
 
-      {!isLoading && !conversationEnded && !onlyWelcome && suggestions.length > 0 ? (
-        <ChatSuggestions suggestions={suggestions} onSelect={(s) => void sendUserText(s)} />
+      {showDynamicPills ? (
+        <ChatSuggestions variant="secondary" suggestions={suggestions} onSelect={(s) => void sendUserText(s)} />
       ) : null}
 
+      {showPills && !conversationEnded ? <div className="mt-3 border-t border-solid border-[#E5E7EB]" aria-hidden /> : null}
+
       {conversationEnded ? (
-        <div className="mt-3 border-t border-gray-100 pt-3">
+        <div className="mt-3 border-t border-solid border-[#E5E7EB] pt-3">
           <div className="flex justify-start">
-            <div className="max-w-[85%] rounded-[12px] bg-white px-4 py-2.5 text-sm leading-relaxed text-foreground shadow-sm">
+            <div className="max-w-[85%] rounded-tl-none rounded-tr-[14px] rounded-br-[14px] rounded-bl-[14px] border border-solid border-[#E5E7EB] bg-[#F8F9FF] px-4 py-3 text-[14px] leading-relaxed text-foreground">
               <p>Votre dossier est qualifié. Créez votre compte pour continuer avec un expert.</p>
             </div>
           </div>
@@ -853,9 +853,7 @@ export function QualificationChatbot() {
           />
         </>
       )}
-      <p className="mt-2 text-right text-[10px] text-muted-foreground">
-        Vertual n'est pas un cabinet juridique.
-      </p>
+      <p className="mt-2 text-right text-[10px] text-[#9CA3AF]">Vertual n&apos;est pas un cabinet juridique.</p>
     </div>
   );
 }
