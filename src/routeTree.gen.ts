@@ -13,6 +13,7 @@ import { Route as VillesRouteImport } from './routes/villes'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as SinistresRouteImport } from './routes/sinistres'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PartenairesRouteImport } from './routes/partenaires'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InscriptionExpertRouteImport } from './routes/inscription-expert'
@@ -89,6 +90,11 @@ const SinistresRoute = SinistresRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartenairesRoute = PartenairesRouteImport.update({
+  id: '/partenaires',
+  path: '/partenaires',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -406,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/partenaires': typeof PartenairesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
@@ -465,6 +472,7 @@ export interface FileRoutesByTo {
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/partenaires': typeof PartenairesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tarifs': typeof TarifsRoute
   '/villes': typeof VillesRoute
@@ -526,6 +534,7 @@ export interface FileRoutesById {
   '/inscription-expert': typeof InscriptionExpertRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/partenaires': typeof PartenairesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sinistres': typeof SinistresRouteWithChildren
   '/tarifs': typeof TarifsRoute
@@ -591,6 +600,7 @@ export interface FileRouteTypes {
     | '/inscription-expert'
     | '/login'
     | '/onboarding'
+    | '/partenaires'
     | '/reset-password'
     | '/sinistres'
     | '/tarifs'
@@ -650,6 +660,7 @@ export interface FileRouteTypes {
     | '/inscription-expert'
     | '/login'
     | '/onboarding'
+    | '/partenaires'
     | '/reset-password'
     | '/tarifs'
     | '/villes'
@@ -710,6 +721,7 @@ export interface FileRouteTypes {
     | '/inscription-expert'
     | '/login'
     | '/onboarding'
+    | '/partenaires'
     | '/reset-password'
     | '/sinistres'
     | '/tarifs'
@@ -774,6 +786,7 @@ export interface RootRouteChildren {
   InscriptionExpertRoute: typeof InscriptionExpertRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  PartenairesRoute: typeof PartenairesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SinistresRoute: typeof SinistresRouteWithChildren
   TarifsRoute: typeof TarifsRoute
@@ -810,6 +823,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partenaires': {
+      id: '/partenaires'
+      path: '/partenaires'
+      fullPath: '/partenaires'
+      preLoaderRoute: typeof PartenairesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -1391,6 +1411,7 @@ const rootRouteChildren: RootRouteChildren = {
   InscriptionExpertRoute: InscriptionExpertRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  PartenairesRoute: PartenairesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SinistresRoute: SinistresRouteWithChildren,
   TarifsRoute: TarifsRoute,

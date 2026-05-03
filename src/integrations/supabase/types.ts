@@ -421,6 +421,48 @@ export type Database = {
           },
         ]
       }
+      partenaires: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          nom: string
+          prenom: string
+          specialite: string
+          statut: string
+          telephone: string
+          type: string
+          zone: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          nom: string
+          prenom: string
+          specialite: string
+          statut?: string
+          telephone: string
+          type: string
+          zone: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          nom?: string
+          prenom?: string
+          specialite?: string
+          statut?: string
+          telephone?: string
+          type?: string
+          zone?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           adresse: string | null
